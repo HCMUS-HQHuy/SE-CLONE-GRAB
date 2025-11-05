@@ -1,5 +1,5 @@
-import React from 'react';
-import { StarIcon, ImageIcon, ChevronDownIcon } from '../components/Icons';
+import React, { useState } from 'react';
+import { StarIcon, ImageIcon, ArrowRightIcon } from '../components/Icons';
 
 const foodCategories = [
   {
@@ -9,7 +9,9 @@ const foodCategories = [
       { id: 2, name: 'Trà sữa trân châu đường đen', description: 'Hương vị trà sữa truyền thống kết hợp trân châu đường đen dai ngon.', oldPrice: '45.000đ', newPrice: '29.000đ', image: 'https://images.unsplash.com/photo-1579954115545-a95591f28bfc?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80', bestseller: false },
       { id: 9, name: 'Bún bò Huế', description: 'Bún bò cay nồng, đậm đà hương vị cố đô.', oldPrice: '50.000đ', newPrice: '40.000đ', image: 'https://i.ytimg.com/vi/A_o2qfaTgKs/maxresdefault.jpg', bestseller: true },
       { id: 10, name: 'Combo Gà Rán', description: '2 miếng gà giòn tan, khoai tây chiên và nước ngọt.', oldPrice: '85.000đ', newPrice: '69.000đ', image: 'https://images.unsplash.com/photo-1562967914-608f82629710?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80', bestseller: false },
-      { id: 17, name: 'Cá hồi nướng măng tây', description: 'Cá hồi nướng ăn kèm măng tây, món ăn bổ dưỡng và ngon miệng.', price: '120.000đ', image: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80', bestseller: true },
+      { id: 17, name: 'Cá hồi nướng măng tây', description: 'Cá hồi nướng ăn kèm măng tây, món ăn bổ dưỡng và ngon miệng.', oldPrice: '135.000đ', newPrice: '120.000đ', image: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80', bestseller: true },
+      { id: 18, name: 'Pizza Hải Sản', description: 'Pizza đế mỏng giòn với hải sản tươi ngon và phô mai.', oldPrice: '150.000đ', newPrice: '119.000đ', image: '', bestseller: false },
+      { id: 19, name: 'Lẩu Thái Tom Yum', description: 'Lẩu thái chua cay đậm đà với hải sản, nấm và rau.', oldPrice: '250.000đ', newPrice: '199.000đ', image: '', bestseller: true },
     ]
   },
   {
@@ -90,6 +92,12 @@ const FoodCard: React.FC<{ item: FoodItem }> = ({ item }) => (
 
 
 const HomePage: React.FC = () => {
+  const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
+
+  const handleShowMore = (categoryName: string) => {
+    setExpandedCategories(prev => [...prev, categoryName]);
+  };
+  
   return (
     <div className="bg-gray-50">
       {/* Banner Section */}
@@ -104,22 +112,32 @@ const HomePage: React.FC = () => {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="space-y-12">
-          {foodCategories.map(category => (
-            <section key={category.name}>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">{category.name}</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {category.items.map(item => (
-                  <FoodCard key={item.id} item={item} />
-                ))}
-              </div>
-              <div className="mt-8 text-center">
-                <button className="inline-flex items-center px-6 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-orange-500 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors">
-                  Xem thêm
-                  <ChevronDownIcon className="ml-2 -mr-1 h-5 w-5" />
-                </button>
-              </div>
-            </section>
-          ))}
+          {foodCategories.map(category => {
+            const isExpanded = expandedCategories.includes(category.name);
+            const itemsToShow = isExpanded ? category.items : category.items.slice(0, 5);
+            const hasMore = category.items.length > 5 && !isExpanded;
+
+            return (
+              <section key={category.name}>
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">{category.name}</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {itemsToShow.map(item => (
+                    <FoodCard key={item.id} item={item} />
+                  ))}
+                  {hasMore && (
+                    <div
+                      onClick={() => handleShowMore(category.name)}
+                      className="bg-white rounded-lg shadow-md flex items-center justify-center cursor-pointer h-full transform hover:-translate-y-1 transition-transform duration-300 hover:shadow-lg"
+                      role="button"
+                      aria-label={`Xem thêm món ăn trong mục ${category.name}`}
+                    >
+                      <ArrowRightIcon className="h-12 w-12 text-orange-500" />
+                    </div>
+                  )}
+                </div>
+              </section>
+            );
+          })}
         </div>
       </div>
     </div>
