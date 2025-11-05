@@ -125,13 +125,14 @@ const HomePage: React.FC = () => {
                     <FoodCard key={item.id} item={item} />
                   ))}
                   {hasMore && (
-                    <div
-                      onClick={() => handleShowMore(category.name)}
-                      className="bg-white rounded-lg shadow-md flex items-center justify-center cursor-pointer h-full transform hover:-translate-y-1 transition-transform duration-300 hover:shadow-lg"
-                      role="button"
-                      aria-label={`Xem thêm món ăn trong mục ${category.name}`}
-                    >
-                      <ArrowRightIcon className="h-12 w-12 text-orange-500" />
+                    <div className="flex items-center justify-center h-full">
+                       <button
+                        onClick={() => handleShowMore(category.name)}
+                        className="group bg-gray-100 rounded-full h-20 w-20 flex items-center justify-center cursor-pointer shadow-md transform hover:-translate-y-1 transition-all duration-300 hover:shadow-lg hover:bg-orange-500"
+                        aria-label={`Xem thêm món ăn trong mục ${category.name}`}
+                      >
+                        <ArrowRightIcon className="h-8 w-8 text-orange-500 group-hover:text-white transition-colors duration-300" />
+                      </button>
                     </div>
                   )}
                 </div>
