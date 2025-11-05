@@ -8,12 +8,12 @@ const Navbar: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
-            <Link to="/user/profile" className="flex-shrink-0 text-2xl font-bold text-orange-500">
+            <Link to="/user/home" className="flex-shrink-0 text-2xl font-bold text-orange-500">
               Food<span className="text-gray-800">Delivery</span>
             </Link>
             <nav className="hidden md:block ml-10">
               <div className="flex items-baseline space-x-4">
-                <Link to="#" className="text-gray-600 hover:bg-orange-500 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Trang chủ</Link>
+                <Link to="/user/home" className="text-gray-600 hover:bg-orange-500 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Trang chủ</Link>
                 <Link to="#" className="text-gray-600 hover:bg-orange-500 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Đơn hàng</Link>
                 <Link to="#" className="text-gray-600 hover:bg-orange-500 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Yêu thích</Link>
               </div>
@@ -31,12 +31,10 @@ const Navbar: React.FC = () => {
                 </button>
                 {/* Profile dropdown */}
                 <div className="ml-3 relative">
-                    <div>
-                        <button type="button" className="bg-gray-100 rounded-full flex items-center justify-center h-8 w-8 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500" id="user-menu-button" aria-expanded="false" aria-haspopup="true">
-                            <span className="sr-only">Open user menu</span>
-                            <UserIcon className="h-6 w-6 text-gray-500" />
-                        </button>
-                    </div>
+                    <Link to="/user/profile" className="bg-gray-100 rounded-full flex items-center justify-center h-8 w-8 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500" id="user-menu-button" aria-expanded="false" aria-haspopup="true">
+                        <span className="sr-only">Open user menu</span>
+                        <UserIcon className="h-6 w-6 text-gray-500" />
+                    </Link>
                 </div>
             </div>
           </div>
