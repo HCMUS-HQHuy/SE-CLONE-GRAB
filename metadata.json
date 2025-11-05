@@ -1,0 +1,5 @@
+{
+  "name": "Food Delivery Authentication",
+  "description": "A prototype authentication page for a food delivery application, allowing users to sign in or sign up. The UI is presented in Vietnamese.",
+  "requestFramePermissions": []
+}
