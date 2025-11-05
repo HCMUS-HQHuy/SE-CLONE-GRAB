@@ -4,6 +4,7 @@ import AuthPage from './pages/AuthPage';
 import UserProfile from './pages/UserProfile';
 import UserLayout from './layouts/UserLayout';
 import HomePage from './pages/HomePage';
+import ProductDetailPage from './pages/ProductDetailPage';
 
 const App: React.FC = () => {
   return (
@@ -14,6 +15,7 @@ const App: React.FC = () => {
         <Route index element={<Navigate to="home" replace />} />
         <Route path="home" element={<HomePage />} />
         <Route path="profile" element={<UserProfile />} />
+        <Route path="food/:id" element={<ProductDetailPage />} />
         {/* Add other user routes here, e.g., orders, settings */}
       </Route>
        {/* You can add routes for /admin, /seller, /shipper later */}

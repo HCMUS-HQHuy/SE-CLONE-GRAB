@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { StarIcon, ImageIcon, ArrowRightIcon } from '../components/Icons';
 
 const foodCategories = [
@@ -122,7 +123,9 @@ const HomePage: React.FC = () => {
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">{category.name}</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {itemsToShow.map(item => (
-                    <FoodCard key={item.id} item={item} />
+                    <Link to={`/user/food/${item.id}`} key={item.id}>
+                      <FoodCard item={item} />
+                    </Link>
                   ))}
                   {hasMore && (
                     <div className="flex items-center justify-center h-full">
