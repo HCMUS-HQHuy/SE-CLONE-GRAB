@@ -1,79 +1,45 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { UserIcon, SearchIcon, ShoppingCartIcon, HeartIcon } from './Icons';
+import { UserIcon } from './Icons';
 
 const Navbar: React.FC = () => {
   return (
-    <header className="bg-white shadow-sm sticky top-0 z-50">
-      {/* Top bar */}
-      <div className="bg-gray-100 py-1 text-xs text-gray-600">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between">
-          <span>Chào mừng bạn đến với GreenMart!</span>
-          <span>Hotline: 1900 6789</span>
-        </div>
-      </div>
-
-      {/* Main navigation */}
+    <header className="bg-white shadow-md sticky top-0 z-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
-            <Link to="/user/home" className="flex-shrink-0 text-3xl font-bold text-primary">
-              Green<span className="text-gray-800">Mart</span>
+            <Link to="/user/home" className="flex-shrink-0 text-2xl font-bold text-orange-500">
+              Food<span className="text-gray-800">Delivery</span>
             </Link>
-          </div>
-          <div className="flex-1 flex justify-center px-2 lg:ml-6 lg:justify-center">
-            <div className="max-w-lg w-full lg:max-w-xs">
-              <label htmlFor="search" className="sr-only">Search</label>
-              <div className="relative text-gray-400 focus-within:text-gray-600">
-                <div className="pointer-events-none absolute inset-y-0 left-0 pl-3 flex items-center">
-                  <SearchIcon className="h-5 w-5" />
-                </div>
-                <input
-                  id="search"
-                  className="block w-full bg-white py-2 pl-10 pr-3 border border-gray-300 rounded-md leading-5 text-gray-900 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm"
-                  placeholder="Tìm kiếm sản phẩm..."
-                  type="search"
-                  name="search"
-                />
+            <nav className="hidden md:block ml-10">
+              <div className="flex items-baseline space-x-4">
+                <Link to="/user/home" className="text-gray-600 hover:bg-orange-500 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Trang chủ</Link>
+                <Link to="#" className="text-gray-600 hover:bg-orange-500 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Đơn hàng</Link>
+                <Link to="#" className="text-gray-600 hover:bg-orange-500 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Yêu thích</Link>
               </div>
-            </div>
+            </nav>
           </div>
           <div className="flex items-center">
-            <div className="flex items-center space-x-4">
-              <a href="#" className="p-1 rounded-full text-gray-500 hover:text-primary-dark">
-                <HeartIcon className="h-6 w-6" />
-                <span className="sr-only">Yêu thích</span>
-              </a>
-               <a href="#" className="relative p-1 rounded-full text-gray-500 hover:text-primary-dark">
-                <ShoppingCartIcon className="h-6 w-6" />
-                <span className="absolute -top-1 -right-1 bg-accent text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">3</span>
-                <span className="sr-only">Giỏ hàng</span>
-              </a>
-              <Link to="/user/profile" className="p-1 rounded-full text-gray-500 hover:text-primary-dark" id="user-menu-button" aria-expanded="false" aria-haspopup="true">
-                  <UserIcon className="h-6 w-6" />
-                  <span className="sr-only">Tài khoản</span>
-              </Link>
+            {/* User menu can be added here */}
+            <div className="ml-4 flex items-center md:ml-6">
+                <button className="p-1 rounded-full text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+                    <span className="sr-only">View notifications</span>
+                    {/* Heroicon name: outline/bell */}
+                    <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                </button>
+                {/* Profile dropdown */}
+                <div className="ml-3 relative">
+                    <Link to="/user/profile" className="bg-gray-100 rounded-full flex items-center justify-center h-8 w-8 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500" id="user-menu-button" aria-expanded="false" aria-haspopup="true">
+                        <span className="sr-only">Open user menu</span>
+                        <UserIcon className="h-6 w-6 text-gray-500" />
+                    </Link>
+                </div>
             </div>
           </div>
         </div>
       </div>
-      {/* Secondary navigation */}
-      <nav className="bg-white border-t border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-12">
-                 <div className="flex space-x-8">
-                    <Link to="/user/home" className="border-b-2 border-primary text-sm font-semibold text-primary">Trang chủ</Link>
-                    <Link to="#" className="border-b-2 border-transparent text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700">Giới thiệu</Link>
-                    <Link to="#" className="border-b-2 border-transparent text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700">Sản phẩm</Link>
-                    <Link to="#" className="border-b-2 border-transparent text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700">Tin tức</Link>
-                    <Link to="#" className="border-b-2 border-transparent text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700">Liên hệ</Link>
-                 </div>
-                 <button className="bg-accent hover:bg-accent-dark text-white font-bold py-2 px-4 rounded-md">
-                    Mua hàng nhanh
-                 </button>
-            </div>
-        </div>
-      </nav>
     </header>
   );
 };
