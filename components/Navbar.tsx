@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { UserIcon } from './Icons';
 
 const Navbar: React.FC = () => {
   return (
@@ -31,9 +32,9 @@ const Navbar: React.FC = () => {
                 {/* Profile dropdown */}
                 <div className="ml-3 relative">
                     <div>
-                        <button type="button" className="max-w-xs bg-gray-800 rounded-full flex items-center text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white" id="user-menu-button" aria-expanded="false" aria-haspopup="true">
+                        <button type="button" className="bg-gray-100 rounded-full flex items-center justify-center h-8 w-8 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500" id="user-menu-button" aria-expanded="false" aria-haspopup="true">
                             <span className="sr-only">Open user menu</span>
-                            <img className="h-8 w-8 rounded-full" src="https://i.pravatar.cc/40" alt="" />
+                            <UserIcon className="h-6 w-6 text-gray-500" />
                         </button>
                     </div>
                 </div>
