@@ -1,105 +1,151 @@
 import React from 'react';
-import { StarIcon } from '../components/Icons';
+import { ChevronLeftIcon, ChevronRightIcon, PlusIcon } from '../components/Icons';
 
-const foodCategories = [
-  {
-    name: '🔥 Đại hạ giá',
-    items: [
-      { id: 1, name: 'Cơm tấm sườn bì chả', description: 'Cơm tấm nóng hổi, sườn nướng đậm đà, bì dai, chả trứng béo ngậy.', oldPrice: '55.000đ', newPrice: '35.000đ', image: 'https://images.unsplash.com/photo-1596560543449-f54676d6b8cc?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80', bestseller: true },
-      { id: 2, name: 'Trà sữa trân châu đường đen', description: 'Hương vị trà sữa truyền thống kết hợp trân châu đường đen dai ngon.', oldPrice: '45.000đ', newPrice: '29.000đ', image: 'https://images.unsplash.com/photo-1558160074-5834151a44a4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80', bestseller: false },
-    ]
-  },
-  {
-    name: 'Ăn vặt',
-    items: [
-       { id: 3, name: 'Bánh tráng trộn Sài Gòn', description: 'Đầy đủ topping: xoài, trứng cút, bò khô, rau răm...', price: '25.000đ', image: 'https://images.unsplash.com/photo-1628771064211-aa715b3eb8a3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80', bestseller: true },
-       { id: 4, name: 'Gỏi cuốn tôm thịt', description: 'Tôm, thịt, bún, rau sống tươi ngon cuốn trong bánh tráng.', price: '30.000đ', image: 'https://images.unsplash.com/photo-1599599810694-b5b373446903?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80', bestseller: false },
-    ]
-  },
-  {
-    name: 'Ăn trưa',
-    items: [
-       { id: 5, name: 'Bún chả Hà Nội', description: 'Thịt nướng thơm lừng ăn kèm bún, rau sống và nước mắm chua ngọt.', price: '50.000đ', image: 'https://images.unsplash.com/photo-1634580392233-1b0b5a8b4e6d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80', bestseller: true },
-       { id: 6, name: 'Phở bò tái lăn', description: 'Phở bò truyền thống với thịt bò được xào tái thơm ngon.', price: '45.000đ', image: 'https://images.unsplash.com/photo-1569718212165-7a444c46331a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80', bestseller: false },
-    ]
-  },
-  {
-    name: 'Đồ uống',
-    items: [
-      { id: 7, name: 'Cà phê sữa đá', description: 'Cà phê robusta đậm đà pha cùng sữa đặc, uống với đá.', price: '25.000đ', image: 'https://images.unsplash.com/photo-1558160074-5834151a44a4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80', bestseller: true },
-      { id: 8, name: 'Nước ép cam tươi', description: 'Cam tươi vắt nguyên chất, không đường, tốt cho sức khỏe.', price: '35.000đ', image: 'https://images.unsplash.com/photo-1600271886742-f049cd451bba?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80', bestseller: false },
-    ]
-  }
+const featuredCategories = [
+    { name: 'Rau củ', image: 'https://i.imgur.com/gI25A41.png' },
+    { name: 'Trái cây', image: 'https://i.imgur.com/61GyGhy.png' },
+    { name: 'Thịt tươi', image: 'https://i.imgur.com/a5HLw0o.png' },
+    { name: 'Trứng', image: 'https://i.imgur.com/nJgQj3z.png' },
+    { name: 'Đồ uống', image: 'https://i.imgur.com/qL3QGWU.png' },
+    { name: 'Bánh mì', image: 'https://i.imgur.com/5XhJ8W2.png' },
+    { name: 'Hải sản', image: 'https://i.imgur.com/v1uY32U.png' },
+    { name: 'Salad', image: 'https://i.imgur.com/L13aSC0.png' },
+    { name: 'Thực phẩm khô', image: 'https://i.imgur.com/Z4wZ8gJ.png' },
 ];
 
-type FoodItem = {
-  id: number;
-  name: string;
-  description: string;
-  price?: string;
-  oldPrice?: string;
-  newPrice?: string;
-  image: string;
-  bestseller: boolean;
-};
+const bestSellers = [
+    { name: 'Hành tây', price: '20.000đ', salePrice: '15.000đ', discount: '17%', image: 'https://i.imgur.com/o5V2sTf.png' },
+    { name: 'Ngò rí', price: '25.000đ', salePrice: '21.000đ', discount: '10%', image: 'https://i.imgur.com/sPTiFCo.png' },
+    { name: 'Đậu cove', price: '47.000đ', salePrice: '40.000đ', discount: '17%', image: 'https://i.imgur.com/mO24jzi.png' },
+    { name: 'Cà chua Đà Lạt', price: '15.000đ', image: 'https://i.imgur.com/S8z1gE1.png' },
+    { name: 'Bí đỏ', price: '22.000đ', salePrice: '18.000đ', discount: '15%', image: 'https://i.imgur.com/8zRLyS9.png' },
+];
 
-const FoodCard: React.FC<{ item: FoodItem }> = ({ item }) => (
-  <div className="bg-white rounded-lg shadow-md overflow-hidden flex transform hover:-translate-y-1 transition-transform duration-300">
-    <div className="w-1/3 flex-shrink-0">
-      <img className="h-full w-full object-cover" src={item.image} alt={item.name} />
-    </div>
-    <div className="w-2/3 p-4 flex flex-col justify-between relative">
-      <div>
-        {item.bestseller && (
-            <div className="absolute top-2 right-2 flex items-center bg-yellow-400 text-white text-xs font-bold px-2 py-1 rounded-full">
-                <StarIcon className="w-3 h-3 mr-1" />
-                <span>Bán chạy</span>
+const ProductCard: React.FC<{ product: typeof bestSellers[0] }> = ({ product }) => (
+    <div className="border border-gray-200 rounded-lg p-4 text-center group flex-shrink-0 w-48">
+        {product.discount && (
+            <div className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full absolute top-2 left-2">
+                -{product.discount}
             </div>
         )}
-        <h3 className="text-lg font-bold text-gray-800 mb-1 pr-16">{item.name}</h3>
-        <p className="text-gray-600 text-sm">{item.description}</p>
-      </div>
-      <div className="mt-3">
-        {item.newPrice ? (
-          <div className="flex items-baseline gap-2">
-            <p className="text-lg font-bold text-orange-500">{item.newPrice}</p>
-            <p className="text-sm text-gray-400 line-through">{item.oldPrice}</p>
-          </div>
-        ) : (
-          <p className="text-lg font-bold text-orange-500">{item.price}</p>
-        )}
-      </div>
+        <img src={product.image} alt={product.name} className="h-24 w-24 mx-auto mb-2 transition-transform duration-300 group-hover:scale-110" />
+        <h3 className="text-sm font-semibold text-gray-800 h-10">{product.name}</h3>
+        <div className="flex justify-center items-baseline my-2">
+            {product.salePrice ? (
+                <>
+                    <p className="text-primary font-bold">{product.salePrice}</p>
+                    <p className="text-xs text-gray-400 line-through ml-2">{product.price}</p>
+                </>
+            ) : (
+                <p className="text-primary font-bold">{product.price}</p>
+            )}
+        </div>
+        <button className="w-full bg-primary-light text-primary-dark font-bold py-2 rounded-md hover:bg-primary hover:text-white transition-colors duration-300 text-sm">
+            Thêm vào giỏ
+        </button>
     </div>
-  </div>
 );
-
 
 const HomePage: React.FC = () => {
   return (
     <div className="bg-gray-50">
       {/* Banner Section */}
-      <div className="relative h-64 bg-cover bg-center" style={{backgroundImage: "url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80')"}}>
-          <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
-              <h1 className="text-4xl font-extrabold text-white tracking-wider text-center px-4">
-                Tối rồi, ăn thôi!
-              </h1>
-          </div>
+      <div className="bg-green-100">
+        <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 flex items-center">
+            <div className="w-1/2">
+                <h1 className="text-5xl font-extrabold text-gray-800 leading-tight">
+                    Rau Tươi <br/> <span className="text-primary">Giảm Giá Lớn</span>
+                </h1>
+                <p className="mt-4 text-lg text-gray-600">
+                    Tiết kiệm tới 50% cho đơn hàng đầu tiên của bạn
+                </p>
+                <button className="mt-8 bg-primary text-white font-bold py-3 px-8 rounded-md hover:bg-primary-dark transition-transform transform hover:scale-105 duration-300">
+                    ĐẶT NGAY
+                </button>
+            </div>
+            <div className="w-1/2">
+                <img src="https://i.imgur.com/1EAD7Tb.png" alt="Fresh Vegetables" className="w-full h-auto" />
+            </div>
+        </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <div className="space-y-12">
-          {foodCategories.map(category => (
-            <section key={category.name}>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">{category.name}</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {category.items.map(item => (
-                  <FoodCard key={item.id} item={item} />
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
+      <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        {/* Featured Categories */}
+        <section>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">Danh mục nổi bật</h2>
+            <div className="flex items-center space-x-2">
+                <button className="p-2 rounded-full border border-gray-300 hover:bg-gray-100"><ChevronLeftIcon className="h-5 w-5 text-gray-600" /></button>
+                <button className="p-2 rounded-full border border-gray-300 hover:bg-gray-100"><ChevronRightIcon className="h-5 w-5 text-gray-600" /></button>
+            </div>
+          </div>
+          <div className="flex space-x-4 overflow-x-auto pb-4 -mx-4 px-4">
+             {featuredCategories.map(category => (
+                <div key={category.name} className="text-center flex-shrink-0 w-24 group">
+                    <div className="bg-white border border-gray-200 rounded-lg p-4 flex items-center justify-center h-24 w-24 mx-auto transition-shadow duration-300 group-hover:shadow-lg">
+                        <img src={category.image} alt={category.name} className="h-16 w-16 object-contain" />
+                    </div>
+                    <p className="mt-2 text-sm font-semibold text-gray-700">{category.name}</p>
+                </div>
+             ))}
+          </div>
+        </section>
+
+        {/* Best Sellers Section */}
+        <section className="mt-12">
+            <div className="flex bg-white rounded-lg p-6 border border-gray-200">
+                <div className="w-1/4 bg-cover bg-center rounded-lg" style={{backgroundImage: "url('https://i.imgur.com/nJgqLBe.png')"}}>
+                    <div className="p-6 h-full flex flex-col justify-between text-white bg-black bg-opacity-30 rounded-lg">
+                        <div>
+                            <h3 className="text-2xl font-bold">Bán chạy nhất hàng ngày</h3>
+                            <p className="text-sm mt-2">Mua sắm thoải mái chỉ từ 20.000 VNĐ</p>
+                        </div>
+                        <button className="mt-4 bg-primary text-white font-bold py-2 px-4 rounded-md self-start hover:bg-primary-dark transition-colors duration-300">
+                            Mua ngay
+                        </button>
+                    </div>
+                </div>
+                <div className="w-3/4 pl-6">
+                    <div className="flex justify-between items-center mb-4">
+                         <div className="flex space-x-4 border-b">
+                            <button className="py-2 text-sm font-semibold text-primary border-b-2 border-primary">Rau củ</button>
+                            <button className="py-2 text-sm font-medium text-gray-500 hover:text-gray-800">Trái cây</button>
+                            <button className="py-2 text-sm font-medium text-gray-500 hover:text-gray-800">Đồ khô</button>
+                        </div>
+                        <button className="text-primary font-semibold text-sm hover:underline">Xem tất cả</button>
+                    </div>
+                     <div className="flex space-x-4 overflow-x-auto pb-4">
+                        {bestSellers.map(product => <ProductCard key={product.name} product={product} />)}
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        {/* Promotional Banners */}
+        <section className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-orange-100 p-6 rounded-lg flex items-center">
+                <div>
+                    <h4 className="font-bold text-lg text-gray-800">Nông sản tươi mới</h4>
+                    <p className="text-sm text-gray-600">Sản phẩm 100% từ thiên nhiên</p>
+                </div>
+                <img src="https://i.imgur.com/dK3f0oX.png" alt="Fresh Produce" className="h-20 w-auto ml-auto" />
+            </div>
+            <div className="bg-blue-100 p-6 rounded-lg flex items-center">
+                <div>
+                    <h4 className="font-bold text-lg text-gray-800">Bữa sáng lành mạnh</h4>
+                    <p className="text-sm text-gray-600">Sữa tươi nguyên chất, tiệt trùng</p>
+                </div>
+                <img src="https://i.imgur.com/QhFzYg1.png" alt="Healthy Breakfast" className="h-20 w-auto ml-auto" />
+            </div>
+            <div className="bg-green-100 p-6 rounded-lg flex items-center">
+                <div>
+                    <h4 className="font-bold text-lg text-gray-800">Rau củ hữu cơ 100%</h4>
+                    <p className="text-sm text-gray-600">Sạch sẽ và an toàn chất lượng</p>
+                </div>
+                <img src="https://i.imgur.com/uR3VvAs.png" alt="Organic Vegetables" className="h-20 w-auto ml-auto" />
+            </div>
+        </section>
       </div>
     </div>
   );
