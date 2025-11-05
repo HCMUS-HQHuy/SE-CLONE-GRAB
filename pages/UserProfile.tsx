@@ -12,10 +12,12 @@ const UserProfile: React.FC = () => {
       {/* Profile Info Section */}
       <div className="bg-white p-6 rounded-lg shadow-md mb-8">
         <h2 className="text-xl font-semibold text-gray-800 border-b pb-4 mb-6">Thông tin cá nhân</h2>
-        <div className="flex flex-col md:flex-row items-center space-y-6 md:space-y-0 md:space-x-8">
-          <div className="relative">
-            <img className="h-24 w-24 rounded-full object-cover" src="https://i.pravatar.cc/150" alt="User avatar" />
-            <button className="absolute bottom-0 right-0 bg-orange-500 p-1.5 rounded-full text-white hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+        <div className="flex flex-col items-center">
+          <div className="relative mb-6">
+            <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center ring-2 ring-gray-200">
+                <UserIcon className="h-16 w-16 text-gray-400" />
+            </div>
+            <button className="absolute bottom-0 right-0 bg-orange-500 p-1.5 rounded-full text-white hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500" aria-label="Edit profile picture">
               <PencilIcon className="h-4 w-4" />
             </button>
           </div>
