@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { StarIcon, ImageIcon, ArrowRightIcon } from '../components/Icons';
+import ProductDetailModal from '../components/ProductDetailModal';
 
 const foodCategories = [
   {
@@ -27,9 +27,9 @@ const foodCategories = [
   {
     name: 'Ăn trưa',
     items: [
-       { id: 5, name: 'Cá hồi nướng măng tây', description: 'Cá hồi nướng ăn kèm măng tây, món ăn bổ dưỡng và ngon miệng.', price: '120.000đ', image: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80', bestseller: true },
+       { id: 5, name: 'Cá hồi nướng măng tây', description: 'Cá hồi nướng ăn kèm măng tây, món ăn bổ dưỡng và ngon miệng.', price: '120.000đ', image: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?ixlib.rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80', bestseller: true },
        { id: 6, name: 'Phở bò tái lăn', description: 'Phở bò truyền thống với thịt bò được xào tái thơm ngon.', price: '45.000đ', image: '', bestseller: false },
-       { id: 13, name: 'Bún chả Hà Nội', description: 'Thịt nướng thơm lừng ăn kèm bún và nước mắm chua ngọt.', price: '40.000đ', image: 'https://images.unsplash.com/photo-1526318896980-cf78c088247c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80', bestseller: true },
+       { id: 13, name: 'Bún chả Hà Nội', description: 'Thịt nướng thơm lừng ăn kèm bún và nước mắm chua ngọt.', price: '40.000đ', image: 'https://images.unsplash.com/photo-1526318896980-cf78c088247c?ixlib.rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80', bestseller: true },
        { id: 14, name: 'Miến xào lòng gà', description: 'Miến dong dai ngon xào cùng lòng gà và rau củ.', price: '35.000đ', image: '', bestseller: false },
     ]
   },
@@ -37,14 +37,14 @@ const foodCategories = [
     name: 'Đồ uống',
     items: [
       { id: 7, name: 'Cà phê sữa đá', description: 'Cà phê robusta đậm đà pha cùng sữa đặc, uống với đá.', price: '25.000đ', image: '', bestseller: true },
-      { id: 8, name: 'Nước ép cam tươi', description: 'Cam tươi vắt nguyên chất, không đường, tốt cho sức khỏe.', price: '35.000đ', image: 'https://images.unsplash.com/photo-1600271886742-f049cd451bba?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80', bestseller: false },
+      { id: 8, name: 'Nước ép cam tươi', description: 'Cam tươi vắt nguyên chất, không đường, tốt cho sức khỏe.', price: '35.000đ', image: 'https://images.unsplash.com/photo-1600271886742-f049cd451bba?ixlib.rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80', bestseller: false },
       { id: 15, name: 'Sinh tố bơ', description: 'Bơ sáp xay mịn cùng sữa tươi, béo ngậy và bổ dưỡng.', price: '40.000đ', image: '', bestseller: false },
       { id: 16, name: 'Trà đào cam sả', description: 'Thức uống giải nhiệt sảng khoái từ trà, đào, cam và sả.', price: '45.000đ', image: '', bestseller: true },
     ]
   }
 ];
 
-type FoodItem = {
+export type FoodItem = {
   id: number;
   name: string;
   description: string;
@@ -94,9 +94,18 @@ const FoodCard: React.FC<{ item: FoodItem }> = ({ item }) => (
 
 const HomePage: React.FC = () => {
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
+  const [selectedProduct, setSelectedProduct] = useState<FoodItem | null>(null);
 
   const handleShowMore = (categoryName: string) => {
     setExpandedCategories(prev => [...prev, categoryName]);
+  };
+  
+  const handleCardClick = (item: FoodItem) => {
+    setSelectedProduct(item);
+  };
+
+  const handleCloseModal = () => {
+    setSelectedProduct(null);
   };
   
   return (
@@ -123,9 +132,9 @@ const HomePage: React.FC = () => {
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">{category.name}</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {itemsToShow.map(item => (
-                    <Link to={`/user/food/${item.id}`} key={item.id}>
+                    <div key={item.id} onClick={() => handleCardClick(item)} className="cursor-pointer">
                       <FoodCard item={item} />
-                    </Link>
+                    </div>
                   ))}
                   {hasMore && (
                     <div className="flex items-center justify-center h-full">
@@ -144,6 +153,10 @@ const HomePage: React.FC = () => {
           })}
         </div>
       </div>
+      
+      {selectedProduct && (
+        <ProductDetailModal product={selectedProduct} onClose={handleCloseModal} />
+      )}
     </div>
   );
 };
