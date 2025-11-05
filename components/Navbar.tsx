@@ -1,8 +1,16 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { UserIcon } from './Icons';
 
 const Navbar: React.FC = () => {
+  const location = useLocation();
+
+  const getLinkClass = (path: string) => {
+    return location.pathname === path
+      ? 'bg-orange-500 text-white px-3 py-2 rounded-md text-sm font-medium'
+      : 'text-gray-600 hover:bg-orange-500 hover:text-white px-3 py-2 rounded-md text-sm font-medium';
+  };
+
   return (
     <header className="bg-white shadow-md sticky top-0 z-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -13,9 +21,9 @@ const Navbar: React.FC = () => {
             </Link>
             <nav className="hidden md:block ml-10">
               <div className="flex items-baseline space-x-4">
-                <Link to="/user/home" className="text-gray-600 hover:bg-orange-500 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Trang chủ</Link>
-                <Link to="#" className="text-gray-600 hover:bg-orange-500 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Đơn hàng</Link>
-                <Link to="#" className="text-gray-600 hover:bg-orange-500 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Yêu thích</Link>
+                <Link to="/user/home" className={getLinkClass('/user/home')}>Trang chủ</Link>
+                <Link to="/user/orders" className={getLinkClass('/user/orders')}>Đơn hàng</Link>
+                <Link to="/user/favorites" className={getLinkClass('/user/favorites')}>Yêu thích</Link>
               </div>
             </nav>
           </div>
