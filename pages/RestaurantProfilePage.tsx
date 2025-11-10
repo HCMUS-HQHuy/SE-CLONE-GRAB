@@ -3,6 +3,7 @@ import { restaurants, foodCategories } from './HomePage'; // Reusing the data st
 import { FoodItem, Restaurant } from './HomePage';
 import { PencilIcon, LocationMarkerIcon, PhoneIcon, ClockIcon, StarIcon, ImageIcon, PlusIcon, UserIcon, ChatAltIcon, ClipboardListIcon } from '../components/Icons';
 import AddMenuItemModal from '../components/AddMenuItemModal';
+import EditRestaurantProfileModal from '../components/EditRestaurantProfileModal';
 
 // Mock Data for a specific restaurant - let's assume the logged-in restaurant is "Quán Ăn Gỗ"
 const restaurantData: Restaurant = restaurants.find(r => r.name === 'Quán Ăn Gỗ')!;
@@ -49,21 +50,23 @@ const FoodCard: React.FC<{ item: FoodItem }> = ({ item }) => (
 
 
 const RestaurantProfilePage: React.FC = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isMenuModalOpen, setIsMenuModalOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+
   const [currentItem, setCurrentItem] = useState<FoodItem | null>(null);
 
   const handleOpenAddModal = () => {
     setCurrentItem(null);
-    setIsModalOpen(true);
+    setIsMenuModalOpen(true);
   };
 
   const handleEditItem = (item: FoodItem) => {
     setCurrentItem(item);
-    setIsModalOpen(true);
+    setIsMenuModalOpen(true);
   };
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
+  const handleCloseMenuModal = () => {
+    setIsMenuModalOpen(false);
     setCurrentItem(null);
   };
 
@@ -75,8 +78,16 @@ const RestaurantProfilePage: React.FC = () => {
       // In a real app, you'd add the new item to your global state
       console.log('Adding new item:', itemData);
     }
-    handleCloseModal();
+    handleCloseMenuModal();
   };
+
+  const handleSaveProfile = (updatedData: Partial<Restaurant>) => {
+    // In a real app, you'd update the restaurant data in your global state or call an API
+    console.log('Saving profile:', updatedData);
+    // For this prototype, we can't actually update the mock data, but we can log it.
+    setIsProfileModalOpen(false);
+  };
+
 
   return (
     <div className="bg-gray-100">
@@ -98,7 +109,10 @@ const RestaurantProfilePage: React.FC = () => {
               <h1 className="text-3xl font-bold text-gray-900">{restaurantData.name}</h1>
               <p className="text-md text-gray-500">{restaurantData.cuisine}</p>
             </div>
-            <button className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+            <button 
+              onClick={() => setIsProfileModalOpen(true)}
+              className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+            >
               <PencilIcon className="h-5 w-5 mr-2 text-gray-400" />
               Chỉnh sửa
             </button>
@@ -204,10 +218,17 @@ const RestaurantProfilePage: React.FC = () => {
       </div>
       
       <AddMenuItemModal 
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
+        isOpen={isMenuModalOpen}
+        onClose={handleCloseMenuModal}
         onSave={handleSaveItem}
         itemToEdit={currentItem}
+      />
+
+      <EditRestaurantProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        onSave={handleSaveProfile}
+        restaurant={restaurantData}
       />
     </div>
   );
