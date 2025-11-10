@@ -1,51 +1,69 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { UserIcon } from './Icons';
+import { Link } from 'react-router-dom';
+import { UserIcon, SearchIcon, HeartIcon, ShoppingCartIcon, BellIcon, DocumentTextIcon, MenuIcon } from './Icons';
 
 const Navbar: React.FC = () => {
-  const location = useLocation();
-
-  const getLinkClass = (path: string) => {
-    return location.pathname === path
-      ? 'bg-orange-500 text-white px-3 py-2 rounded-md text-sm font-medium'
-      : 'text-gray-600 hover:bg-orange-500 hover:text-white px-3 py-2 rounded-md text-sm font-medium';
-  };
-
   return (
     <header className="bg-white shadow-md sticky top-0 z-10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-20">
+          
+          {/* Left section: Logo */}
           <div className="flex items-center">
             <Link to="/user/home" className="flex-shrink-0 text-2xl font-bold text-orange-500">
               Food<span className="text-gray-800">Delivery</span>
             </Link>
-            <nav className="hidden md:block ml-10">
-              <div className="flex items-baseline space-x-4">
-                <Link to="/user/home" className={getLinkClass('/user/home')}>Trang chủ</Link>
-                <Link to="/user/orders" className={getLinkClass('/user/orders')}>Đơn hàng</Link>
-                <Link to="/user/favorites" className={getLinkClass('/user/favorites')}>Yêu thích</Link>
-              </div>
-            </nav>
           </div>
-          <div className="flex items-center">
-            {/* User menu can be added here */}
-            <div className="ml-4 flex items-center md:ml-6">
-                <button className="p-1 rounded-full text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
-                    <span className="sr-only">View notifications</span>
-                    {/* Heroicon name: outline/bell */}
-                    <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                    </svg>
-                </button>
-                {/* Profile dropdown */}
-                <div className="ml-3 relative">
-                    <Link to="/user/profile" className="bg-gray-100 rounded-full flex items-center justify-center h-8 w-8 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500" id="user-menu-button" aria-expanded="false" aria-haspopup="true">
-                        <span className="sr-only">Open user menu</span>
-                        <UserIcon className="h-6 w-6 text-gray-500" />
-                    </Link>
+
+          {/* Center section: Search Bar */}
+          <div className="flex-1 flex justify-center px-2 lg:ml-6 lg:justify-center">
+            <div className="w-full max-w-lg lg:max-w-xl">
+              <label htmlFor="search" className="sr-only">Tìm kiếm</label>
+              <div className="relative text-gray-400 focus-within:text-gray-600">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <SearchIcon className="h-5 w-5" />
                 </div>
+                <input
+                  id="search"
+                  className="block w-full bg-gray-100 py-3 pl-10 pr-3 border border-transparent rounded-full leading-5 text-gray-900 placeholder-gray-500 focus:outline-none focus:bg-white focus:border-orange-300 focus:ring-orange-300 focus:ring-1 transition"
+                  placeholder="Tìm món ăn, nhà hàng..."
+                  type="search"
+                  name="search"
+                />
+              </div>
             </div>
           </div>
+
+          {/* Right section: Actions */}
+          <div className="hidden md:flex items-center space-x-2">
+            <Link to="/user/orders" className="p-2 rounded-full text-gray-500 hover:text-orange-500 hover:bg-orange-50 focus:outline-none focus:bg-orange-100 transition" aria-label="Đơn hàng">
+              <DocumentTextIcon className="h-6 w-6" />
+            </Link>
+            <Link to="/user/favorites" className="p-2 rounded-full text-gray-500 hover:text-orange-500 hover:bg-orange-50 focus:outline-none focus:bg-orange-100 transition" aria-label="Yêu thích">
+              <HeartIcon className="h-6 w-6" />
+            </Link>
+             <button className="p-2 rounded-full text-gray-500 hover:text-orange-500 hover:bg-orange-50 focus:outline-none focus:bg-orange-100 transition" aria-label="Giỏ hàng">
+              <ShoppingCartIcon className="h-6 w-6" />
+            </button>
+            <button className="p-2 rounded-full text-gray-500 hover:text-orange-500 hover:bg-orange-50 focus:outline-none focus:bg-orange-100 transition" aria-label="Thông báo">
+              <BellIcon className="h-6 w-6" />
+            </button>
+            
+            {/* Profile dropdown */}
+            <div className="ml-3 relative">
+              <Link to="/user/profile" className="bg-gray-100 rounded-full flex items-center justify-center h-10 w-10 text-sm focus:outline-none ring-2 ring-offset-2 hover:ring-orange-500 transition" id="user-menu-button" aria-expanded="false" aria-haspopup="true" aria-label="Mở menu người dùng">
+                <UserIcon className="h-6 w-6 text-gray-500" />
+              </Link>
+            </div>
+          </div>
+          
+          {/* Mobile menu button */}
+          <div className="md:hidden flex items-center">
+             <button className="p-2 rounded-full text-gray-500 hover:text-orange-500 hover:bg-orange-50 focus:outline-none focus:bg-orange-100 transition" aria-label="Mở menu">
+              <MenuIcon className="h-6 w-6" />
+            </button>
+          </div>
+
         </div>
       </div>
     </header>
