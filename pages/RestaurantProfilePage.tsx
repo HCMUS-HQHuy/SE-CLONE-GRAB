@@ -101,17 +101,34 @@ const RestaurantProfilePage: React.FC = () => {
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="relative -mt-16 sm:-mt-24">
           {/* Profile Card */}
-          <div className="bg-white rounded-xl shadow-lg p-6 flex flex-col sm:flex-row items-center sm:items-end space-y-4 sm:space-y-0 sm:space-x-6">
+          <div className="bg-white rounded-xl shadow-lg p-6 flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-6">
             <div className="relative flex-shrink-0">
               <img className="h-28 w-28 rounded-full object-cover border-4 border-white" src={restaurantData.logoUrl} alt="Restaurant Logo" />
             </div>
-            <div className="flex-grow text-center sm:text-left">
+            <div className="flex-grow text-center sm:text-left sm:pt-4">
               <h1 className="text-3xl font-bold text-gray-900">{restaurantData.name}</h1>
-              <p className="text-md text-gray-500">{restaurantData.cuisine}</p>
+              <p className="text-md text-gray-500 mt-1">{restaurantData.cuisine}</p>
+               <div className="flex items-center justify-center sm:justify-start flex-wrap gap-x-4 gap-y-2 mt-4 text-sm text-gray-600">
+                  <div className="flex items-center">
+                      <StarIcon className="w-5 h-5 text-yellow-400 mr-1.5" />
+                      <span className="font-bold text-gray-800">{restaurantData.rating.toFixed(1)}</span>
+                      <span className="ml-1">({restaurantData.reviewCount.toLocaleString()} đánh giá)</span>
+                  </div>
+                  <span className="text-gray-300 hidden sm:inline">|</span>
+                  <div className="flex items-center">
+                      <ChatAltIcon className="w-5 h-5 text-gray-400 mr-1.5" />
+                      <span>{restaurantData.commentCount.toLocaleString()} bình luận</span>
+                  </div>
+                  <span className="text-gray-300 hidden sm:inline">|</span>
+                  <div className="flex items-center">
+                      <ClipboardListIcon className="w-5 h-5 text-gray-400 mr-1.5" />
+                      <span>{restaurantData.orderCount.toLocaleString()}+ đơn hàng</span>
+                  </div>
+              </div>
             </div>
             <button 
               onClick={() => setIsProfileModalOpen(true)}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+              className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 flex-shrink-0"
             >
               <PencilIcon className="h-5 w-5 mr-2 text-gray-400" />
               Chỉnh sửa
@@ -158,39 +175,6 @@ const RestaurantProfilePage: React.FC = () => {
 
             {/* Right Column: Details */}
             <div className="space-y-8">
-              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                  <h3 className="text-lg font-semibold text-gray-800 border-b pb-3 mb-4">Thống kê</h3>
-                  <ul className="space-y-3 text-sm">
-                      <li className="flex items-center justify-between">
-                          <div className="flex items-center">
-                              <StarIcon className="h-5 w-5 text-yellow-400 mr-3 flex-shrink-0" />
-                              <span className="text-gray-700">Đánh giá trung bình</span>
-                          </div>
-                          <span className="font-bold text-gray-800">{restaurantData.rating.toFixed(1)} / 5.0</span>
-                      </li>
-                      <li className="flex items-center justify-between">
-                          <div className="flex items-center">
-                              <UserIcon className="h-5 w-5 text-gray-400 mr-3 flex-shrink-0" />
-                              <span className="text-gray-700">Tổng lượt đánh giá</span>
-                          </div>
-                          <span className="font-bold text-gray-800">{restaurantData.reviewCount}</span>
-                      </li>
-                      <li className="flex items-center justify-between">
-                          <div className="flex items-center">
-                              <ChatAltIcon className="h-5 w-5 text-gray-400 mr-3 flex-shrink-0" />
-                              <span className="text-gray-700">Tổng bình luận</span>
-                          </div>
-                          <span className="font-bold text-gray-800">{restaurantData.commentCount}</span>
-                      </li>
-                      <li className="flex items-center justify-between">
-                          <div className="flex items-center">
-                              <ClipboardListIcon className="h-5 w-5 text-gray-400 mr-3 flex-shrink-0" />
-                              <span className="text-gray-700">Tổng đơn hàng</span>
-                          </div>
-                          <span className="font-bold text-gray-800">{restaurantData.orderCount.toLocaleString()}+</span>
-                      </li>
-                  </ul>
-              </div>
               <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                 <h3 className="text-lg font-semibold text-gray-800 border-b pb-3 mb-4">Về chúng tôi</h3>
                 <p className="text-gray-600 text-sm">{restaurantData.description}</p>
