@@ -118,24 +118,29 @@ const RestaurantProfilePage: React.FC = () => {
           {/* Left Column: Menu */}
           <div className="lg:col-span-2 space-y-8">
              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                <div className="flex justify-between items-center border-b pb-4 mb-6">
+                <div className="border-b pb-4 mb-6">
                     <h2 className="text-xl font-semibold text-gray-800">Thực đơn nổi bật</h2>
-                    <button 
-                        onClick={handleOpenAddModal}
-                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-orange-500 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
-                    >
-                        <PlusIcon className="h-5 w-5 mr-2" />
-                        Thêm món
-                    </button>
                 </div>
                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                    {restaurantMenuItems.slice(0, 6).map(item => (
+                    <div 
+                        onClick={handleOpenAddModal}
+                        className="bg-white rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center h-full min-h-[210px] cursor-pointer group transition-all duration-300 hover:shadow-lg hover:border-orange-400 hover:bg-orange-50"
+                        role="button"
+                        aria-label="Thêm món ăn mới"
+                    >
+                        <div className="text-center text-gray-400 group-hover:text-orange-500 transition-colors">
+                            <PlusIcon className="h-10 w-10 mx-auto" />
+                            <p className="mt-2 text-sm font-semibold">Thêm món</p>
+                        </div>
+                    </div>
+
+                    {restaurantMenuItems.slice(0, 5).map(item => (
                         <div key={item.id} onClick={() => handleEditItem(item)}>
                           <FoodCard item={item} />
                         </div>
                     ))}
                  </div>
-                 {restaurantMenuItems.length > 6 && (
+                 {restaurantMenuItems.length > 5 && (
                     <div className="text-center mt-6">
                         <button className="text-sm font-semibold text-orange-600 hover:text-orange-500">
                             Xem tất cả thực đơn &rarr;
