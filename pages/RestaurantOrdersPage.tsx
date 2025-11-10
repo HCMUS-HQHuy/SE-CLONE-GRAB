@@ -1,14 +1,16 @@
 import React, { useState, useMemo } from 'react';
 import { ClockIcon, CheckCircleIcon, XCircleIcon, TruckIcon } from '../components/Icons';
+import OrderDetailModal from '../components/OrderDetailModal';
 
 type OrderStatus = 'Mới' | 'Đang chuẩn bị' | 'Sẵn sàng giao' | 'Hoàn thành' | 'Đã hủy';
 
-type OrderItem = {
+export type OrderItem = {
   name: string;
   quantity: number;
+  price: number;
 };
 
-type Order = {
+export type Order = {
   id: string;
   customerName: string;
   address: string;
@@ -23,20 +25,20 @@ const mockOrders: Order[] = [
   {
     id: '#12345',
     customerName: 'Nguyễn Văn A',
-    address: '123 Đường ABC, Q1, TPHCM',
+    address: '123 Đường ABC, Phường Bến Nghé, Quận 1, Thành phố Hồ Chí Minh',
     items: [
-      { name: 'Cơm tấm sườn bì chả', quantity: 2 },
-      { name: 'Nước ép cam tươi', quantity: 1 },
+      { name: 'Cơm tấm sườn bì chả', quantity: 2, price: 35000 },
+      { name: 'Nước ép cam tươi', quantity: 1, price: 35000 },
     ],
     total: 105000,
     status: 'Mới',
-    createdAt: '2024-07-30T10:30:00Z',
+    createdAt: '2024-07-30T17:30:00Z',
   },
   {
     id: '#12346',
     customerName: 'Trần Thị B',
     address: '456 Đường XYZ, Q3, TPHCM',
-    items: [{ name: 'Pizza Hải Sản', quantity: 1 }],
+    items: [{ name: 'Pizza Hải Sản', quantity: 1, price: 119000 }],
     total: 119000,
     status: 'Đang chuẩn bị',
     createdAt: '2024-07-30T10:25:00Z',
@@ -46,8 +48,8 @@ const mockOrders: Order[] = [
     customerName: 'Lê Văn C',
     address: '789 Đường LMN, Q7, TPHCM',
     items: [
-        { name: 'Miến xào lòng gà', quantity: 1 },
-        { name: 'Nem chua rán', quantity: 2 },
+        { name: 'Miến xào lòng gà', quantity: 1, price: 35000 },
+        { name: 'Nem chua rán', quantity: 2, price: 30000 },
     ],
     total: 95000,
     status: 'Sẵn sàng giao',
@@ -57,16 +59,16 @@ const mockOrders: Order[] = [
     id: '#12348',
     customerName: 'Phạm Thị D',
     address: '101 Đường OPQ, Bình Thạnh, TPHCM',
-    items: [{ name: 'Cơm tấm sườn bì chả', quantity: 1 }],
+    items: [{ name: 'Cơm tấm sườn bì chả', quantity: 1, price: 35000 }],
     total: 35000,
     status: 'Hoàn thành',
-    createdAt: '2024-07-29T19:30:00Z',
+    createdAt: '2024-07-30T02:30:00Z',
   },
    {
     id: '#12349',
     customerName: 'Võ Văn E',
     address: '222 Đường UVW, Q2, TPHCM',
-    items: [{ name: 'Pizza Hải Sản', quantity: 1 }],
+    items: [{ name: 'Pizza Hải Sản', quantity: 1, price: 119000 }],
     total: 119000,
     status: 'Đã hủy',
     createdAt: '2024-07-29T12:00:00Z',
@@ -74,7 +76,7 @@ const mockOrders: Order[] = [
 ];
 
 
-const getStatusStyles = (status: OrderStatus) => {
+export const getStatusStyles = (status: OrderStatus) => {
     switch (status) {
         case 'Mới': return 'bg-blue-100 text-blue-800';
         case 'Đang chuẩn bị': return 'bg-yellow-100 text-yellow-800';
@@ -85,41 +87,48 @@ const getStatusStyles = (status: OrderStatus) => {
     }
 };
 
-const formatCurrency = (amount: number) => {
+export const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
 };
 
-const formatDateTime = (dateString: string) => {
+export const formatDateTime = (dateString: string) => {
     const date = new Date(dateString);
-    return `${date.toLocaleTimeString('vi-VN')} ${date.toLocaleDateString('vi-VN')}`;
+    const time = date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+    const day = date.toLocaleDateString('vi-VN');
+    return `${time} ${day}`;
 };
 
 
 // Reusable OrderCard Component
-const OrderCard: React.FC<{ order: Order; onUpdateStatus: (id: string, status: OrderStatus) => void; }> = ({ order, onUpdateStatus }) => {
+const OrderCard: React.FC<{ order: Order; onUpdateStatus: (id: string, status: OrderStatus) => void; onCardClick: (order: Order) => void; }> = ({ order, onUpdateStatus, onCardClick }) => {
     
+    const handleActionClick = (e: React.MouseEvent, newStatus: OrderStatus) => {
+        e.stopPropagation();
+        onUpdateStatus(order.id, newStatus);
+    };
+
     const ActionButtons = () => {
         switch(order.status) {
             case 'Mới':
                 return (
                     <div className="flex space-x-2">
-                        <button onClick={() => onUpdateStatus(order.id, 'Đang chuẩn bị')} className="flex items-center text-sm font-medium text-white bg-green-500 hover:bg-green-600 px-3 py-1.5 rounded-md transition-colors">
+                        <button onClick={(e) => handleActionClick(e, 'Đang chuẩn bị')} className="flex items-center text-sm font-medium text-white bg-green-500 hover:bg-green-600 px-3 py-1.5 rounded-md transition-colors">
                            <CheckCircleIcon className="h-4 w-4 mr-1.5" /> Chấp nhận
                         </button>
-                         <button onClick={() => onUpdateStatus(order.id, 'Đã hủy')} className="flex items-center text-sm font-medium text-white bg-red-500 hover:bg-red-600 px-3 py-1.5 rounded-md transition-colors">
+                         <button onClick={(e) => handleActionClick(e, 'Đã hủy')} className="flex items-center text-sm font-medium text-white bg-red-500 hover:bg-red-600 px-3 py-1.5 rounded-md transition-colors">
                            <XCircleIcon className="h-4 w-4 mr-1.5" /> Từ chối
                         </button>
                     </div>
                 );
             case 'Đang chuẩn bị':
                  return (
-                    <button onClick={() => onUpdateStatus(order.id, 'Sẵn sàng giao')} className="flex items-center text-sm font-medium text-white bg-blue-500 hover:bg-blue-600 px-3 py-1.5 rounded-md transition-colors">
+                    <button onClick={(e) => handleActionClick(e, 'Sẵn sàng giao')} className="flex items-center text-sm font-medium text-white bg-blue-500 hover:bg-blue-600 px-3 py-1.5 rounded-md transition-colors">
                        <TruckIcon className="h-4 w-4 mr-1.5" /> Sẵn sàng giao
                     </button>
                 );
             case 'Sẵn sàng giao':
                  return (
-                    <button onClick={() => onUpdateStatus(order.id, 'Hoàn thành')} className="flex items-center text-sm font-medium text-white bg-indigo-500 hover:bg-indigo-600 px-3 py-1.5 rounded-md transition-colors">
+                    <button onClick={(e) => handleActionClick(e, 'Hoàn thành')} className="flex items-center text-sm font-medium text-white bg-indigo-500 hover:bg-indigo-600 px-3 py-1.5 rounded-md transition-colors">
                        <CheckCircleIcon className="h-4 w-4 mr-1.5" /> Hoàn thành
                     </button>
                 );
@@ -129,14 +138,14 @@ const OrderCard: React.FC<{ order: Order; onUpdateStatus: (id: string, status: O
     }
 
     return (
-        <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
-            <div className="flex flex-wrap justify-between items-start mb-4">
-                <div>
+        <div onClick={() => onCardClick(order)} className="bg-white p-5 rounded-lg shadow-sm border border-gray-200 cursor-pointer transition-shadow hover:shadow-lg">
+            <div className="flex justify-between items-start mb-4 gap-4">
+                <div className="flex-grow min-w-0">
                     <h3 className="font-bold text-lg text-orange-600">{order.id}</h3>
-                    <p className="font-semibold text-gray-800 mt-1">{order.customerName}</p>
-                    <p className="text-sm text-gray-500">{order.address}</p>
+                    <p className="font-semibold text-gray-800 mt-1 truncate">{order.customerName}</p>
+                    <p className="text-sm text-gray-500 truncate">{order.address}</p>
                 </div>
-                <div className="text-right mt-2 sm:mt-0">
+                <div className="flex-shrink-0 text-right">
                     <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${getStatusStyles(order.status)}`}>
                         {order.status}
                     </span>
@@ -147,12 +156,17 @@ const OrderCard: React.FC<{ order: Order; onUpdateStatus: (id: string, status: O
                 </div>
             </div>
             <div className="border-t border-b border-gray-200 py-3 my-3">
-                <ul className="space-y-1.5 text-sm">
-                    {order.items.map((item, index) => (
+                 <ul className="space-y-1.5 text-sm">
+                    {order.items.slice(0, 1).map((item, index) => (
                         <li key={index} className="flex justify-between">
-                            <span className="text-gray-700">{item.quantity}x {item.name}</span>
+                            <span className="text-gray-700 truncate">{item.quantity}x {item.name}</span>
                         </li>
                     ))}
+                    {order.items.length > 1 && (
+                        <li className="text-xs text-gray-500 italic mt-1">
+                            + {order.items.length - 1} món nữa...
+                        </li>
+                    )}
                 </ul>
             </div>
             <div className="flex justify-between items-center">
@@ -160,7 +174,9 @@ const OrderCard: React.FC<{ order: Order; onUpdateStatus: (id: string, status: O
                     <p className="text-sm text-gray-500">Tổng tiền</p>
                     <p className="font-bold text-xl text-gray-900">{formatCurrency(order.total)}</p>
                 </div>
-                <ActionButtons />
+                <div onClick={e => e.stopPropagation()}>
+                    <ActionButtons />
+                </div>
             </div>
         </div>
     );
@@ -170,6 +186,7 @@ const OrderCard: React.FC<{ order: Order; onUpdateStatus: (id: string, status: O
 const RestaurantOrdersPage: React.FC = () => {
     const [orders, setOrders] = useState<Order[]>(mockOrders);
     const [activeTab, setActiveTab] = useState('Tất cả');
+    const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
     
     const tabs = ['Tất cả', 'Mới', 'Đang chuẩn bị', 'Sẵn sàng giao', 'Hoàn thành'];
 
@@ -179,6 +196,18 @@ const RestaurantOrdersPage: React.FC = () => {
                 order.id === orderId ? { ...order, status: newStatus } : order
             )
         );
+        // Also update the selected order if it's open in the modal
+        if (selectedOrder && selectedOrder.id === orderId) {
+            setSelectedOrder(prev => prev ? { ...prev, status: newStatus } : null);
+        }
+    };
+
+    const handleCardClick = (order: Order) => {
+      setSelectedOrder(order);
+    };
+
+    const handleCloseModal = () => {
+      setSelectedOrder(null);
     };
     
     const filteredOrders = useMemo(() => {
@@ -217,7 +246,12 @@ const RestaurantOrdersPage: React.FC = () => {
             {filteredOrders.length > 0 ? (
                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredOrders.map(order => (
-                        <OrderCard key={order.id} order={order} onUpdateStatus={handleUpdateStatus} />
+                        <OrderCard 
+                          key={order.id} 
+                          order={order} 
+                          onUpdateStatus={handleUpdateStatus}
+                          onCardClick={handleCardClick} 
+                        />
                     ))}
                 </div>
             ) : (
@@ -225,6 +259,14 @@ const RestaurantOrdersPage: React.FC = () => {
                     <h3 className="text-lg font-semibold text-gray-700">Không có đơn hàng nào</h3>
                     <p className="text-gray-500 mt-1">Hiện tại không có đơn hàng nào trong mục này.</p>
                 </div>
+            )}
+
+            {selectedOrder && (
+                <OrderDetailModal
+                    isOpen={!!selectedOrder}
+                    onClose={handleCloseModal}
+                    order={selectedOrder}
+                />
             )}
         </div>
     );
