@@ -16,7 +16,7 @@ const RestaurantNavbar: React.FC = () => {
           {/* Left section: Logo and Nav */}
           <div className="flex items-center space-x-8">
             <Link to="/restaurant/profile" className="flex-shrink-0 text-xl font-bold text-gray-800">
-              Quản lý <span className="text-orange-500">Nhà Hàng</span>
+              Restaurant <span className="text-orange-500">Management</span>
             </Link>
             <nav className="hidden md:flex space-x-6">
               <NavLink 

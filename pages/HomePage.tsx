@@ -59,7 +59,7 @@ export const restaurants: Restaurant[] = [
     phone: '090 123 4567',
     openingHours: '09:00 - 22:00',
     description: 'Quán Ăn Gỗ tự hào mang đến những hương vị đậm đà, chuẩn vị Việt Nam. Với không gian ấm cúng và thực đơn đa dạng, chúng tôi là điểm đến lý tưởng cho những bữa ăn gia đình và gặp gỡ bạn bè.',
-    bannerUrl: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1674&q=80',
+    bannerUrl: 'https://cdn.xanhsm.com/2025/01/e0898853-nha-hang-khu-ngoai-giao-doan-3.jpg',
     logoUrl: 'https://cdn-icons-png.flaticon.com/512/3448/3448609.png',
     rating: 4.7,
     reviewCount: 258,
