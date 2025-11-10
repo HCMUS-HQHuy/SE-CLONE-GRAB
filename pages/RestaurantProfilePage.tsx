@@ -84,119 +84,120 @@ const RestaurantProfilePage: React.FC = () => {
       <div className="relative">
         <div className="h-56 bg-cover bg-center" style={{ backgroundImage: `url(${restaurantData.bannerUrl})` }}></div>
         <div className="absolute inset-0 bg-black bg-opacity-30"></div>
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="relative -mt-16 sm:-mt-24">
-            <div className="bg-white rounded-xl shadow-lg p-6 flex flex-col sm:flex-row items-center sm:items-end space-y-4 sm:space-y-0 sm:space-x-6">
-              <div className="relative flex-shrink-0">
-                <img className="h-28 w-28 rounded-full object-cover border-4 border-white" src={restaurantData.logoUrl} alt="Restaurant Logo" />
-              </div>
-              <div className="flex-grow text-center sm:text-left">
-                <h1 className="text-3xl font-bold text-gray-900">{restaurantData.name}</h1>
-                <p className="text-md text-gray-500">{restaurantData.cuisine}</p>
-              </div>
-              <button className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
-                <PencilIcon className="h-5 w-5 mr-2 text-gray-400" />
-                Chỉnh sửa
-              </button>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          {/* Left Column: Menu */}
-          <div className="lg:col-span-2 space-y-8">
-             <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                <div className="flex justify-between items-center border-b pb-4 mb-6">
-                    <h2 className="text-xl font-semibold text-gray-800">Thực đơn nổi bật</h2>
-                </div>
-                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                    <div 
-                        onClick={handleOpenAddModal}
-                        className="bg-white rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center h-full min-h-[210px] cursor-pointer group transition-all duration-300 hover:shadow-lg hover:border-orange-400 hover:bg-orange-50"
-                        role="button"
-                        aria-label="Thêm món ăn mới"
-                    >
-                        <div className="text-center text-gray-400 group-hover:text-orange-500 transition-colors">
-                            <PlusIcon className="h-10 w-10 mx-auto" />
-                            <p className="mt-2 text-sm font-semibold">Thêm món</p>
-                        </div>
-                    </div>
-
-                    {restaurantMenuItems.slice(0, 5).map(item => (
-                        <div key={item.id} onClick={() => handleEditItem(item)}>
-                          <FoodCard item={item} />
-                        </div>
-                    ))}
-                 </div>
-                 {restaurantMenuItems.length > 5 && (
-                    <div className="text-center mt-6">
-                        <button className="text-sm font-semibold text-orange-600 hover:text-orange-500">
-                            Xem tất cả thực đơn &rarr;
-                        </button>
-                    </div>
-                 )}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="relative -mt-16 sm:-mt-24">
+          {/* Profile Card */}
+          <div className="bg-white rounded-xl shadow-lg p-6 flex flex-col sm:flex-row items-center sm:items-end space-y-4 sm:space-y-0 sm:space-x-6">
+            <div className="relative flex-shrink-0">
+              <img className="h-28 w-28 rounded-full object-cover border-4 border-white" src={restaurantData.logoUrl} alt="Restaurant Logo" />
             </div>
+            <div className="flex-grow text-center sm:text-left">
+              <h1 className="text-3xl font-bold text-gray-900">{restaurantData.name}</h1>
+              <p className="text-md text-gray-500">{restaurantData.cuisine}</p>
+            </div>
+            <button className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+              <PencilIcon className="h-5 w-5 mr-2 text-gray-400" />
+              Chỉnh sửa
+            </button>
           </div>
 
-          {/* Right Column: Details */}
-          <div className="space-y-8">
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-800 border-b pb-3 mb-4">Thống kê</h3>
+          {/* Grid Content */}
+          <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            {/* Left Column: Menu */}
+            <div className="lg:col-span-2 space-y-8">
+              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                  <div className="flex justify-between items-center border-b pb-4 mb-6">
+                      <h2 className="text-xl font-semibold text-gray-800">Thực đơn nổi bật</h2>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                      <div 
+                          onClick={handleOpenAddModal}
+                          className="bg-white rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center h-full min-h-[210px] cursor-pointer group transition-all duration-300 hover:shadow-lg hover:border-orange-400 hover:bg-orange-50"
+                          role="button"
+                          aria-label="Thêm món ăn mới"
+                      >
+                          <div className="text-center text-gray-400 group-hover:text-orange-500 transition-colors">
+                              <PlusIcon className="h-10 w-10 mx-auto" />
+                              <p className="mt-2 text-sm font-semibold">Thêm món</p>
+                          </div>
+                      </div>
+
+                      {restaurantMenuItems.slice(0, 5).map(item => (
+                          <div key={item.id} onClick={() => handleEditItem(item)}>
+                            <FoodCard item={item} />
+                          </div>
+                      ))}
+                  </div>
+                  {restaurantMenuItems.length > 5 && (
+                      <div className="text-center mt-6">
+                          <button className="text-sm font-semibold text-orange-600 hover:text-orange-500">
+                              Xem tất cả thực đơn &rarr;
+                          </button>
+                      </div>
+                  )}
+              </div>
+            </div>
+
+            {/* Right Column: Details */}
+            <div className="space-y-8">
+              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                  <h3 className="text-lg font-semibold text-gray-800 border-b pb-3 mb-4">Thống kê</h3>
+                  <ul className="space-y-3 text-sm">
+                      <li className="flex items-center justify-between">
+                          <div className="flex items-center">
+                              <StarIcon className="h-5 w-5 text-yellow-400 mr-3 flex-shrink-0" />
+                              <span className="text-gray-700">Đánh giá trung bình</span>
+                          </div>
+                          <span className="font-bold text-gray-800">{restaurantData.rating.toFixed(1)} / 5.0</span>
+                      </li>
+                      <li className="flex items-center justify-between">
+                          <div className="flex items-center">
+                              <UserIcon className="h-5 w-5 text-gray-400 mr-3 flex-shrink-0" />
+                              <span className="text-gray-700">Tổng lượt đánh giá</span>
+                          </div>
+                          <span className="font-bold text-gray-800">{restaurantData.reviewCount}</span>
+                      </li>
+                      <li className="flex items-center justify-between">
+                          <div className="flex items-center">
+                              <ChatAltIcon className="h-5 w-5 text-gray-400 mr-3 flex-shrink-0" />
+                              <span className="text-gray-700">Tổng bình luận</span>
+                          </div>
+                          <span className="font-bold text-gray-800">{restaurantData.commentCount}</span>
+                      </li>
+                      <li className="flex items-center justify-between">
+                          <div className="flex items-center">
+                              <ClipboardListIcon className="h-5 w-5 text-gray-400 mr-3 flex-shrink-0" />
+                              <span className="text-gray-700">Tổng đơn hàng</span>
+                          </div>
+                          <span className="font-bold text-gray-800">{restaurantData.orderCount.toLocaleString()}+</span>
+                      </li>
+                  </ul>
+              </div>
+              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-800 border-b pb-3 mb-4">Về chúng tôi</h3>
+                <p className="text-gray-600 text-sm">{restaurantData.description}</p>
+              </div>
+              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-800 border-b pb-3 mb-4">Thông tin chi tiết</h3>
                 <ul className="space-y-3 text-sm">
-                    <li className="flex items-center justify-between">
-                        <div className="flex items-center">
-                            <StarIcon className="h-5 w-5 text-yellow-400 mr-3 flex-shrink-0" />
-                            <span className="text-gray-700">Đánh giá trung bình</span>
-                        </div>
-                        <span className="font-bold text-gray-800">{restaurantData.rating.toFixed(1)} / 5.0</span>
-                    </li>
-                    <li className="flex items-center justify-between">
-                        <div className="flex items-center">
-                            <UserIcon className="h-5 w-5 text-gray-400 mr-3 flex-shrink-0" />
-                            <span className="text-gray-700">Tổng lượt đánh giá</span>
-                        </div>
-                        <span className="font-bold text-gray-800">{restaurantData.reviewCount}</span>
-                    </li>
-                    <li className="flex items-center justify-between">
-                        <div className="flex items-center">
-                            <ChatAltIcon className="h-5 w-5 text-gray-400 mr-3 flex-shrink-0" />
-                            <span className="text-gray-700">Tổng bình luận</span>
-                        </div>
-                        <span className="font-bold text-gray-800">{restaurantData.commentCount}</span>
-                    </li>
-                    <li className="flex items-center justify-between">
-                        <div className="flex items-center">
-                            <ClipboardListIcon className="h-5 w-5 text-gray-400 mr-3 flex-shrink-0" />
-                            <span className="text-gray-700">Tổng đơn hàng</span>
-                        </div>
-                        <span className="font-bold text-gray-800">{restaurantData.orderCount.toLocaleString()}+</span>
-                    </li>
+                  <li className="flex items-start">
+                    <LocationMarkerIcon className="h-5 w-5 text-gray-400 mr-3 flex-shrink-0 mt-0.5" />
+                    <span className="text-gray-700">{restaurantData.address}</span>
+                  </li>
+                  <li className="flex items-center">
+                    <PhoneIcon className="h-5 w-5 text-gray-400 mr-3 flex-shrink-0" />
+                    <span className="text-gray-700">{restaurantData.phone}</span>
+                  </li>
+                  <li className="flex items-center">
+                    <ClockIcon className="h-5 w-5 text-gray-400 mr-3 flex-shrink-0" />
+                    <span className="text-gray-700">{restaurantData.openingHours}</span>
+                  </li>
                 </ul>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-800 border-b pb-3 mb-4">Về chúng tôi</h3>
-              <p className="text-gray-600 text-sm">{restaurantData.description}</p>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-800 border-b pb-3 mb-4">Thông tin chi tiết</h3>
-              <ul className="space-y-3 text-sm">
-                <li className="flex items-start">
-                  <LocationMarkerIcon className="h-5 w-5 text-gray-400 mr-3 flex-shrink-0 mt-0.5" />
-                  <span className="text-gray-700">{restaurantData.address}</span>
-                </li>
-                <li className="flex items-center">
-                  <PhoneIcon className="h-5 w-5 text-gray-400 mr-3 flex-shrink-0" />
-                  <span className="text-gray-700">{restaurantData.phone}</span>
-                </li>
-                <li className="flex items-center">
-                  <ClockIcon className="h-5 w-5 text-gray-400 mr-3 flex-shrink-0" />
-                  <span className="text-gray-700">{restaurantData.openingHours}</span>
-                </li>
-              </ul>
+              </div>
             </div>
           </div>
         </div>

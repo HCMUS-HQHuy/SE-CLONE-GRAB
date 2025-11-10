@@ -89,114 +89,114 @@ const UserRestaurantProfilePage: React.FC = () => {
       <div className="relative">
         <div className="h-56 bg-cover bg-center" style={{ backgroundImage: `url(${restaurant.bannerUrl})` }}></div>
         <div className="absolute inset-0 bg-black bg-opacity-30"></div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="relative -mt-16 sm:-mt-24">
-            <div className="bg-white rounded-xl shadow-lg p-6 flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-6">
-              <div className="relative flex-shrink-0">
-                <img className="h-28 w-28 rounded-full object-cover border-4 border-white" src={restaurant.logoUrl} alt="Restaurant Logo" />
-              </div>
-              <div className="flex-grow text-center sm:text-left pt-4">
-                <h1 className="text-3xl font-bold text-gray-900">{restaurant.name}</h1>
-                <p className="text-md text-gray-500 mt-1">{restaurant.cuisine}</p>
-                 <div className="flex items-center justify-center sm:justify-start flex-wrap gap-x-4 gap-y-2 mt-3 text-sm text-gray-600">
-                    <div className="flex items-center">
-                        <StarIcon className="w-5 h-5 text-yellow-400 mr-1" />
-                        <span className="font-bold text-gray-800">{restaurant.rating.toFixed(1)}</span>
-                        <span className="ml-1">({restaurant.reviewCount.toLocaleString()} đánh giá)</span>
-                    </div>
-                    <span className="text-gray-300 hidden sm:inline">|</span>
-                    <div className="flex items-center">
-                        <ClipboardListIcon className="w-5 h-5 text-gray-400 mr-1.5" />
-                        <span>{restaurant.orderCount.toLocaleString()}+ đơn hàng</span>
-                    </div>
-                    <span className="text-gray-300 hidden sm:inline">|</span>
-                    <div className="flex items-center">
-                        <ChatAltIcon className="w-5 h-5 text-gray-400 mr-1.5" />
-                        <span>{restaurant.commentCount.toLocaleString()} bình luận</span>
-                    </div>
-                </div>
-                <div className="mt-3 text-sm text-gray-600 space-y-2">
-                    <div className="flex items-center justify-center sm:justify-start">
-                        <LocationMarkerIcon className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
-                        <span>{restaurant.address}</span>
-                    </div>
-                    <div className="flex items-center justify-center sm:justify-start">
-                        <ClockIcon className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
-                        <span>{restaurant.openingHours}</span>
-                    </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          {/* Left Column: Menu */}
-          <div className="lg:col-span-2 space-y-8">
-             {Object.entries(menuByCategory).map(([categoryName, items]) => (
-                <div key={categoryName} className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                    <div className="border-b pb-4 mb-6">
-                        <h2 className="text-xl font-semibold text-gray-800">{categoryName}</h2>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {items.map(item => (
-                            <div key={item.id} onClick={() => handleCardClick(item)}>
-                              <FoodCard item={item} />
-                            </div>
-                        ))}
-                    </div>
-                </div>
-             ))}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="relative -mt-16 sm:-mt-24">
+           {/* Profile Card */}
+          <div className="bg-white rounded-xl shadow-lg p-6 flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-6">
+            <div className="relative flex-shrink-0">
+              <img className="h-28 w-28 rounded-full object-cover border-4 border-white" src={restaurant.logoUrl} alt="Restaurant Logo" />
+            </div>
+            <div className="flex-grow text-center sm:text-left pt-4">
+              <h1 className="text-3xl font-bold text-gray-900">{restaurant.name}</h1>
+              <p className="text-md text-gray-500 mt-1">{restaurant.cuisine}</p>
+                <div className="flex items-center justify-center sm:justify-start flex-wrap gap-x-4 gap-y-2 mt-3 text-sm text-gray-600">
+                  <div className="flex items-center">
+                      <StarIcon className="w-5 h-5 text-yellow-400 mr-1" />
+                      <span className="font-bold text-gray-800">{restaurant.rating.toFixed(1)}</span>
+                      <span className="ml-1">({restaurant.reviewCount.toLocaleString()} đánh giá)</span>
+                  </div>
+                  <span className="text-gray-300 hidden sm:inline">|</span>
+                  <div className="flex items-center">
+                      <ClipboardListIcon className="w-5 h-5 text-gray-400 mr-1.5" />
+                      <span>{restaurant.orderCount.toLocaleString()}+ đơn hàng</span>
+                  </div>
+                  <span className="text-gray-300 hidden sm:inline">|</span>
+                  <div className="flex items-center">
+                      <ChatAltIcon className="w-5 h-5 text-gray-400 mr-1.5" />
+                      <span>{restaurant.commentCount.toLocaleString()} bình luận</span>
+                  </div>
+              </div>
+              <div className="mt-3 text-sm text-gray-600 space-y-2">
+                  <div className="flex items-center justify-center sm:justify-start">
+                      <LocationMarkerIcon className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
+                      <span>{restaurant.address}</span>
+                  </div>
+                  <div className="flex items-center justify-center sm:justify-start">
+                      <ClockIcon className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
+                      <span>{restaurant.openingHours}</span>
+                  </div>
+              </div>
+            </div>
           </div>
 
-          {/* Right Column: Details */}
-          <div className="space-y-8 lg:sticky lg:top-24">
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-800 border-b pb-3 mb-4">Về chúng tôi</h3>
-              <p className="text-gray-600 text-sm">{restaurant.description}</p>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-800 border-b pb-3 mb-4">Đánh giá từ khách hàng</h3>
-              {restaurant.reviews.length > 0 ? (
-                <ul className="space-y-5">
-                  {restaurant.reviews.map(review => (
-                    <li key={review.id} className="flex items-start space-x-4">
-                      <img className="h-10 w-10 rounded-full object-cover" src={review.avatarUrl} alt={review.author} />
-                      <div className="flex-1">
-                        <div className="flex justify-between items-center">
-                          <p className="text-sm font-semibold text-gray-800">{review.author}</p>
-                          <span className="text-xs text-gray-400">{review.date}</span>
-                        </div>
-                        <div className="flex items-center mt-1">
-                          {[...Array(5)].map((_, i) => (
-                            <StarIcon key={i} className={`w-4 h-4 ${i < review.rating ? 'text-yellow-400' : 'text-gray-300'}`} />
-                          ))}
-                        </div>
-                        <p className="text-sm text-gray-600 mt-2">{review.comment}</p>
+          {/* Grid Content */}
+          <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left Column: Menu */}
+            <div className="lg:col-span-2 space-y-8">
+              {Object.entries(menuByCategory).map(([categoryName, items]) => (
+                  <div key={categoryName} className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                      <div className="border-b pb-4 mb-6">
+                          <h2 className="text-xl font-semibold text-gray-800">{categoryName}</h2>
                       </div>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-sm text-gray-500">Chưa có đánh giá nào cho nhà hàng này.</p>
-              )}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                          {items.map(item => (
+                              <div key={item.id} onClick={() => handleCardClick(item)}>
+                                <FoodCard item={item} />
+                              </div>
+                          ))}
+                      </div>
+                  </div>
+              ))}
             </div>
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-800 border-b pb-3 mb-4">Thông tin liên hệ</h3>
-              <ul className="space-y-3 text-sm">
-                <li className="flex items-center">
-                  <PhoneIcon className="h-5 w-5 text-gray-400 mr-3 flex-shrink-0" />
-                  <span className="text-gray-700">{restaurant.phone}</span>
-                </li>
-                 <li className="flex items-start">
-                  <LocationMarkerIcon className="h-5 w-5 text-gray-400 mr-3 flex-shrink-0 mt-0.5" />
-                  <span className="text-gray-700">{restaurant.address}</span>
-                </li>
-              </ul>
+
+            {/* Right Column: Details */}
+            <div className="space-y-8 lg:sticky lg:top-24">
+              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-800 border-b pb-3 mb-4">Về chúng tôi</h3>
+                <p className="text-gray-600 text-sm">{restaurant.description}</p>
+              </div>
+              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-800 border-b pb-3 mb-4">Đánh giá từ khách hàng</h3>
+                {restaurant.reviews.length > 0 ? (
+                  <ul className="space-y-5">
+                    {restaurant.reviews.map(review => (
+                      <li key={review.id} className="flex items-start space-x-4">
+                        <img className="h-10 w-10 rounded-full object-cover" src={review.avatarUrl} alt={review.author} />
+                        <div className="flex-1">
+                          <div className="flex justify-between items-center">
+                            <p className="text-sm font-semibold text-gray-800">{review.author}</p>
+                            <span className="text-xs text-gray-400">{review.date}</span>
+                          </div>
+                          <div className="flex items-center mt-1">
+                            {[...Array(5)].map((_, i) => (
+                              <StarIcon key={i} className={`w-4 h-4 ${i < review.rating ? 'text-yellow-400' : 'text-gray-300'}`} />
+                            ))}
+                          </div>
+                          <p className="text-sm text-gray-600 mt-2">{review.comment}</p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-gray-500">Chưa có đánh giá nào cho nhà hàng này.</p>
+                )}
+              </div>
+              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-800 border-b pb-3 mb-4">Thông tin liên hệ</h3>
+                <ul className="space-y-3 text-sm">
+                  <li className="flex items-center">
+                    <PhoneIcon className="h-5 w-5 text-gray-400 mr-3 flex-shrink-0" />
+                    <span className="text-gray-700">{restaurant.phone}</span>
+                  </li>
+                  <li className="flex items-start">
+                    <LocationMarkerIcon className="h-5 w-5 text-gray-400 mr-3 flex-shrink-0 mt-0.5" />
+                    <span className="text-gray-700">{restaurant.address}</span>
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
         </div>
