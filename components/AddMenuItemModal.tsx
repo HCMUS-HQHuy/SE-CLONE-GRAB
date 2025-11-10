@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { XIcon, UploadIcon, ImageIcon } from './Icons';
+import { FoodItem } from '../pages/HomePage';
 
 type AddMenuItemModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onSave: (newItem: any) => void;
+  itemToEdit?: FoodItem | null;
 };
 
-const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({ isOpen, onClose, onSave }) => {
+const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({ isOpen, onClose, onSave, itemToEdit }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
@@ -24,11 +26,50 @@ const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({ isOpen, onClose, on
         onClose();
       }
     };
-    window.addEventListener('keydown', handleEsc);
+    if (isOpen) {
+      window.addEventListener('keydown', handleEsc);
+    }
     return () => {
       window.removeEventListener('keydown', handleEsc);
     };
-  }, [onClose]);
+  }, [isOpen, onClose]);
+
+  useEffect(() => {
+    if (isOpen) {
+      if (itemToEdit) {
+        // Populate form for editing
+        const parsePrice = (priceStr?: string) => priceStr ? priceStr.replace(/\D/g, '') : '';
+        
+        setName(itemToEdit.name);
+        setDescription(itemToEdit.description);
+        
+        if (itemToEdit.newPrice && itemToEdit.oldPrice) {
+            setPrice(parsePrice(itemToEdit.oldPrice));
+            setDiscountPrice(parsePrice(itemToEdit.newPrice));
+        } else {
+            setPrice(parsePrice(itemToEdit.price || itemToEdit.newPrice));
+            setDiscountPrice('');
+        }
+        
+        setIsBestseller(itemToEdit.bestseller);
+        setImagePreview(itemToEdit.image || null);
+        // Reset fields not present in FoodItem for simplicity in this prototype
+        setCategory('Ăn trưa');
+        setStock('');
+
+      } else {
+        // Reset form for adding new item
+        setName('');
+        setDescription('');
+        setPrice('');
+        setDiscountPrice('');
+        setCategory('Ăn trưa');
+        setStock('');
+        setIsBestseller(false);
+        setImagePreview(null);
+      }
+    }
+  }, [isOpen, itemToEdit]);
 
   if (!isOpen) return null;
 
@@ -49,7 +90,17 @@ const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({ isOpen, onClose, on
           alert('Vui lòng điền các trường bắt buộc: Tên món, Giá, và Phân loại.');
           return;
       }
-      onSave({ name, description, price, discountPrice, category, stock, isBestseller, image: imagePreview });
+      onSave({ 
+        ...(itemToEdit || {}), // Keep original data like ID if editing
+        name, 
+        description, 
+        price, 
+        discountPrice, 
+        category, 
+        stock, 
+        isBestseller, 
+        image: imagePreview 
+      });
   };
 
   return (
@@ -65,7 +116,9 @@ const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({ isOpen, onClose, on
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center border-b pb-4 mb-6">
-            <h2 id="add-item-title" className="text-xl font-bold text-gray-800">Thêm món ăn mới</h2>
+            <h2 id="add-item-title" className="text-xl font-bold text-gray-800">
+              {itemToEdit ? 'Chỉnh sửa món ăn' : 'Thêm món ăn mới'}
+            </h2>
             <button 
               onClick={onClose} 
               className="text-gray-400 hover:text-gray-600 transition-colors duration-300"
@@ -161,7 +214,7 @@ const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({ isOpen, onClose, on
                 onClick={handleSave}
                 className="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-orange-500 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
             >
-                Lưu món ăn
+                {itemToEdit ? 'Lưu thay đổi' : 'Lưu món ăn'}
             </button>
         </div>
       </div>

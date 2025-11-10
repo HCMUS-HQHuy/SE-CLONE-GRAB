@@ -23,7 +23,7 @@ const restaurantMenuItems = foodCategories
 
 
 const FoodCard: React.FC<{ item: FoodItem }> = ({ item }) => (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col h-full">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col h-full cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.02]">
       <div className="relative w-full h-32 bg-gray-200">
         {item.image ? (
           <img className="h-full w-full object-cover" src={item.image} alt={item.name} />
@@ -58,11 +58,32 @@ const FoodCard: React.FC<{ item: FoodItem }> = ({ item }) => (
 
 const RestaurantProfilePage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentItem, setCurrentItem] = useState<FoodItem | null>(null);
 
-  const handleAddItem = (newItem: any) => {
-    // In a real app, you'd handle the state update here
-    console.log('New item added:', newItem);
+  const handleOpenAddModal = () => {
+    setCurrentItem(null);
+    setIsModalOpen(true);
+  };
+
+  const handleEditItem = (item: FoodItem) => {
+    setCurrentItem(item);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
     setIsModalOpen(false);
+    setCurrentItem(null);
+  };
+
+  const handleSaveItem = (itemData: any) => {
+    if (currentItem) {
+      // In a real app, you'd find and update the item in your global state
+      console.log('Updating item:', itemData);
+    } else {
+      // In a real app, you'd add the new item to your global state
+      console.log('Adding new item:', itemData);
+    }
+    handleCloseModal();
   };
 
   return (
@@ -100,7 +121,7 @@ const RestaurantProfilePage: React.FC = () => {
                 <div className="flex justify-between items-center border-b pb-4 mb-6">
                     <h2 className="text-xl font-semibold text-gray-800">Thực đơn nổi bật</h2>
                     <button 
-                        onClick={() => setIsModalOpen(true)}
+                        onClick={handleOpenAddModal}
                         className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-orange-500 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
                     >
                         <PlusIcon className="h-5 w-5 mr-2" />
@@ -109,7 +130,9 @@ const RestaurantProfilePage: React.FC = () => {
                 </div>
                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                     {restaurantMenuItems.slice(0, 6).map(item => (
-                        <FoodCard key={item.id} item={item} />
+                        <div key={item.id} onClick={() => handleEditItem(item)}>
+                          <FoodCard item={item} />
+                        </div>
                     ))}
                  </div>
                  {restaurantMenuItems.length > 6 && (
@@ -151,8 +174,9 @@ const RestaurantProfilePage: React.FC = () => {
       
       <AddMenuItemModal 
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSave={handleAddItem}
+        onClose={handleCloseModal}
+        onSave={handleSaveItem}
+        itemToEdit={currentItem}
       />
     </div>
   );
