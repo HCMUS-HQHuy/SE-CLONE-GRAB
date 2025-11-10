@@ -4,6 +4,15 @@ import { StarIcon, ImageIcon, ArrowRightIcon } from '../components/Icons';
 import ProductDetailModal from '../components/ProductDetailModal';
 
 // FIX: Export Restaurant type for use in other components.
+export type Review = {
+  id: number;
+  author: string;
+  avatarUrl: string;
+  rating: number;
+  comment: string;
+  date: string;
+};
+
 export type Restaurant = {
   id: string;
   name: string;
@@ -16,6 +25,11 @@ export type Restaurant = {
   description: string;
   bannerUrl: string;
   logoUrl: string;
+  rating: number;
+  reviewCount: number;
+  commentCount: number;
+  orderCount: number;
+  reviews: Review[];
 };
 
 export type FoodItem = {
@@ -47,11 +61,95 @@ export const restaurants: Restaurant[] = [
     description: 'Quán Ăn Gỗ tự hào mang đến những hương vị đậm đà, chuẩn vị Việt Nam. Với không gian ấm cúng và thực đơn đa dạng, chúng tôi là điểm đến lý tưởng cho những bữa ăn gia đình và gặp gỡ bạn bè.',
     bannerUrl: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1674&q=80',
     logoUrl: 'https://cdn-icons-png.flaticon.com/512/3448/3448609.png',
+    rating: 4.7,
+    reviewCount: 258,
+    commentCount: 190,
+    orderCount: 1200,
+    reviews: [
+      { id: 1, author: 'Hương Tràm', avatarUrl: 'https://i.pravatar.cc/150?u=a042581f4e29026704d', rating: 5, comment: 'Đồ ăn rất ngon, đặc biệt là món cơm tấm. Sẽ quay lại ủng hộ quán!', date: '2 ngày trước' },
+      { id: 2, author: 'Minh Tuấn', avatarUrl: 'https://i.pravatar.cc/150?u=a042581f4e29026705d', rating: 4, comment: 'Không gian ấm cúng, phục vụ nhanh nhẹn. Giá cả hợp lý.', date: '1 tuần trước' },
+    ]
   },
-  { id: '1002', name: 'Bếp Việt', address: '45 Phạm Ngọc Thạch, Quận 3, TP.HCM', lat: 10.7850, lon: 106.6921, cuisine: 'Món Việt', phone: '091 234 5678', openingHours: '10:00 - 21:00', description: 'Bếp Việt chuyên các món ăn truyền thống, gợi nhớ hương vị quê nhà trong từng món ăn.', bannerUrl: 'https://images.unsplash.com/photo-1504754524776-8f4f37790774?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80', logoUrl: 'https://cdn-icons-png.flaticon.com/512/4555/4555035.png' },
-  { id: '1003', name: 'Phở Ngon 3 Miền', address: '212 Nguyễn Trãi, Quận 5, TP.HCM', lat: 10.7545, lon: 106.6696, cuisine: 'Phở & Bún', phone: '092 345 6789', openingHours: '06:00 - 22:00', description: 'Thưởng thức tô phở nóng hổi, chuẩn vị 3 miền Bắc, Trung, Nam tại Phở Ngon.', bannerUrl: 'https://images.unsplash.com/photo-1569429453484-a245f09978b7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80', logoUrl: 'https://cdn-icons-png.flaticon.com/512/5856/5856424.png' },
-  { id: '1004', name: 'Ốc Đảo', address: '88 Nguyễn Thị Thập, Quận 7, TP.HCM', lat: 10.7391, lon: 106.7180, cuisine: 'Hải sản', phone: '093 456 7890', openingHours: '16:00 - 23:00', description: 'Thiên đường hải sản tươi sống với đủ loại ốc, sò, cua, ghẹ chế biến theo yêu cầu.', bannerUrl: 'https://images.unsplash.com/photo-1563723876356-c87a5585044d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80', logoUrl: 'https://cdn-icons-png.flaticon.com/512/701/701963.png' },
-  { id: '1005', name: 'Lẩu & Nướng BBQ', address: '300 Xô Viết Nghệ Tĩnh, Bình Thạnh, TP.HCM', lat: 10.8015, lon: 106.7150, cuisine: 'Lẩu & Nướng', phone: '094 567 8901', openingHours: '11:00 - 23:00', description: 'Buffet lẩu nướng không giới hạn với hàng trăm món nhúng và nướng hảo hạng.', bannerUrl: 'https://images.unsplash.com/photo-1629566236239-a9a304655325?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80', logoUrl: 'https://cdn-icons-png.flaticon.com/512/2515/2515220.png' },
+  { 
+    id: '1002', 
+    name: 'Bếp Việt', 
+    address: '45 Phạm Ngọc Thạch, Quận 3, TP.HCM', 
+    lat: 10.7850, 
+    lon: 106.6921, 
+    cuisine: 'Món Việt', 
+    phone: '091 234 5678', 
+    openingHours: '10:00 - 21:00', 
+    description: 'Bếp Việt chuyên các món ăn truyền thống, gợi nhớ hương vị quê nhà trong từng món ăn.', 
+    bannerUrl: 'https://images.unsplash.com/photo-1504754524776-8f4f37790774?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80', 
+    logoUrl: 'https://cdn-icons-png.flaticon.com/512/4555/4555035.png',
+    rating: 4.5,
+    reviewCount: 180,
+    commentCount: 152,
+    orderCount: 980,
+    reviews: [
+        { id: 1, author: 'Thanh Hằng', avatarUrl: 'https://i.pravatar.cc/150?u=a042581f4e29026706d', rating: 5, comment: 'Món bún chả ở đây ngon tuyệt vời, chuẩn vị Hà Nội. Rất đáng thử.', date: 'Hôm qua' },
+        { id: 2, author: 'Quốc Bảo', avatarUrl: 'https://i.pravatar.cc/150?u=a042581f4e29026707d', rating: 4, comment: 'Phục vụ hơi chậm vào giờ cao điểm, nhưng đồ ăn ngon nên vẫn chấp nhận được.', date: '3 ngày trước' },
+    ]
+  },
+  { 
+    id: '1003', 
+    name: 'Phở Ngon 3 Miền', 
+    address: '212 Nguyễn Trãi, Quận 5, TP.HCM', 
+    lat: 10.7545, 
+    lon: 106.6696, 
+    cuisine: 'Phở & Bún', 
+    phone: '092 345 6789', 
+    openingHours: '06:00 - 22:00', 
+    description: 'Thưởng thức tô phở nóng hổi, chuẩn vị 3 miền Bắc, Trung, Nam tại Phở Ngon.', 
+    bannerUrl: 'https://images.unsplash.com/photo-1569429453484-a245f09978b7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80', 
+    logoUrl: 'https://cdn-icons-png.flaticon.com/512/5856/5856424.png',
+    rating: 4.8,
+    reviewCount: 520,
+    commentCount: 450,
+    orderCount: 2500,
+    reviews: [
+        { id: 1, author: 'Gia đình Bún Phở', avatarUrl: 'https://i.pravatar.cc/150?u=a042581f4e29026708d', rating: 5, comment: 'Phở ở đây là số một! Nước lèo trong, ngọt thanh, thịt bò mềm. Sẽ ghé quán thường xuyên.', date: '5 ngày trước' },
+    ]
+  },
+  { 
+    id: '1004', 
+    name: 'Ốc Đảo', 
+    address: '88 Nguyễn Thị Thập, Quận 7, TP.HCM', 
+    lat: 10.7391, 
+    lon: 106.7180, 
+    cuisine: 'Hải sản', 
+    phone: '093 456 7890', 
+    openingHours: '16:00 - 23:00', 
+    description: 'Thiên đường hải sản tươi sống với đủ loại ốc, sò, cua, ghẹ chế biến theo yêu cầu.', 
+    bannerUrl: 'https://images.unsplash.com/photo-1563723876356-c87a5585044d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80', 
+    logoUrl: 'https://cdn-icons-png.flaticon.com/512/701/701963.png',
+    rating: 4.6,
+    reviewCount: 312,
+    commentCount: 280,
+    orderCount: 1500,
+    reviews: []
+  },
+  { 
+    id: '1005', 
+    name: 'Lẩu & Nướng BBQ', 
+    address: '300 Xô Viết Nghệ Tĩnh, Bình Thạnh, TP.HCM', 
+    lat: 10.8015, 
+    lon: 106.7150, 
+    cuisine: 'Lẩu & Nướng', 
+    phone: '094 567 8901', 
+    openingHours: '11:00 - 23:00', 
+    description: 'Buffet lẩu nướng không giới hạn với hàng trăm món nhúng và nướng hảo hạng.', 
+    bannerUrl: 'https://images.unsplash.com/photo-1629566236239-a9a304655325?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80', 
+    logoUrl: 'https://cdn-icons-png.flaticon.com/512/2515/2515220.png',
+    rating: 4.4,
+    reviewCount: 450,
+    commentCount: 410,
+    orderCount: 1800,
+    reviews: [
+        { id: 1, author: 'Anh Dũng', avatarUrl: 'https://i.pravatar.cc/150?u=a042581f4e29026709d', rating: 4, comment: 'Đồ ăn đa dạng, tươi ngon. Tuy nhiên quán hơi đông nên ồn ào.', date: '2 tuần trước' },
+        { id: 2, author: 'Chị Mai', avatarUrl: 'https://i.pravatar.cc/150?u=a042581f4e29026710d', rating: 5, comment: 'Giá buffet hợp lý, chất lượng đồ ăn tốt. Nhân viên thân thiện, nhiệt tình. Rất thích hợp đi ăn cùng nhóm bạn.', date: '1 tháng trước' },
+    ]
+  },
 ];
 
 // FIX: Export foodCategories to resolve import error in other components.

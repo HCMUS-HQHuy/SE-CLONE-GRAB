@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { restaurants, foodCategories } from './HomePage'; // Reusing the data structure
 import { FoodItem, Restaurant } from './HomePage';
-import { PencilIcon, LocationMarkerIcon, PhoneIcon, ClockIcon, StarIcon, ImageIcon, PlusIcon } from '../components/Icons';
+import { PencilIcon, LocationMarkerIcon, PhoneIcon, ClockIcon, StarIcon, ImageIcon, PlusIcon, UserIcon, ChatAltIcon, ClipboardListIcon } from '../components/Icons';
 import AddMenuItemModal from '../components/AddMenuItemModal';
 
 // Mock Data for a specific restaurant - let's assume the logged-in restaurant is "Quán Ăn Gỗ"
@@ -144,6 +144,39 @@ const RestaurantProfilePage: React.FC = () => {
 
           {/* Right Column: Details */}
           <div className="space-y-8">
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-800 border-b pb-3 mb-4">Thống kê</h3>
+                <ul className="space-y-3 text-sm">
+                    <li className="flex items-center justify-between">
+                        <div className="flex items-center">
+                            <StarIcon className="h-5 w-5 text-yellow-400 mr-3 flex-shrink-0" />
+                            <span className="text-gray-700">Đánh giá trung bình</span>
+                        </div>
+                        <span className="font-bold text-gray-800">{restaurantData.rating.toFixed(1)} / 5.0</span>
+                    </li>
+                    <li className="flex items-center justify-between">
+                        <div className="flex items-center">
+                            <UserIcon className="h-5 w-5 text-gray-400 mr-3 flex-shrink-0" />
+                            <span className="text-gray-700">Tổng lượt đánh giá</span>
+                        </div>
+                        <span className="font-bold text-gray-800">{restaurantData.reviewCount}</span>
+                    </li>
+                    <li className="flex items-center justify-between">
+                        <div className="flex items-center">
+                            <ChatAltIcon className="h-5 w-5 text-gray-400 mr-3 flex-shrink-0" />
+                            <span className="text-gray-700">Tổng bình luận</span>
+                        </div>
+                        <span className="font-bold text-gray-800">{restaurantData.commentCount}</span>
+                    </li>
+                    <li className="flex items-center justify-between">
+                        <div className="flex items-center">
+                            <ClipboardListIcon className="h-5 w-5 text-gray-400 mr-3 flex-shrink-0" />
+                            <span className="text-gray-700">Tổng đơn hàng</span>
+                        </div>
+                        <span className="font-bold text-gray-800">{restaurantData.orderCount.toLocaleString()}+</span>
+                    </li>
+                </ul>
+            </div>
             <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
               <h3 className="text-lg font-semibold text-gray-800 border-b pb-3 mb-4">Về chúng tôi</h3>
               <p className="text-gray-600 text-sm">{restaurantData.description}</p>

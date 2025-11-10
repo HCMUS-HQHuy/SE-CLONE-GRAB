@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { restaurants, foodCategories, FoodItem } from './HomePage';
-import { LocationMarkerIcon, PhoneIcon, ClockIcon, StarIcon, ImageIcon } from '../components/Icons';
+import { LocationMarkerIcon, PhoneIcon, ClockIcon, StarIcon, ImageIcon, ClipboardListIcon, ChatAltIcon } from '../components/Icons';
 import ProductDetailModal from '../components/ProductDetailModal';
 
 const FoodCard: React.FC<{ item: FoodItem }> = ({ item }) => (
@@ -98,6 +98,23 @@ const UserRestaurantProfilePage: React.FC = () => {
               <div className="flex-grow text-center sm:text-left pt-4">
                 <h1 className="text-3xl font-bold text-gray-900">{restaurant.name}</h1>
                 <p className="text-md text-gray-500 mt-1">{restaurant.cuisine}</p>
+                 <div className="flex items-center justify-center sm:justify-start flex-wrap gap-x-4 gap-y-2 mt-3 text-sm text-gray-600">
+                    <div className="flex items-center">
+                        <StarIcon className="w-5 h-5 text-yellow-400 mr-1" />
+                        <span className="font-bold text-gray-800">{restaurant.rating.toFixed(1)}</span>
+                        <span className="ml-1">({restaurant.reviewCount.toLocaleString()} đánh giá)</span>
+                    </div>
+                    <span className="text-gray-300 hidden sm:inline">|</span>
+                    <div className="flex items-center">
+                        <ClipboardListIcon className="w-5 h-5 text-gray-400 mr-1.5" />
+                        <span>{restaurant.orderCount.toLocaleString()}+ đơn hàng</span>
+                    </div>
+                    <span className="text-gray-300 hidden sm:inline">|</span>
+                    <div className="flex items-center">
+                        <ChatAltIcon className="w-5 h-5 text-gray-400 mr-1.5" />
+                        <span>{restaurant.commentCount.toLocaleString()} bình luận</span>
+                    </div>
+                </div>
                 <div className="mt-3 text-sm text-gray-600 space-y-2">
                     <div className="flex items-center justify-center sm:justify-start">
                         <LocationMarkerIcon className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
@@ -141,6 +158,32 @@ const UserRestaurantProfilePage: React.FC = () => {
             <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
               <h3 className="text-lg font-semibold text-gray-800 border-b pb-3 mb-4">Về chúng tôi</h3>
               <p className="text-gray-600 text-sm">{restaurant.description}</p>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-800 border-b pb-3 mb-4">Đánh giá từ khách hàng</h3>
+              {restaurant.reviews.length > 0 ? (
+                <ul className="space-y-5">
+                  {restaurant.reviews.map(review => (
+                    <li key={review.id} className="flex items-start space-x-4">
+                      <img className="h-10 w-10 rounded-full object-cover" src={review.avatarUrl} alt={review.author} />
+                      <div className="flex-1">
+                        <div className="flex justify-between items-center">
+                          <p className="text-sm font-semibold text-gray-800">{review.author}</p>
+                          <span className="text-xs text-gray-400">{review.date}</span>
+                        </div>
+                        <div className="flex items-center mt-1">
+                          {[...Array(5)].map((_, i) => (
+                            <StarIcon key={i} className={`w-4 h-4 ${i < review.rating ? 'text-yellow-400' : 'text-gray-300'}`} />
+                          ))}
+                        </div>
+                        <p className="text-sm text-gray-600 mt-2">{review.comment}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-gray-500">Chưa có đánh giá nào cho nhà hàng này.</p>
+              )}
             </div>
             <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
               <h3 className="text-lg font-semibold text-gray-800 border-b pb-3 mb-4">Thông tin liên hệ</h3>
