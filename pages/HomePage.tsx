@@ -1,48 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StarIcon, ImageIcon, ArrowRightIcon } from '../components/Icons';
 import ProductDetailModal from '../components/ProductDetailModal';
 
-const foodCategories = [
-  {
-    name: '🔥 Đại hạ giá',
-    items: [
-      { id: 1, name: 'Cơm tấm sườn bì chả', description: 'Cơm tấm nóng hổi, sườn nướng đậm đà, bì dai, chả trứng béo ngậy.', oldPrice: '55.000đ', newPrice: '35.000đ', image: 'https://sakos.vn/wp-content/uploads/2024/10/bia-4.jpg', bestseller: true },
-      { id: 2, name: 'Trà sữa trân châu đường đen', description: 'Hương vị trà sữa truyền thống kết hợp trân châu đường đen dai ngon.', oldPrice: '45.000đ', newPrice: '29.000đ', image: 'https://images.unsplash.com/photo-1579954115545-a95591f28bfc?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80', bestseller: false },
-      { id: 9, name: 'Bún bò Huế', description: 'Bún bò cay nồng, đậm đà hương vị cố đô.', oldPrice: '50.000đ', newPrice: '40.000đ', image: 'https://i.ytimg.com/vi/A_o2qfaTgKs/maxresdefault.jpg', bestseller: true },
-      { id: 10, name: 'Combo Gà Rán', description: '2 miếng gà giòn tan, khoai tây chiên và nước ngọt.', oldPrice: '85.000đ', newPrice: '69.000đ', image: 'https://images.unsplash.com/photo-1562967914-608f82629710?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80', bestseller: false },
-      { id: 17, name: 'Cá hồi nướng măng tây', description: 'Cá hồi nướng ăn kèm măng tây, món ăn bổ dưỡng và ngon miệng.', oldPrice: '135.000đ', newPrice: '120.000đ', image: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80', bestseller: true },
-      { id: 18, name: 'Pizza Hải Sản', description: 'Pizza đế mỏng giòn với hải sản tươi ngon và phô mai.', oldPrice: '150.000đ', newPrice: '119.000đ', image: '', bestseller: false },
-      { id: 19, name: 'Lẩu Thái Tom Yum', description: 'Lẩu thái chua cay đậm đà với hải sản, nấm và rau.', oldPrice: '250.000đ', newPrice: '199.000đ', image: '', bestseller: true },
-    ]
-  },
-  {
-    name: 'Ăn vặt',
-    items: [
-       { id: 3, name: 'Bánh tráng trộn Sài Gòn', description: 'Đầy đủ topping: xoài, trứng cút, bò khô, rau răm...', price: '25.000đ', image: 'https://cdn.xanhsm.com/2025/01/1b04f701-banh-trang-tron-sai-gon-1.jpg', bestseller: true },
-       { id: 4, name: 'Gỏi cuốn tôm thịt', description: 'Tôm, thịt, bún, rau sống tươi ngon cuốn trong bánh tráng.', price: '30.000đ', image: 'https://cdn.tgdd.vn/2021/08/CookRecipe/Avatar/goi-cuon-tom-thit-thumbnail-1.jpg', bestseller: false },
-       { id: 11, name: 'Nem chua rán', description: 'Nem chua rán nóng giòn, chấm cùng tương ớt cay cay.', price: '30.000đ', image: '', bestseller: true },
-       { id: 12, name: 'Chè khúc bạch', description: 'Chè thanh mát với khúc bạch phô mai, nhãn và hạnh nhân.', price: '35.000đ', image: '', bestseller: false },
-    ]
-  },
-  {
-    name: 'Ăn trưa',
-    items: [
-       { id: 5, name: 'Cá hồi nướng măng tây', description: 'Cá hồi nướng ăn kèm măng tây, món ăn bổ dưỡng và ngon miệng.', price: '120.000đ', image: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?ixlib.rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80', bestseller: true },
-       { id: 6, name: 'Phở bò tái lăn', description: 'Phở bò truyền thống với thịt bò được xào tái thơm ngon.', price: '45.000đ', image: '', bestseller: false },
-       { id: 13, name: 'Bún chả Hà Nội', description: 'Thịt nướng thơm lừng ăn kèm bún và nước mắm chua ngọt.', price: '40.000đ', image: 'https://images.unsplash.com/photo-1526318896980-cf78c088247c?ixlib.rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80', bestseller: true },
-       { id: 14, name: 'Miến xào lòng gà', description: 'Miến dong dai ngon xào cùng lòng gà và rau củ.', price: '35.000đ', image: '', bestseller: false },
-    ]
-  },
-  {
-    name: 'Đồ uống',
-    items: [
-      { id: 7, name: 'Cà phê sữa đá', description: 'Cà phê robusta đậm đà pha cùng sữa đặc, uống với đá.', price: '25.000đ', image: '', bestseller: true },
-      { id: 8, name: 'Nước ép cam tươi', description: 'Cam tươi vắt nguyên chất, không đường, tốt cho sức khỏe.', price: '35.000đ', image: 'https://images.unsplash.com/photo-1600271886742-f049cd451bba?ixlib.rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80', bestseller: false },
-      { id: 15, name: 'Sinh tố bơ', description: 'Bơ sáp xay mịn cùng sữa tươi, béo ngậy và bổ dưỡng.', price: '40.000đ', image: '', bestseller: false },
-      { id: 16, name: 'Trà đào cam sả', description: 'Thức uống giải nhiệt sảng khoái từ trà, đào, cam và sả.', price: '45.000đ', image: '', bestseller: true },
-    ]
-  }
-];
+type Restaurant = {
+  name: string;
+  address: string;
+  lat: number;
+  lon: number;
+};
 
 export type FoodItem = {
   id: number;
@@ -53,6 +18,75 @@ export type FoodItem = {
   newPrice?: string;
   image: string;
   bestseller: boolean;
+  restaurant: Restaurant;
+  distance?: number;
+};
+
+const restaurants: { [key: string]: Restaurant } = {
+  quanAnGo: { name: 'Quán Ăn Gỗ', address: '123 Đường Lê Lợi, Quận 1, TP.HCM', lat: 10.7756, lon: 106.7001 },
+  bepViet: { name: 'Bếp Việt', address: '45 Phạm Ngọc Thạch, Quận 3, TP.HCM', lat: 10.7850, lon: 106.6921 },
+  phoNgon: { name: 'Phở Ngon 3 Miền', address: '212 Nguyễn Trãi, Quận 5, TP.HCM', lat: 10.7545, lon: 106.6696 },
+  ocDao: { name: 'Ốc Đảo', address: '88 Nguyễn Thị Thập, Quận 7, TP.HCM', lat: 10.7391, lon: 106.7180 },
+  lauNuong: { name: 'Lẩu & Nướng BBQ', address: '300 Xô Viết Nghệ Tĩnh, Bình Thạnh, TP.HCM', lat: 10.8015, lon: 106.7150 },
+};
+
+const foodCategories: { name: string; items: Omit<FoodItem, 'distance'>[] }[] = [
+  {
+    name: '🔥 Đại hạ giá',
+    items: [
+      { id: 1, name: 'Cơm tấm sườn bì chả', description: 'Cơm tấm nóng hổi, sườn nướng đậm đà, bì dai, chả trứng béo ngậy.', oldPrice: '55.000đ', newPrice: '35.000đ', image: 'https://sakos.vn/wp-content/uploads/2024/10/bia-4.jpg', bestseller: true, restaurant: restaurants.quanAnGo },
+      { id: 2, name: 'Trà sữa trân châu đường đen', description: 'Hương vị trà sữa truyền thống kết hợp trân châu đường đen dai ngon.', oldPrice: '45.000đ', newPrice: '29.000đ', image: 'https://images.unsplash.com/photo-1579954115545-a95591f28bfc?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80', bestseller: false, restaurant: restaurants.bepViet },
+      { id: 9, name: 'Bún bò Huế', description: 'Bún bò cay nồng, đậm đà hương vị cố đô.', oldPrice: '50.000đ', newPrice: '40.000đ', image: 'https://i.ytimg.com/vi/A_o2qfaTgKs/maxresdefault.jpg', bestseller: true, restaurant: restaurants.phoNgon },
+      { id: 10, name: 'Combo Gà Rán', description: '2 miếng gà giòn tan, khoai tây chiên và nước ngọt.', oldPrice: '85.000đ', newPrice: '69.000đ', image: 'https://images.unsplash.com/photo-1562967914-608f82629710?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80', bestseller: false, restaurant: restaurants.lauNuong },
+      { id: 17, name: 'Cá hồi nướng măng tây', description: 'Cá hồi nướng ăn kèm măng tây, món ăn bổ dưỡng và ngon miệng.', oldPrice: '135.000đ', newPrice: '120.000đ', image: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80', bestseller: true, restaurant: restaurants.ocDao },
+      { id: 18, name: 'Pizza Hải Sản', description: 'Pizza đế mỏng giòn với hải sản tươi ngon và phô mai.', oldPrice: '150.000đ', newPrice: '119.000đ', image: '', bestseller: false, restaurant: restaurants.quanAnGo },
+      { id: 19, name: 'Lẩu Thái Tom Yum', description: 'Lẩu thái chua cay đậm đà với hải sản, nấm và rau.', oldPrice: '250.000đ', newPrice: '199.000đ', image: '', bestseller: true, restaurant: restaurants.lauNuong },
+    ]
+  },
+  {
+    name: 'Ăn vặt',
+    items: [
+       { id: 3, name: 'Bánh tráng trộn Sài Gòn', description: 'Đầy đủ topping: xoài, trứng cút, bò khô, rau răm...', price: '25.000đ', image: 'https://cdn.xanhsm.com/2025/01/1b04f701-banh-trang-tron-sai-gon-1.jpg', bestseller: true, restaurant: restaurants.bepViet },
+       { id: 4, name: 'Gỏi cuốn tôm thịt', description: 'Tôm, thịt, bún, rau sống tươi ngon cuốn trong bánh tráng.', price: '30.000đ', image: 'https://cdn.tgdd.vn/2021/08/CookRecipe/Avatar/goi-cuon-tom-thit-thumbnail-1.jpg', bestseller: false, restaurant: restaurants.phoNgon },
+       { id: 11, name: 'Nem chua rán', description: 'Nem chua rán nóng giòn, chấm cùng tương ớt cay cay.', price: '30.000đ', image: '', bestseller: true, restaurant: restaurants.quanAnGo },
+       { id: 12, name: 'Chè khúc bạch', description: 'Chè thanh mát với khúc bạch phô mai, nhãn và hạnh nhân.', price: '35.000đ', image: '', bestseller: false, restaurant: restaurants.ocDao },
+    ]
+  },
+  {
+    name: 'Ăn trưa',
+    items: [
+       { id: 5, name: 'Cá hồi nướng măng tây', description: 'Cá hồi nướng ăn kèm măng tây, món ăn bổ dưỡng và ngon miệng.', price: '120.000đ', image: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?ixlib.rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80', bestseller: true, restaurant: restaurants.ocDao },
+       { id: 6, name: 'Phở bò tái lăn', description: 'Phở bò truyền thống với thịt bò được xào tái thơm ngon.', price: '45.000đ', image: '', bestseller: false, restaurant: restaurants.phoNgon },
+       { id: 13, name: 'Bún chả Hà Nội', description: 'Thịt nướng thơm lừng ăn kèm bún và nước mắm chua ngọt.', price: '40.000đ', image: 'https://images.unsplash.com/photo-1526318896980-cf78c088247c?ixlib.rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80', bestseller: true, restaurant: restaurants.bepViet },
+       { id: 14, name: 'Miến xào lòng gà', description: 'Miến dong dai ngon xào cùng lòng gà và rau củ.', price: '35.000đ', image: '', bestseller: false, restaurant: restaurants.quanAnGo },
+    ]
+  },
+  {
+    name: 'Đồ uống',
+    items: [
+      { id: 7, name: 'Cà phê sữa đá', description: 'Cà phê robusta đậm đà pha cùng sữa đặc, uống với đá.', price: '25.000đ', image: '', bestseller: true, restaurant: restaurants.bepViet },
+      { id: 8, name: 'Nước ép cam tươi', description: 'Cam tươi vắt nguyên chất, không đường, tốt cho sức khỏe.', price: '35.000đ', image: 'https://images.unsplash.com/photo-1600271886742-f049cd451bba?ixlib.rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80', bestseller: false, restaurant: restaurants.quanAnGo },
+      { id: 15, name: 'Sinh tố bơ', description: 'Bơ sáp xay mịn cùng sữa tươi, béo ngậy và bổ dưỡng.', price: '40.000đ', image: '', bestseller: false, restaurant: restaurants.lauNuong },
+      { id: 16, name: 'Trà đào cam sả', description: 'Thức uống giải nhiệt sảng khoái từ trà, đào, cam và sả.', price: '45.000đ', image: '', bestseller: true, restaurant: restaurants.phoNgon },
+    ]
+  }
+];
+
+const getDistanceFromLatLonInKm = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+  const R = 6371; // Radius of the earth in km
+  const dLat = deg2rad(lat2 - lat1);
+  const dLon = deg2rad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const d = R * c; // Distance in km
+  return d;
+};
+
+const deg2rad = (deg: number): number => {
+  return deg * (Math.PI / 180);
 };
 
 const FoodCard: React.FC<{ item: FoodItem }> = ({ item }) => (
@@ -75,16 +109,22 @@ const FoodCard: React.FC<{ item: FoodItem }> = ({ item }) => (
     <div className="p-4 flex flex-col flex-grow">
       <div className="flex-grow">
         <h3 className="text-md font-bold text-gray-800 mb-1">{item.name}</h3>
+        <p className="text-gray-500 text-sm mb-2 font-semibold">{item.restaurant.name}</p>
         <p className="text-gray-600 text-sm">{item.description}</p>
       </div>
-      <div className="mt-auto pt-3">
-        {item.newPrice ? (
-          <div className="flex items-baseline gap-2">
-            <p className="text-lg font-bold text-orange-500">{item.newPrice}</p>
-            <p className="text-sm text-gray-400 line-through">{item.oldPrice}</p>
-          </div>
-        ) : (
-          <p className="text-lg font-bold text-orange-500">{item.price}</p>
+      <div className="mt-auto pt-3 flex justify-between items-end">
+        <div>
+          {item.newPrice ? (
+            <div className="flex items-baseline gap-2">
+              <p className="text-lg font-bold text-orange-500">{item.newPrice}</p>
+              <p className="text-sm text-gray-400 line-through">{item.oldPrice}</p>
+            </div>
+          ) : (
+            <p className="text-lg font-bold text-orange-500">{item.price}</p>
+          )}
+        </div>
+        {item.distance !== undefined && (
+          <p className="text-sm text-gray-500">{item.distance.toFixed(1)} km</p>
         )}
       </div>
     </div>
@@ -93,12 +133,71 @@ const FoodCard: React.FC<{ item: FoodItem }> = ({ item }) => (
 
 
 const HomePage: React.FC = () => {
-  const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const [filteredCategories, setFilteredCategories] = useState<typeof foodCategories>([]);
   const [selectedProduct, setSelectedProduct] = useState<FoodItem | null>(null);
 
-  const handleShowMore = (categoryName: string) => {
-    setExpandedCategories(prev => [...prev, categoryName]);
-  };
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lon: position.coords.longitude,
+          });
+          setLocationError(null);
+        },
+        (error) => {
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              setLocationError("Bạn đã từ chối yêu cầu truy cập vị trí. Vui lòng bật trong cài đặt trình duyệt để tìm các nhà hàng gần đó.");
+              break;
+            case error.POSITION_UNAVAILABLE:
+              setLocationError("Thông tin vị trí không có sẵn.");
+              break;
+            case error.TIMEOUT:
+              setLocationError("Yêu cầu lấy vị trí người dùng đã hết thời gian.");
+              break;
+            default:
+              setLocationError("Đã xảy ra lỗi không xác định khi lấy vị trí.");
+              break;
+          }
+        }
+      );
+    } else {
+      setLocationError("Trình duyệt của bạn không hỗ trợ định vị địa lý.");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (userLocation) {
+      const allItems: FoodItem[] = foodCategories.flatMap(category =>
+        category.items.map(item => {
+          const distance = getDistanceFromLatLonInKm(
+            userLocation.lat,
+            userLocation.lon,
+            item.restaurant.lat,
+            item.restaurant.lon
+          );
+          return { ...item, distance };
+        })
+      );
+
+      const nearbyItems = allItems
+        .filter(item => item.distance! <= 10)
+        .sort((a, b) => a.distance! - b.distance!);
+
+      const newFilteredCategories = foodCategories.map(category => ({
+        ...category,
+        items: nearbyItems.filter(item => 
+          foodCategories.find(c => c.name === category.name)?.items.some(originalItem => originalItem.id === item.id)
+        )
+      })).filter(category => category.items.length > 0);
+
+      setFilteredCategories(newFilteredCategories);
+    }
+  }, [userLocation]);
   
   const handleCardClick = (item: FoodItem) => {
     setSelectedProduct(item);
@@ -108,50 +207,68 @@ const HomePage: React.FC = () => {
     setSelectedProduct(null);
   };
   
+  const renderContent = () => {
+    if (locationError) {
+      return (
+        <div className="text-center py-20 px-4">
+          <h2 className="text-xl font-semibold text-red-600">Không thể tải món ăn</h2>
+          <p className="mt-2 text-gray-600">{locationError}</p>
+        </div>
+      );
+    }
+  
+    if (!userLocation) {
+      return (
+        <div className="text-center py-20 px-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
+          <h2 className="text-xl font-semibold text-gray-800 mt-4">Đang tìm nhà hàng gần bạn...</h2>
+          <p className="mt-2 text-gray-600">Vui lòng cho phép truy cập vị trí của bạn.</p>
+        </div>
+      );
+    }
+  
+    if (filteredCategories.length === 0) {
+       return (
+          <div className="text-center py-20 px-4">
+              <h2 className="text-xl font-semibold text-gray-800">Không tìm thấy nhà hàng nào gần bạn</h2>
+              <p className="mt-2 text-gray-600">Rất tiếc, chúng tôi không tìm thấy nhà hàng nào trong phạm vi 10km.</p>
+          </div>
+       );
+    }
+
+    return (
+      <div className="space-y-12">
+        {filteredCategories.map(category => (
+            <section key={category.name}>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">{category.name}</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {category.items.map(item => (
+                  <div key={item.id} onClick={() => handleCardClick(item)} className="cursor-pointer">
+                    <FoodCard item={item} />
+                  </div>
+                ))}
+              </div>
+            </section>
+          )
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="bg-gray-50">
       {/* Banner Section */}
       <div className="relative h-64 bg-cover bg-center" style={{backgroundImage: "url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80')"}}>
           <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
               <h1 className="text-4xl font-extrabold text-white tracking-wider text-center px-4">
-                Tối rồi, ăn thôi!
+                Tìm món ngon gần bạn!
               </h1>
           </div>
       </div>
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <div className="space-y-12">
-          {foodCategories.map(category => {
-            const isExpanded = expandedCategories.includes(category.name);
-            const itemsToShow = isExpanded ? category.items : category.items.slice(0, 5);
-            const hasMore = category.items.length > 5 && !isExpanded;
-
-            return (
-              <section key={category.name}>
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">{category.name}</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {itemsToShow.map(item => (
-                    <div key={item.id} onClick={() => handleCardClick(item)} className="cursor-pointer">
-                      <FoodCard item={item} />
-                    </div>
-                  ))}
-                  {hasMore && (
-                    <div className="flex items-center justify-center h-full">
-                       <button
-                        onClick={() => handleShowMore(category.name)}
-                        className="group bg-gray-100 rounded-full h-20 w-20 flex items-center justify-center cursor-pointer shadow-md transform hover:-translate-y-1 transition-all duration-300 hover:shadow-lg hover:bg-orange-500"
-                        aria-label={`Xem thêm món ăn trong mục ${category.name}`}
-                      >
-                        <ArrowRightIcon className="h-8 w-8 text-orange-500 group-hover:text-white transition-colors duration-300" />
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </section>
-            );
-          })}
-        </div>
+        {renderContent()}
       </div>
       
       {selectedProduct && (

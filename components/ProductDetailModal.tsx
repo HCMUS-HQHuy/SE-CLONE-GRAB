@@ -69,6 +69,13 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product, onClos
                 </div>
             )}
             <h1 id="product-modal-title" className="text-3xl font-extrabold text-gray-900 mb-2">{product.name}</h1>
+            <div className="mb-4 border-b pb-4">
+              <p className="font-semibold text-gray-700">{product.restaurant.name}</p>
+              <p className="text-sm text-gray-500">{product.restaurant.address}</p>
+               {product.distance !== undefined && (
+                <p className="text-sm text-orange-600 font-medium mt-1">Cách bạn khoảng {product.distance.toFixed(1)} km</p>
+              )}
+            </div>
             <p className="text-gray-600 mb-4">{product.description}</p>
             
             <div className="mb-6">
