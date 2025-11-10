@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { foodCategories } from './HomePage'; // Reusing the data structure
 import { FoodItem } from './HomePage';
-import { PencilIcon, LocationMarkerIcon, PhoneIcon, ClockIcon, StarIcon, ImageIcon } from '../components/Icons';
+import { PencilIcon, LocationMarkerIcon, PhoneIcon, ClockIcon, StarIcon, ImageIcon, PlusIcon } from '../components/Icons';
+import AddMenuItemModal from '../components/AddMenuItemModal';
 
 // Mock Data for a specific restaurant
 const restaurantData = {
@@ -56,6 +57,14 @@ const FoodCard: React.FC<{ item: FoodItem }> = ({ item }) => (
 
 
 const RestaurantProfilePage: React.FC = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleAddItem = (newItem: any) => {
+    // In a real app, you'd handle the state update here
+    console.log('New item added:', newItem);
+    setIsModalOpen(false);
+  };
+
   return (
     <div className="bg-gray-100">
       {/* Banner and Header */}
@@ -88,7 +97,16 @@ const RestaurantProfilePage: React.FC = () => {
           {/* Left Column: Menu */}
           <div className="lg:col-span-2 space-y-8">
              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                <h2 className="text-xl font-semibold text-gray-800 border-b pb-4 mb-6">Thực đơn nổi bật</h2>
+                <div className="flex justify-between items-center border-b pb-4 mb-6">
+                    <h2 className="text-xl font-semibold text-gray-800">Thực đơn nổi bật</h2>
+                    <button 
+                        onClick={() => setIsModalOpen(true)}
+                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-orange-500 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+                    >
+                        <PlusIcon className="h-5 w-5 mr-2" />
+                        Thêm món
+                    </button>
+                </div>
                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                     {restaurantMenuItems.slice(0, 6).map(item => (
                         <FoodCard key={item.id} item={item} />
@@ -130,6 +148,12 @@ const RestaurantProfilePage: React.FC = () => {
           </div>
         </div>
       </div>
+      
+      <AddMenuItemModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={handleAddItem}
+      />
     </div>
   );
 };
