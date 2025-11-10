@@ -1,8 +1,16 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { UserIcon, SearchIcon, HeartIcon, ShoppingCartIcon, BellIcon, DocumentTextIcon, MenuIcon, LocationMarkerIcon } from './Icons';
+import { useCart } from '../contexts/CartContext';
 
-const Navbar: React.FC = () => {
+type NavbarProps = {
+  onCartClick: () => void;
+};
+
+const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
+  const { items } = useCart();
+  const cartItemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+
   return (
     <header className="bg-white shadow-md sticky top-0 z-10">
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -57,8 +65,13 @@ const Navbar: React.FC = () => {
             <Link to="/user/favorites" className="p-2 rounded-full text-gray-500 hover:text-orange-500 hover:bg-orange-50 focus:outline-none focus:bg-orange-100 transition" aria-label="Yêu thích">
               <HeartIcon className="h-6 w-6" />
             </Link>
-             <button className="p-2 rounded-full text-gray-500 hover:text-orange-500 hover:bg-orange-50 focus:outline-none focus:bg-orange-100 transition" aria-label="Giỏ hàng">
+             <button onClick={onCartClick} className="relative p-2 rounded-full text-gray-500 hover:text-orange-500 hover:bg-orange-50 focus:outline-none focus:bg-orange-100 transition" aria-label="Giỏ hàng">
               <ShoppingCartIcon className="h-6 w-6" />
+              {cartItemCount > 0 && (
+                <span className="absolute top-0 right-0 block h-5 w-5 rounded-full bg-orange-500 text-white text-xs flex items-center justify-center ring-2 ring-white">
+                  {cartItemCount}
+                </span>
+              )}
             </button>
             <button className="p-2 rounded-full text-gray-500 hover:text-orange-500 hover:bg-orange-50 focus:outline-none focus:bg-orange-100 transition" aria-label="Thông báo">
               <BellIcon className="h-6 w-6" />

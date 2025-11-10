@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { StarIcon, ImageIcon, PlusIcon, MinusIcon, XIcon } from './Icons';
 import { FoodItem } from '../pages/HomePage';
+import { useCart } from '../contexts/CartContext';
 
 type ProductDetailModalProps = {
   product: FoodItem;
@@ -10,8 +11,9 @@ type ProductDetailModalProps = {
 
 const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product, onClose }) => {
   const [quantity, setQuantity] = useState(1);
+  const { addItem } = useCart();
+  const navigate = useNavigate();
 
-  // Handle Escape key press to close modal
   useEffect(() => {
     const handleEsc = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -30,6 +32,24 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product, onClos
 
   const handleDecrement = () => {
     setQuantity(prev => (prev > 1 ? prev - 1 : 1));
+  };
+
+  const handleAddToCart = () => {
+    if (product && product.restaurant) {
+      addItem(product, quantity, product.restaurant);
+      onClose(); // Close modal after adding
+    }
+  };
+
+  const handleBuyNow = () => {
+    if (product && product.restaurant) {
+      addItem(product, quantity, product.restaurant, true); // `true` indicates it's a "buy now" action
+      // The context will handle navigation if cart is cleared.
+      if (product.restaurant.id === useCart.getState().restaurant?.id || !useCart.getState().restaurant) {
+         navigate('/user/checkout');
+      }
+      onClose();
+    }
   };
 
   return (
@@ -110,10 +130,10 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product, onClos
 
             {/* Action Buttons */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                 <button className="w-full flex justify-center py-3 px-4 border border-orange-500 rounded-md shadow-sm text-sm font-medium text-orange-500 bg-white hover:bg-orange-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all duration-300">
+                 <button onClick={handleAddToCart} className="w-full flex justify-center py-3 px-4 border border-orange-500 rounded-md shadow-sm text-sm font-medium text-orange-500 bg-white hover:bg-orange-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all duration-300">
                     Thêm vào giỏ hàng
                 </button>
-                <button className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all duration-300">
+                <button onClick={handleBuyNow} className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all duration-300">
                     Mua ngay
                 </button>
             </div>

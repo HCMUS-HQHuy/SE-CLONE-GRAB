@@ -7,6 +7,8 @@ import HomePage from './pages/HomePage';
 import RestaurantLayout from './layouts/RestaurantLayout';
 import RestaurantProfilePage from './pages/RestaurantProfilePage';
 import UserRestaurantProfilePage from './pages/UserRestaurantProfilePage';
+import CheckoutPage from './pages/CheckoutPage';
+import OrderTrackingPage from './pages/OrderTrackingPage';
 
 const App: React.FC = () => {
   return (
@@ -18,6 +20,8 @@ const App: React.FC = () => {
         <Route path="home" element={<HomePage />} />
         <Route path="profile" element={<UserProfile />} />
         <Route path="restaurant/:id" element={<UserRestaurantProfilePage />} />
+        <Route path="checkout" element={<CheckoutPage />} />
+        <Route path="order/:orderId" element={<OrderTrackingPage />} />
         {/* Add other user routes here, e.g., orders, settings */}
       </Route>
       <Route path="/restaurant" element={<RestaurantLayout />}>
