@@ -1,25 +1,17 @@
 import React, { useState } from 'react';
-import { foodCategories } from './HomePage'; // Reusing the data structure
-import { FoodItem } from './HomePage';
+import { restaurants, foodCategories } from './HomePage'; // Reusing the data structure
+import { FoodItem, Restaurant } from './HomePage';
 import { PencilIcon, LocationMarkerIcon, PhoneIcon, ClockIcon, StarIcon, ImageIcon, PlusIcon } from '../components/Icons';
 import AddMenuItemModal from '../components/AddMenuItemModal';
 
-// Mock Data for a specific restaurant
-const restaurantData = {
-  name: 'Quán Ăn Gỗ',
-  cuisine: 'Món Việt',
-  address: '123 Đường Lê Lợi, Quận 1, TP.HCM',
-  phone: '090 123 4567',
-  openingHours: '09:00 - 22:00',
-  description: 'Quán Ăn Gỗ tự hào mang đến những hương vị đậm đà, chuẩn vị Việt Nam. Với không gian ấm cúng và thực đơn đa dạng, chúng tôi là điểm đến lý tưởng cho những bữa ăn gia đình và gặp gỡ bạn bè.',
-  bannerUrl: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1674&q=80',
-  logoUrl: 'https://cdn-icons-png.flaticon.com/512/3448/3448609.png',
-};
+// Mock Data for a specific restaurant - let's assume the logged-in restaurant is "Quán Ăn Gỗ"
+const restaurantData: Restaurant = restaurants.find(r => r.name === 'Quán Ăn Gỗ')!;
 
 // Filter food items for this specific restaurant
 const restaurantMenuItems = foodCategories
   .flatMap(category => category.items)
-  .filter(item => item.restaurant.name === restaurantData.name);
+  .filter(item => item.restaurantId === restaurantData.id)
+  .map(item => ({...item, restaurant: restaurantData})); // Add restaurant object for FoodCard
 
 
 const FoodCard: React.FC<{ item: FoodItem }> = ({ item }) => (
@@ -118,7 +110,7 @@ const RestaurantProfilePage: React.FC = () => {
           {/* Left Column: Menu */}
           <div className="lg:col-span-2 space-y-8">
              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                <div className="border-b pb-4 mb-6">
+                <div className="flex justify-between items-center border-b pb-4 mb-6">
                     <h2 className="text-xl font-semibold text-gray-800">Thực đơn nổi bật</h2>
                 </div>
                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">

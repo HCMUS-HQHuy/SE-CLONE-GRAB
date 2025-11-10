@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { StarIcon, ImageIcon, PlusIcon, MinusIcon, XIcon } from './Icons';
 import { FoodItem } from '../pages/HomePage';
 
@@ -45,7 +46,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product, onClos
       >
         <button 
           onClick={onClose} 
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors duration-300"
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors duration-300 z-10"
           aria-label="Close"
         >
           <XIcon className="h-6 w-6" />
@@ -69,13 +70,17 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product, onClos
                 </div>
             )}
             <h1 id="product-modal-title" className="text-3xl font-extrabold text-gray-900 mb-2">{product.name}</h1>
-            <div className="mb-4 border-b pb-4">
-              <p className="font-semibold text-gray-700">{product.restaurant.name}</p>
-              <p className="text-sm text-gray-500">{product.restaurant.address}</p>
-               {product.distance !== undefined && (
-                <p className="text-sm text-orange-600 font-medium mt-1">Cách bạn khoảng {product.distance.toFixed(1)} km</p>
-              )}
-            </div>
+            {product.restaurant && (
+                 <div className="mb-4 border-b pb-4">
+                    <Link to={`/user/restaurant/${product.restaurant.id}`} className="font-semibold text-gray-700 hover:text-orange-600 hover:underline">
+                        {product.restaurant.name}
+                    </Link>
+                    <p className="text-sm text-gray-500">{product.restaurant.address}</p>
+                    {product.distance !== undefined && (
+                        <p className="text-sm text-orange-600 font-medium mt-1">Cách bạn khoảng {product.distance.toFixed(1)} km</p>
+                    )}
+                </div>
+            )}
             <p className="text-gray-600 mb-4">{product.description}</p>
             
             <div className="mb-6">

@@ -6,6 +6,7 @@ import UserLayout from './layouts/UserLayout';
 import HomePage from './pages/HomePage';
 import RestaurantLayout from './layouts/RestaurantLayout';
 import RestaurantProfilePage from './pages/RestaurantProfilePage';
+import UserRestaurantProfilePage from './pages/UserRestaurantProfilePage';
 
 const App: React.FC = () => {
   return (
@@ -16,6 +17,7 @@ const App: React.FC = () => {
         <Route index element={<Navigate to="home" replace />} />
         <Route path="home" element={<HomePage />} />
         <Route path="profile" element={<UserProfile />} />
+        <Route path="restaurant/:id" element={<UserRestaurantProfilePage />} />
         {/* Add other user routes here, e.g., orders, settings */}
       </Route>
       <Route path="/restaurant" element={<RestaurantLayout />}>
