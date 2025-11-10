@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { UserIcon, SearchIcon, HeartIcon, ShoppingCartIcon, BellIcon, DocumentTextIcon, MenuIcon } from './Icons';
+import { UserIcon, SearchIcon, HeartIcon, ShoppingCartIcon, BellIcon, DocumentTextIcon, MenuIcon, LocationMarkerIcon } from './Icons';
 
 const Navbar: React.FC = () => {
   return (
@@ -17,22 +17,37 @@ const Navbar: React.FC = () => {
 
           {/* Center section: Search Bar */}
           <div className="flex-1 flex justify-center px-2 lg:ml-6 lg:justify-center">
-            <div className="w-full max-w-lg lg:max-w-xl">
-              <label htmlFor="search" className="sr-only">Tìm kiếm</label>
-              <div className="relative text-gray-400 focus-within:text-gray-600">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <SearchIcon className="h-5 w-5" />
+            <div className="w-full max-w-3xl">
+              <div className="flex items-center w-full bg-gray-100 rounded-full border border-gray-200 focus-within:ring-2 focus-within:ring-orange-400 focus-within:border-orange-400 focus-within:bg-white transition-all duration-300">
+                {/* Location Part */}
+                <div className="flex items-center pl-4 pr-2 py-1 flex-shrink-0 cursor-pointer group">
+                  <LocationMarkerIcon className="h-5 w-5 text-gray-500 mr-2 group-hover:text-orange-500 transition-colors" />
+                  <div className="hidden sm:block">
+                    <span className="text-xs text-gray-500">Giao đến</span>
+                    <p className="text-sm font-semibold text-gray-800 line-clamp-1 group-hover:text-orange-500 transition-colors">Chọn địa chỉ...</p>
+                  </div>
                 </div>
-                <input
-                  id="search"
-                  className="block w-full bg-gray-100 py-3 pl-10 pr-3 border border-transparent rounded-full leading-5 text-gray-900 placeholder-gray-500 focus:outline-none focus:bg-white focus:border-orange-300 focus:ring-orange-300 focus:ring-1 transition"
-                  placeholder="Tìm món ăn, nhà hàng..."
-                  type="search"
-                  name="search"
-                />
+
+                {/* Separator */}
+                <div className="h-8 border-l border-gray-300 mx-2"></div>
+
+                {/* Search Input Part */}
+                <div className="relative flex-1">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <SearchIcon className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    id="search"
+                    className="block w-full bg-transparent py-3 pl-10 pr-4 border-none rounded-r-full leading-5 text-gray-900 placeholder-gray-500 focus:outline-none"
+                    placeholder="Bạn thèm ăn gì hôm nay?"
+                    type="search"
+                    name="search"
+                  />
+                </div>
               </div>
             </div>
           </div>
+
 
           {/* Right section: Actions */}
           <div className="hidden md:flex items-center space-x-2">
