@@ -156,18 +156,18 @@ const OrderCard: React.FC<{ order: Order; onUpdateStatus: (id: string, status: O
                 </div>
             </div>
             <div className="border-t border-b border-gray-200 py-3 my-3">
-                 <ul className="space-y-1.5 text-sm">
-                    {order.items.slice(0, 1).map((item, index) => (
-                        <li key={index} className="flex justify-between">
-                            <span className="text-gray-700 truncate">{item.quantity}x {item.name}</span>
-                        </li>
-                    ))}
-                    {order.items.length > 1 && (
-                        <li className="text-xs text-gray-500 italic mt-1">
-                            + {order.items.length - 1} món nữa...
-                        </li>
+                 <div className="text-sm">
+                    {order.items.length > 0 && (
+                        <div className="flex items-baseline space-x-2">
+                            <span className="text-gray-700 truncate">{order.items[0].quantity}x {order.items[0].name}</span>
+                            {order.items.length > 1 && (
+                                <span className="text-xs text-gray-500 italic whitespace-nowrap flex-shrink-0">
+                                    + {order.items.length - 1} món nữa...
+                                </span>
+                            )}
+                        </div>
                     )}
-                </ul>
+                </div>
             </div>
             <div className="flex justify-between items-center">
                 <div>
