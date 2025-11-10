@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { StarIcon, ImageIcon, ArrowRightIcon } from '../components/Icons';
 import ProductDetailModal from '../components/ProductDetailModal';
 
-type Restaurant = {
+// FIX: Export Restaurant type for use in other components.
+export type Restaurant = {
   name: string;
   address: string;
   lat: number;
@@ -22,7 +23,8 @@ export type FoodItem = {
   distance?: number;
 };
 
-const restaurants: { [key: string]: Restaurant } = {
+// FIX: Export restaurants data for use in other components.
+export const restaurants: { [key: string]: Restaurant } = {
   quanAnGo: { name: 'Quán Ăn Gỗ', address: '123 Đường Lê Lợi, Quận 1, TP.HCM', lat: 10.7756, lon: 106.7001 },
   bepViet: { name: 'Bếp Việt', address: '45 Phạm Ngọc Thạch, Quận 3, TP.HCM', lat: 10.7850, lon: 106.6921 },
   phoNgon: { name: 'Phở Ngon 3 Miền', address: '212 Nguyễn Trãi, Quận 5, TP.HCM', lat: 10.7545, lon: 106.6696 },
@@ -30,7 +32,8 @@ const restaurants: { [key: string]: Restaurant } = {
   lauNuong: { name: 'Lẩu & Nướng BBQ', address: '300 Xô Viết Nghệ Tĩnh, Bình Thạnh, TP.HCM', lat: 10.8015, lon: 106.7150 },
 };
 
-const foodCategories: { name: string; items: Omit<FoodItem, 'distance'>[] }[] = [
+// FIX: Export foodCategories to resolve import error in other components.
+export const foodCategories: { name: string; items: Omit<FoodItem, 'distance'>[] }[] = [
   {
     name: '🔥 Đại hạ giá',
     items: [
