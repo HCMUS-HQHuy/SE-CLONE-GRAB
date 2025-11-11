@@ -4,8 +4,8 @@ import { PencilIcon, LocationMarkerIcon, PhoneIcon, ClockIcon, StarIcon, ImageIc
 import AddMenuItemModal from '../components/AddMenuItemModal';
 import EditRestaurantProfileModal from '../components/EditRestaurantProfileModal';
 
-// Extend FoodItem type to include category for management
-type FoodItem = BaseFoodItem & { isAvailable: boolean; category: string; };
+// Extend FoodItem type to ensure isAvailable is always present for management
+type FoodItem = BaseFoodItem & { isAvailable: boolean };
 
 // Mock Data for a specific restaurant - let's assume the logged-in restaurant is "Quán Ăn Gỗ"
 const restaurantData: Restaurant = restaurants.find(r => r.id === '1001')!;
@@ -77,31 +77,13 @@ const StorePage: React.FC = () => {
     const [currentItem, setCurrentItem] = useState<FoodItem | null>(null);
 
     const initialMenuItems = useMemo(() => {
-        // Get all items from all categories and add category name to each item
-        const allItemsWithCategory = foodCategories.flatMap(category =>
-            category.items.map(item => ({
-                ...item,
-                isAvailable: item.isAvailable ?? true,
-                category: category.name,
-            }))
-        );
-        // Filter for the current restaurant
-        return allItemsWithCategory.filter(item => item.restaurantId === restaurantData.id);
+        return foodCategories
+            .flatMap(category => category.items)
+            .filter(item => item.restaurantId === restaurantData.id)
+            .map(item => ({ ...item, isAvailable: item.isAvailable ?? true })); // Ensure isAvailable is set
     }, []);
 
     const [menuItems, setMenuItems] = useState<FoodItem[]>(initialMenuItems);
-
-    const menuByCategories = useMemo(() => {
-        return menuItems.reduce((acc, item) => {
-            const category = item.category || 'Chưa phân loại';
-            if (!acc[category]) {
-                acc[category] = [];
-            }
-            acc[category].push(item);
-            return acc;
-        }, {} as Record<string, FoodItem[]>);
-    }, [menuItems]);
-
 
     const handleOpenAddModal = () => {
         setCurrentItem(null);
@@ -128,30 +110,12 @@ const StorePage: React.FC = () => {
     };
 
     const handleSaveItem = (itemData: any) => {
-        const formatVND = (value: string | number) => {
-            if (!value && value !== 0) return undefined;
-            return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(value));
-        }
-
-        const preparedItemData = { ...itemData };
-        if (itemData.discountPrice && Number(itemData.discountPrice) > 0) {
-            preparedItemData.oldPrice = formatVND(itemData.price);
-            preparedItemData.newPrice = formatVND(itemData.discountPrice);
-            delete preparedItemData.price;
-            delete preparedItemData.discountPrice;
-        } else {
-            preparedItemData.price = formatVND(itemData.price);
-            delete preparedItemData.oldPrice;
-            delete preparedItemData.newPrice;
-            delete preparedItemData.discountPrice;
-        }
-
         if (currentItem) {
-            setMenuItems(prev => prev.map(item => item.id === preparedItemData.id ? { ...item, ...preparedItemData } : item));
+            setMenuItems(prev => prev.map(item => item.id === itemData.id ? { ...item, ...itemData } : item));
         } else {
             const newItem: FoodItem = {
-                ...preparedItemData,
-                id: Math.max(0, ...menuItems.map(i => i.id)) + 1,
+                ...itemData,
+                id: Math.max(0, ...menuItems.map(i => i.id)) + 1, // Generate new ID
                 restaurantId: restaurantData.id,
                 isAvailable: true,
             };
@@ -199,37 +163,57 @@ const StorePage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Menu Section */}
-                 <div className="mt-8 bg-white p-6 rounded-lg shadow-md border">
-                    <div className="flex justify-between items-center border-b pb-4 mb-6">
-                        <h2 className="text-xl font-bold text-gray-800">Quản lý thực đơn</h2>
-                        <button
-                            onClick={handleOpenAddModal}
-                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-orange-500 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
-                            role="button" aria-label="Thêm món ăn mới"
-                        >
-                            <PlusIcon className="h-5 w-5 mr-2" />
-                            Thêm món
-                        </button>
+                {/* Two-column Layout */}
+                <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Left Column: Menu */}
+                    <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow-md border">
+                        <h2 className="text-xl font-bold text-gray-800 mb-6 border-b pb-4">Thực đơn nổi bật</h2>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                            <div
+                                onClick={handleOpenAddModal}
+                                className="bg-white rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center h-full min-h-[210px] cursor-pointer group transition-all duration-300 hover:shadow-inner hover:border-orange-400 hover:bg-orange-50"
+                                role="button" aria-label="Thêm món ăn mới"
+                            >
+                                <div className="text-center text-gray-400 group-hover:text-orange-500 transition-colors">
+                                    <PlusIcon className="h-10 w-10 mx-auto" />
+                                    <p className="mt-2 text-sm font-semibold">Thêm món</p>
+                                </div>
+                            </div>
+                            {menuItems.map(item => (
+                                <MenuItemCard
+                                    key={item.id}
+                                    item={item}
+                                    onEdit={() => handleEditItem(item)}
+                                    onDelete={() => handleDeleteItem(item.id)}
+                                    onToggle={() => handleToggleAvailability(item.id)}
+                                />
+                            ))}
+                        </div>
                     </div>
 
-                    <div className="space-y-10">
-                    {Object.entries(menuByCategories).map(([category, items]) => (
-                        <section key={category}>
-                            <h3 className="text-lg font-semibold text-gray-700 mb-4">{category}</h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                {items.map(item => (
-                                    <MenuItemCard
-                                        key={item.id}
-                                        item={item}
-                                        onEdit={() => handleEditItem(item)}
-                                        onDelete={() => handleDeleteItem(item.id)}
-                                        onToggle={() => handleToggleAvailability(item.id)}
-                                    />
-                                ))}
-                            </div>
-                        </section>
-                    ))}
+                    {/* Right Column: Sidebar */}
+                    <div className="lg:col-span-1 space-y-8">
+                        <div className="bg-white p-6 rounded-lg shadow-md border">
+                            <h3 className="text-lg font-semibold text-gray-800 border-b pb-3 mb-4">Về chúng tôi</h3>
+                            <p className="text-gray-600 text-sm">{restaurantData.description}</p>
+                        </div>
+                        <div className="bg-white p-6 rounded-lg shadow-md border">
+                            <h3 className="text-lg font-semibold text-gray-800 border-b pb-3 mb-4">Thông tin chi tiết</h3>
+                            <ul className="space-y-4 text-sm">
+                                <li className="flex items-start">
+                                    <LocationMarkerIcon className="h-5 w-5 text-gray-400 mr-3 flex-shrink-0 mt-0.5" />
+                                    <span className="text-gray-700">{restaurantData.address}</span>
+                                </li>
+                                <li className="flex items-center">
+                                    <PhoneIcon className="h-5 w-5 text-gray-400 mr-3 flex-shrink-0" />
+                                    <span className="text-gray-700">{restaurantData.phone}</span>
+                                </li>
+                                <li className="flex items-center">
+                                    <ClockIcon className="h-5 w-5 text-gray-400 mr-3 flex-shrink-0" />
+                                    <span className="text-gray-700">{restaurantData.openingHours}</span>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
