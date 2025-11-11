@@ -10,6 +10,7 @@ import UserRestaurantProfilePage from './pages/UserRestaurantProfilePage';
 import CheckoutPage from './pages/CheckoutPage';
 import OrderTrackingPage from './pages/OrderTrackingPage';
 import RestaurantOrdersPage from './pages/RestaurantOrdersPage';
+import RestaurantDashboardPage from './pages/DashboardPage';
 
 const App: React.FC = () => {
   return (
@@ -26,7 +27,8 @@ const App: React.FC = () => {
         {/* Add other user routes here, e.g., orders, settings */}
       </Route>
       <Route path="/restaurant" element={<RestaurantLayout />}>
-        <Route index element={<Navigate to="profile" replace />} />
+        <Route index element={<Navigate to="dashboard" replace />} />
+        <Route path="dashboard" element={<RestaurantDashboardPage />} />
         <Route path="profile" element={<RestaurantProfilePage />} />
         <Route path="orders" element={<RestaurantOrdersPage />} />
         {/* Add other restaurant routes here, e.g., menu, orders */}

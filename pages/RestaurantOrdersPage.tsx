@@ -21,7 +21,8 @@ export type Order = {
 };
 
 // Mock Data
-const mockOrders: Order[] = [
+// FIX: Export mockOrders to fix import error in DashboardPage.tsx
+export const mockOrders: Order[] = [
   {
     id: '#12345',
     customerName: 'Nguyễn Văn A',
