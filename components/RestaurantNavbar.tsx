@@ -15,7 +15,7 @@ const RestaurantNavbar: React.FC = () => {
           
           {/* Left section: Logo and Nav */}
           <div className="flex items-center space-x-8">
-            <Link to="/restaurant/profile" className="flex-shrink-0 text-xl font-bold text-gray-800">
+            <Link to="/restaurant/store" className="flex-shrink-0 text-xl font-bold text-gray-800">
               Restaurant <span className="text-orange-500">Management</span>
             </Link>
             <nav className="hidden md:flex space-x-6">
@@ -27,11 +27,11 @@ const RestaurantNavbar: React.FC = () => {
                 Tổng quan
               </NavLink>
               <NavLink 
-                to="/restaurant/menu" 
+                to="/restaurant/store" 
                 className="text-gray-500 hover:text-orange-500 px-3 py-2 rounded-md text-sm font-medium transition"
                 style={({ isActive }) => isActive ? activeLinkStyle : undefined}
               >
-                Thực đơn
+                Cửa hàng
               </NavLink>
               <NavLink 
                 to="/restaurant/orders" 
@@ -40,20 +40,13 @@ const RestaurantNavbar: React.FC = () => {
               >
                 Đơn hàng
               </NavLink>
-               <NavLink 
-                to="/restaurant/profile" 
-                className="text-gray-500 hover:text-orange-500 px-3 py-2 rounded-md text-sm font-medium transition"
-                style={({ isActive }) => isActive ? activeLinkStyle : undefined}
-              >
-                Hồ sơ
-              </NavLink>
             </nav>
           </div>
 
           {/* Right section: Profile */}
           <div className="flex items-center">
             <div className="ml-3 relative">
-              <Link to="/restaurant/profile" className="bg-gray-100 rounded-full flex items-center justify-center h-9 w-9 text-sm focus:outline-none ring-2 ring-offset-2 hover:ring-orange-500 transition" aria-label="Mở menu người dùng">
+              <Link to="/restaurant/store" className="bg-gray-100 rounded-full flex items-center justify-center h-9 w-9 text-sm focus:outline-none ring-2 ring-offset-2 hover:ring-orange-500 transition" aria-label="Mở menu người dùng">
                 <UserIcon className="h-5 w-5 text-gray-500" />
               </Link>
             </div>
