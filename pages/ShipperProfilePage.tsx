@@ -26,21 +26,20 @@ const ratingData = {
     ],
 };
 
-// Stat card component
-const StatCard: React.FC<{ icon: React.ReactNode; title: string; value: string | number; }> = ({ icon, title, value }) => (
-    <div className="flex items-center p-3 bg-gray-50 rounded-lg">
-        <div className="flex-shrink-0 text-orange-500">
+const HeaderStat: React.FC<{ icon: React.ReactNode; title: string; value: string | number; }> = ({ icon, title, value }) => (
+    <div className="text-center p-3 rounded-lg hover:bg-gray-50 transition-colors">
+        <div className="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-orange-100 text-orange-600 mb-2">
             {icon}
         </div>
-        <div className="ml-3">
-            <p className="text-sm text-gray-600">{title}</p>
-            <p className="text-lg font-bold text-gray-900">{value}</p>
-        </div>
+        <p className="text-xl font-bold text-gray-900">{value}</p>
+        <p className="text-xs text-gray-500 truncate">{title}</p>
     </div>
 );
 
+
 const RatingBreakdown: React.FC = () => (
-    <div className="bg-white p-6 rounded-lg shadow-md border">
+    <div className="bg-white p-6 rounded-lg shadow-md border h-full">
+        <h3 className="text-xl font-semibold text-gray-800 mb-4">Phân tích đánh giá</h3>
         <div className="flex justify-between items-baseline text-xs text-gray-500 mb-4">
             <p>Từ 100 chuyến xe gần nhất</p>
             <p>Cập nhật 6 giờ trước</p>
@@ -80,10 +79,35 @@ const ShipperProfilePage: React.FC = () => {
     }
 
     return (
-        <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
+        <div className="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8">
             <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900">Hồ sơ của tôi</h1>
+                <h1 className="text-3xl font-bold text-gray-900">Hồ sơ tài xế</h1>
                 <p className="mt-1 text-sm text-gray-500">Quản lý thông tin cá nhân và xem hiệu suất của bạn.</p>
+            </div>
+            
+            {/* Summary Header Card */}
+            <div className="bg-white p-6 rounded-lg shadow-md border mb-8">
+                <div className="flex flex-col sm:flex-row items-center sm:space-x-8">
+                    <div className="flex-shrink-0 flex flex-col items-center text-center mb-6 sm:mb-0">
+                        <div className="relative">
+                            <img className="w-24 h-24 rounded-full object-cover ring-4 ring-orange-100" src={shipper.avatarUrl} alt="Avatar" />
+                            {isEditing && (
+                                <button className="absolute bottom-0 right-0 bg-orange-500 p-2 rounded-full text-white hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500" aria-label="Change profile picture">
+                                    <PencilIcon className="h-4 w-4" />
+                                </button>
+                            )}
+                        </div>
+                        <h3 className="text-lg font-bold text-gray-900 mt-3">{shipper.name}</h3>
+                        <p className="text-sm text-gray-500">Tài xế công nghệ</p>
+                    </div>
+
+                    <div className="flex-grow grid grid-cols-2 md:grid-cols-4 gap-4 w-full border-t sm:border-t-0 sm:border-l pt-6 sm:pt-0 sm:pl-8 border-gray-200">
+                        <HeaderStat icon={<ShieldCheckIcon className="h-6 w-6"/>} title="Điểm uy tín" value={shipper.reputationScore} />
+                        <HeaderStat icon={<StarIcon className="h-6 w-6"/>} title="Đánh giá" value={`${shipper.rating}/5.0`} />
+                        <HeaderStat icon={<CheckCircleIcon className="h-6 w-6"/>} title="Đơn thành công" value={shipper.successfulDeliveries.toLocaleString()} />
+                        <HeaderStat icon={<XCircleIcon className="h-6 w-6"/>} title="Tỉ lệ hủy" value={`${shipper.cancellationRate}%`} />
+                    </div>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -95,8 +119,9 @@ const ShipperProfilePage: React.FC = () => {
                             <h2 className="text-xl font-semibold text-gray-800">Thông tin cá nhân</h2>
                             <button 
                                 onClick={() => setIsEditing(!isEditing)} 
-                                className="text-sm font-medium text-orange-600 hover:text-orange-500"
+                                className="text-sm font-medium text-orange-600 hover:text-orange-500 flex items-center"
                             >
+                                <PencilIcon className="h-4 w-4 mr-1.5" />
                                 {isEditing ? 'Hủy' : 'Chỉnh sửa'}
                             </button>
                         </div>
@@ -152,34 +177,8 @@ const ShipperProfilePage: React.FC = () => {
                     )}
                 </div>
 
-                {/* Right side - Avatar and Stats */}
-                <div className="lg:col-span-1 space-y-8">
-                    {/* Avatar */}
-                    <div className="bg-white p-6 rounded-lg shadow-md border flex flex-col items-center">
-                        <div className="relative mb-4">
-                            <img className="w-28 h-28 rounded-full object-cover ring-4 ring-orange-100" src={shipper.avatarUrl} alt="Avatar" />
-                            {isEditing && (
-                                <button className="absolute bottom-0 right-0 bg-orange-500 p-2 rounded-full text-white hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500" aria-label="Change profile picture">
-                                    <PencilIcon className="h-4 w-4" />
-                                </button>
-                            )}
-                        </div>
-                        <h3 className="text-lg font-bold text-gray-900">{shipper.name}</h3>
-                        <p className="text-sm text-gray-500">Tài xế công nghệ</p>
-                    </div>
-
-                    {/* Stats */}
-                    <div className="bg-white p-6 rounded-lg shadow-md border">
-                        <h3 className="text-xl font-semibold text-gray-800 border-b pb-4 mb-6">Thống kê hiệu suất</h3>
-                        <div className="space-y-4">
-                            <StatCard icon={<ShieldCheckIcon className="h-6 w-6"/>} title="Điểm uy tín" value={shipper.reputationScore} />
-                            <StatCard icon={<StarIcon className="h-6 w-6"/>} title="Đánh giá trung bình" value={`${shipper.rating}/5.0`} />
-                            <StatCard icon={<CheckCircleIcon className="h-6 w-6"/>} title="Đơn thành công" value={shipper.successfulDeliveries.toLocaleString()} />
-                            <StatCard icon={<XCircleIcon className="h-6 w-6"/>} title="Tỉ lệ hủy" value={`${shipper.cancellationRate}%`} />
-                        </div>
-                    </div>
-                    
-                    {/* Rating Breakdown */}
+                {/* Right side - Rating Breakdown */}
+                <div className="lg:col-span-1">
                     <RatingBreakdown />
                 </div>
             </div>
