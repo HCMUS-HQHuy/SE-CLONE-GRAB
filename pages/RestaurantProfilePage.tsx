@@ -5,7 +5,8 @@ import AddMenuItemModal from '../components/AddMenuItemModal';
 import EditRestaurantProfileModal from '../components/EditRestaurantProfileModal';
 
 // Extend FoodItem type to ensure isAvailable is always present for management
-type FoodItem = BaseFoodItem & { isAvailable: boolean };
+type FoodItem = BaseFoodItem & { isAvailable: boolean; category: string };
+type MenuData = { [category: string]: FoodItem[] };
 
 // Mock Data for a specific restaurant - let's assume the logged-in restaurant is "Quán Ăn Gỗ"
 const restaurantData: Restaurant = restaurants.find(r => r.id === '1001')!;
@@ -75,15 +76,31 @@ const StorePage: React.FC = () => {
     const [isMenuModalOpen, setIsMenuModalOpen] = useState(false);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const [currentItem, setCurrentItem] = useState<FoodItem | null>(null);
+    const [activeTab, setActiveTab] = useState('Tất cả');
 
-    const initialMenuItems = useMemo(() => {
-        return foodCategories
-            .flatMap(category => category.items)
-            .filter(item => item.restaurantId === restaurantData.id)
-            .map(item => ({ ...item, isAvailable: item.isAvailable ?? true })); // Ensure isAvailable is set
+    const initialMenu = useMemo((): MenuData => {
+        const menu: MenuData = {};
+        foodCategories.forEach(category => {
+            const items = category.items
+                .filter(item => item.restaurantId === restaurantData.id)
+                .map(item => ({ ...item, isAvailable: item.isAvailable ?? true, category: category.name }));
+            if (items.length > 0) {
+                menu[category.name] = items;
+            }
+        });
+        return menu;
     }, []);
+    
+    const [menuByCategories, setMenuByCategories] = useState<MenuData>(initialMenu);
+    
+    const categoryTabs = useMemo(() => ['Tất cả', ...Object.keys(menuByCategories)], [menuByCategories]);
 
-    const [menuItems, setMenuItems] = useState<FoodItem[]>(initialMenuItems);
+    const itemsToShow = useMemo(() => {
+        if (activeTab === 'Tất cả') {
+            return Object.values(menuByCategories).flat().sort((a,b) => a.id - b.id);
+        }
+        return menuByCategories[activeTab] || [];
+    }, [activeTab, menuByCategories]);
 
     const handleOpenAddModal = () => {
         setCurrentItem(null);
@@ -97,33 +114,93 @@ const StorePage: React.FC = () => {
 
     const handleDeleteItem = (itemId: number) => {
         if (window.confirm('Bạn có chắc chắn muốn xóa món ăn này không?')) {
-            setMenuItems(prev => prev.filter(item => item.id !== itemId));
+            setMenuByCategories(prev => {
+                const newMenu = { ...prev };
+                for (const category in newMenu) {
+                    newMenu[category] = newMenu[category].filter(item => item.id !== itemId);
+                    if (newMenu[category].length === 0) {
+                        delete newMenu[category];
+                    }
+                }
+                return newMenu;
+            });
         }
     };
 
     const handleToggleAvailability = (itemId: number) => {
-        setMenuItems(prev =>
-            prev.map(item =>
-                item.id === itemId ? { ...item, isAvailable: !item.isAvailable } : item
-            )
-        );
+        setMenuByCategories(prev => {
+            const newMenu = { ...prev };
+            for (const category in newMenu) {
+                newMenu[category] = newMenu[category].map(item =>
+                    item.id === itemId ? { ...item, isAvailable: !item.isAvailable } : item
+                );
+            }
+            return newMenu;
+        });
+    };
+
+    const formatCurrency = (amount: number | string) => {
+        const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+        if (isNaN(num)) return '';
+        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(num).replace(/\s/g, '');
     };
 
     const handleSaveItem = (itemData: any) => {
-        if (currentItem) {
-            setMenuItems(prev => prev.map(item => item.id === itemData.id ? { ...item, ...itemData } : item));
-        } else {
-            const newItem: FoodItem = {
-                ...itemData,
-                id: Math.max(0, ...menuItems.map(i => i.id)) + 1, // Generate new ID
+        const { id, category: newCategory, ...rest } = itemData;
+
+        setMenuByCategories(prevMenu => {
+            let newMenu = JSON.parse(JSON.stringify(prevMenu)); // Deep copy
+
+            // Find and remove old item if it exists (for both edit and category change)
+            let oldItem: FoodItem | undefined;
+            if (id) {
+                for (const cat in newMenu) {
+                    const itemIndex = newMenu[cat].findIndex((i: FoodItem) => i.id === id);
+                    if (itemIndex > -1) {
+                        oldItem = newMenu[cat][itemIndex];
+                        newMenu[cat].splice(itemIndex, 1);
+                        if (newMenu[cat].length === 0) delete newMenu[cat];
+                        break;
+                    }
+                }
+            }
+            
+            // Prepare price fields
+            const priceData: { price?: string; oldPrice?: string; newPrice?:string; } = {};
+            if (rest.discountPrice && parseFloat(rest.discountPrice) > 0) {
+                priceData.oldPrice = formatCurrency(rest.price);
+                priceData.newPrice = formatCurrency(rest.discountPrice);
+                delete priceData.price;
+            } else {
+                priceData.price = formatCurrency(rest.price);
+                delete priceData.oldPrice;
+                delete priceData.newPrice;
+            }
+
+            // Prepare the new/updated item object
+            const updatedItem: FoodItem = {
+                ...(oldItem || {}),
+                ...rest,
+                ...priceData,
+                id: id || Math.max(0, ...Object.values(newMenu).flat().map((i: FoodItem) => i.id)) + 1,
                 restaurantId: restaurantData.id,
-                isAvailable: true,
+                isAvailable: itemData.isAvailable ?? true,
+                category: newCategory,
             };
-            setMenuItems(prev => [...prev, newItem]);
-        }
+
+            // Add the item to the new category
+            if (!newMenu[newCategory]) {
+                newMenu[newCategory] = [];
+            }
+            newMenu[newCategory].push(updatedItem);
+            
+            return newMenu;
+        });
+
         setIsMenuModalOpen(false);
         setCurrentItem(null);
     };
+
 
     const handleSaveProfile = (updatedData: Partial<Restaurant>) => {
         console.log('Saving profile:', updatedData);
@@ -167,7 +244,23 @@ const StorePage: React.FC = () => {
                 <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Left Column: Menu */}
                     <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow-md border">
-                        <h2 className="text-xl font-bold text-gray-800 mb-6 border-b pb-4">Thực đơn nổi bật</h2>
+                        <div className="border-b border-gray-200 mb-6">
+                            <nav className="-mb-px flex space-x-6 overflow-x-auto" aria-label="Tabs">
+                                {categoryTabs.map(tab => (
+                                    <button
+                                        key={tab}
+                                        onClick={() => setActiveTab(tab)}
+                                        className={`whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-colors ${
+                                            activeTab === tab
+                                            ? 'border-orange-500 text-orange-600'
+                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                        }`}
+                                    >
+                                        {tab}
+                                    </button>
+                                ))}
+                            </nav>
+                        </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                             <div
                                 onClick={handleOpenAddModal}
@@ -179,7 +272,7 @@ const StorePage: React.FC = () => {
                                     <p className="mt-2 text-sm font-semibold">Thêm món</p>
                                 </div>
                             </div>
-                            {menuItems.map(item => (
+                            {itemsToShow.map(item => (
                                 <MenuItemCard
                                     key={item.id}
                                     item={item}
@@ -223,6 +316,7 @@ const StorePage: React.FC = () => {
                 onClose={() => setIsMenuModalOpen(false)}
                 onSave={handleSaveItem}
                 itemToEdit={currentItem}
+                categories={Object.keys(menuByCategories)}
             />
             <EditRestaurantProfileModal
                 isOpen={isProfileModalOpen}

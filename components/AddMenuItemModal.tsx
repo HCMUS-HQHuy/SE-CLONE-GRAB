@@ -6,15 +6,16 @@ type AddMenuItemModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onSave: (newItem: any) => void;
-  itemToEdit?: FoodItem | null;
+  itemToEdit?: (FoodItem & { category?: string }) | null;
+  categories: string[];
 };
 
-const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({ isOpen, onClose, onSave, itemToEdit }) => {
+const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({ isOpen, onClose, onSave, itemToEdit, categories }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [discountPrice, setDiscountPrice] = useState('');
-  const [category, setCategory] = useState('Ăn trưa');
+  const [category, setCategory] = useState(categories[0] || '');
   const [stock, setStock] = useState('');
   const [isBestseller, setIsBestseller] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -37,7 +38,6 @@ const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({ isOpen, onClose, on
   useEffect(() => {
     if (isOpen) {
       if (itemToEdit) {
-        // Populate form for editing
         const parsePrice = (priceStr?: string) => priceStr ? priceStr.replace(/\D/g, '') : '';
         
         setName(itemToEdit.name);
@@ -51,25 +51,23 @@ const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({ isOpen, onClose, on
             setDiscountPrice('');
         }
         
+        setCategory(itemToEdit.category || categories[0] || '');
         setIsBestseller(itemToEdit.bestseller);
         setImagePreview(itemToEdit.image || null);
-        // Reset fields not present in FoodItem for simplicity in this prototype
-        setCategory('Ăn trưa');
-        setStock('');
-
+        setStock(''); // Reset stock for simplicity in this prototype
       } else {
         // Reset form for adding new item
         setName('');
         setDescription('');
         setPrice('');
         setDiscountPrice('');
-        setCategory('Ăn trưa');
+        setCategory(categories[0] || '');
         setStock('');
         setIsBestseller(false);
         setImagePreview(null);
       }
     }
-  }, [isOpen, itemToEdit]);
+  }, [isOpen, itemToEdit, categories]);
 
   if (!isOpen) return null;
 
@@ -85,20 +83,19 @@ const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({ isOpen, onClose, on
   };
   
   const handleSave = () => {
-      // Basic validation
       if (!name || !price || !category) {
           alert('Vui lòng điền các trường bắt buộc: Tên món, Giá, và Phân loại.');
           return;
       }
       onSave({ 
-        ...(itemToEdit || {}), // Keep original data like ID if editing
+        ...(itemToEdit || {}),
         name, 
         description, 
         price, 
         discountPrice, 
         category, 
         stock, 
-        isBestseller, 
+        bestseller: isBestseller,
         image: imagePreview 
       });
   };
@@ -145,7 +142,7 @@ const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({ isOpen, onClose, on
                                 <div className="flex text-sm text-gray-600">
                                     <p className="pl-1">Nhấn để tải ảnh lên</p>
                                 </div>
-                                <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                                <p className="text-xs text-gray-500">PNG, JPG, GIF</p>
                             </>
                         )}
                     </div>
@@ -180,11 +177,9 @@ const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({ isOpen, onClose, on
                     <div>
                         <label htmlFor="item-category" className="block text-sm font-medium text-gray-700">Phân loại <span className="text-red-500">*</span></label>
                         <select id="item-category" value={category} onChange={e => setCategory(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm">
-                            <option>Ăn trưa</option>
-                            <option>Ăn vặt</option>
-                            <option>Món chính</option>
-                            <option>Tráng miệng</option>
-                            <option>Đồ uống</option>
+                            {[...categories, 'Món mới'].filter((v, i, a) => a.indexOf(v) === i).map(cat => (
+                                <option key={cat} value={cat}>{cat}</option>
+                            ))}
                         </select>
                     </div>
                     <div>
