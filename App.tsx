@@ -11,6 +11,7 @@ import CheckoutPage from './pages/CheckoutPage';
 import OrderTrackingPage from './pages/OrderTrackingPage';
 import RestaurantOrdersPage from './pages/RestaurantOrdersPage';
 import RestaurantDashboardPage from './pages/DashboardPage';
+import PromotionsPage from './pages/PromotionsPage';
 
 const App: React.FC = () => {
   return (
@@ -31,6 +32,7 @@ const App: React.FC = () => {
         <Route path="dashboard" element={<RestaurantDashboardPage />} />
         <Route path="store" element={<StorePage />} />
         <Route path="orders" element={<RestaurantOrdersPage />} />
+        <Route path="promotions" element={<PromotionsPage />} />
         {/* Add other restaurant routes here, e.g., menu, orders */}
       </Route>
        {/* You can add routes for /admin, /seller, /shipper later */}

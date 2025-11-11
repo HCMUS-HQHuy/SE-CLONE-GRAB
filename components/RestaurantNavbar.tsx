@@ -73,6 +73,13 @@ const RestaurantNavbar: React.FC = () => {
               >
                 Đơn hàng
               </NavLink>
+              <NavLink 
+                to="/restaurant/promotions" 
+                className="text-gray-500 hover:text-orange-500 px-3 py-2 rounded-md text-sm font-medium transition"
+                style={({ isActive }) => isActive ? activeLinkStyle : undefined}
+              >
+                Ưu đãi
+              </NavLink>
             </nav>
           </div>
 
