@@ -14,6 +14,8 @@ import RestaurantDashboardPage from './pages/DashboardPage';
 import PromotionsPage from './pages/PromotionsPage';
 import ShipperLayout from './layouts/ShipperLayout';
 import ShipperProfilePage from './pages/ShipperProfilePage';
+import ShipperOrdersPage from './pages/ShipperOrdersPage';
+import ShipperNotificationsPage from './pages/ShipperNotificationsPage';
 
 const App: React.FC = () => {
   return (
@@ -40,7 +42,8 @@ const App: React.FC = () => {
        <Route path="/shipper" element={<ShipperLayout />}>
         <Route index element={<Navigate to="profile" replace />} />
         <Route path="profile" element={<ShipperProfilePage />} />
-        {/* Add other shipper routes here, e.g., orders */}
+        <Route path="orders" element={<ShipperOrdersPage />} />
+        <Route path="notifications" element={<ShipperNotificationsPage />} />
       </Route>
     </Routes>
   );

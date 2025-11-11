@@ -276,3 +276,9 @@ export const ThumbUpIcon: React.FC<IconProps> = ({ className }) => (
     <path strokeLinecap="round" strokeLinejoin="round" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.085a2 2 0 00-1.736.97l-2.074 4.148a2 2 0 00-.326 1.078V14m7-4h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
   </svg>
 );
+
+export const MailOpenIcon: React.FC<IconProps> = ({ className }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M3 19v-8.93a2 2 0 01.89-1.664l7.45-6.386a2 2 0 012.32 0l7.45 6.386A2 2 0 0121 10.07V19M3 19a2 2 0 002 2h14a2 2 0 002-2M3 19l6.75-5.75M21 19l-6.75-5.75M12 12l-4-4m4 4l4-4" />
+  </svg>
+);
