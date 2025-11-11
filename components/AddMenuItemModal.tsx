@@ -6,7 +6,7 @@ type AddMenuItemModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onSave: (newItem: any) => void;
-  itemToEdit?: FoodItem | null;
+  itemToEdit?: (FoodItem & { category?: string }) | null;
 };
 
 const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({ isOpen, onClose, onSave, itemToEdit }) => {
@@ -53,8 +53,7 @@ const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({ isOpen, onClose, on
         
         setIsBestseller(itemToEdit.bestseller);
         setImagePreview(itemToEdit.image || null);
-        // Reset fields not present in FoodItem for simplicity in this prototype
-        setCategory('Ăn trưa');
+        setCategory(itemToEdit.category || 'Ăn trưa');
         setStock('');
 
       } else {
@@ -180,10 +179,9 @@ const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({ isOpen, onClose, on
                     <div>
                         <label htmlFor="item-category" className="block text-sm font-medium text-gray-700">Phân loại <span className="text-red-500">*</span></label>
                         <select id="item-category" value={category} onChange={e => setCategory(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm">
+                            <option>🔥 Đại hạ giá</option>
                             <option>Ăn trưa</option>
                             <option>Ăn vặt</option>
-                            <option>Món chính</option>
-                            <option>Tráng miệng</option>
                             <option>Đồ uống</option>
                         </select>
                     </div>
