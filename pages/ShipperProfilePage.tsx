@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { UserIcon, PhoneIcon, PencilIcon, UploadIcon, StarIcon, ShieldCheckIcon, IdentificationIcon, CheckCircleIcon, XCircleIcon } from '../components/Icons';
+import { UserIcon, PhoneIcon, PencilIcon, UploadIcon, StarIcon, ShieldCheckIcon, IdentificationIcon, CheckCircleIcon, XCircleIcon, LightningBoltIcon, CalendarIcon, ThumbUpIcon } from '../components/Icons';
 
 // Mock data for the shipper
 const mockShipper = {
@@ -25,6 +25,19 @@ const ratingData = {
         { stars: 1, count: 3 },
     ],
 };
+
+const mockBadges = [
+    { icon: <LightningBoltIcon className="h-6 w-6 text-yellow-500"/>, text: 'Giao hàng thần tốc' },
+    { icon: <ThumbUpIcon className="h-6 w-6 text-blue-500"/>, text: 'Tài xế thân thiện' },
+    { icon: <CalendarIcon className="h-6 w-6 text-green-500"/>, text: 'Đối tác 1 năm+' },
+    { icon: <CheckCircleIcon className="h-6 w-6 text-purple-500"/>, text: 'Không hủy đơn' },
+];
+
+const mockRecentComments = [
+    { author: 'Nguyễn V.', rating: 5, comment: 'Tài xế rất nhiệt tình và giao hàng nhanh chóng. 5 sao!' },
+    { author: 'Trần T.', rating: 5, comment: 'Anh tài xế cẩn thận, đồ ăn của mình còn nóng hổi. Cảm ơn nhiều.' },
+    { author: 'Lê P.', rating: 4, comment: 'Giao hàng đúng giờ, rất chuyên nghiệp.' },
+];
 
 const HeaderStat: React.FC<{ icon: React.ReactNode; title: string; value: string | number; }> = ({ icon, title, value }) => (
     <div className="text-center p-3 rounded-lg hover:bg-gray-50 transition-colors">
@@ -63,6 +76,41 @@ const RatingBreakdown: React.FC = () => (
                     </div>
                 ))}
             </div>
+        </div>
+    </div>
+);
+
+const ShipperBadges: React.FC = () => (
+    <div className="bg-white p-6 rounded-lg shadow-md border">
+        <h3 className="text-xl font-semibold text-gray-800 mb-4">Huy hiệu & Thành tích</h3>
+        <div className="grid grid-cols-2 gap-4">
+            {mockBadges.map((badge, index) => (
+                <div key={index} className="bg-gray-50 p-3 rounded-lg flex items-center space-x-3">
+                    <div className="flex-shrink-0">{badge.icon}</div>
+                    <p className="text-sm font-medium text-gray-700">{badge.text}</p>
+                </div>
+            ))}
+        </div>
+    </div>
+);
+
+const RecentComments: React.FC = () => (
+    <div className="bg-white p-6 rounded-lg shadow-md border">
+        <h3 className="text-xl font-semibold text-gray-800 mb-4">Khách hàng nói gì</h3>
+        <div className="space-y-4">
+            {mockRecentComments.map((review, index) => (
+                <div key={index} className="border-b border-gray-100 pb-3 last:border-b-0 last:pb-0">
+                    <div className="flex justify-between items-center mb-1">
+                        <p className="text-sm font-semibold text-gray-800">{review.author}</p>
+                        <div className="flex items-center">
+                            {[...Array(5)].map((_, i) => (
+                                <StarIcon key={i} className={`w-3.5 h-3.5 ${i < review.rating ? 'text-yellow-400' : 'text-gray-300'}`} />
+                            ))}
+                        </div>
+                    </div>
+                    <p className="text-sm text-gray-600 italic">"{review.comment}"</p>
+                </div>
+            ))}
         </div>
     </div>
 );
@@ -177,9 +225,11 @@ const ShipperProfilePage: React.FC = () => {
                     )}
                 </div>
 
-                {/* Right side - Rating Breakdown */}
-                <div className="lg:col-span-1">
+                {/* Right side - Stats & Info */}
+                <div className="lg:col-span-1 space-y-8">
                     <RatingBreakdown />
+                    <ShipperBadges />
+                    <RecentComments />
                 </div>
             </div>
         </div>

@@ -258,3 +258,21 @@ export const IdentificationIcon: React.FC<IconProps> = ({ className }) => (
         <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 012-2h2a2 2 0 012 2v1m-4 0h4m-4 0a2 2 0 100 4 2 2 0 000-4zm-2 8a2 2 0 11-4 0 2 2 0 014 0z" />
     </svg>
 );
+
+export const LightningBoltIcon: React.FC<IconProps> = ({ className }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+  </svg>
+);
+
+export const CalendarIcon: React.FC<IconProps> = ({ className }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+  </svg>
+);
+
+export const ThumbUpIcon: React.FC<IconProps> = ({ className }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.085a2 2 0 00-1.736.97l-2.074 4.148a2 2 0 00-.326 1.078V14m7-4h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+  </svg>
+);
