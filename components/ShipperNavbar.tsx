@@ -55,6 +55,13 @@ const ShipperNavbar: React.FC = () => {
               >
                 Đơn hàng
               </NavLink>
+              <NavLink 
+                to="/shipper/history" 
+                className="text-gray-500 hover:text-orange-500 px-3 py-2 rounded-md text-sm font-medium transition"
+                style={({ isActive }) => isActive ? activeLinkStyle : undefined}
+              >
+                Lịch sử
+              </NavLink>
                <NavLink 
                 to="/shipper/notifications" 
                 className="text-gray-500 hover:text-orange-500 px-3 py-2 rounded-md text-sm font-medium transition"

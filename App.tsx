@@ -16,6 +16,7 @@ import ShipperLayout from './layouts/ShipperLayout';
 import ShipperProfilePage from './pages/ShipperProfilePage';
 import ShipperOrdersPage from './pages/ShipperOrdersPage';
 import ShipperNotificationsPage from './pages/ShipperNotificationsPage';
+import ShipperHistoryPage from './pages/ShipperHistoryPage';
 
 const App: React.FC = () => {
   return (
@@ -43,6 +44,7 @@ const App: React.FC = () => {
         <Route index element={<Navigate to="profile" replace />} />
         <Route path="profile" element={<ShipperProfilePage />} />
         <Route path="orders" element={<ShipperOrdersPage />} />
+        <Route path="history" element={<ShipperHistoryPage />} />
         <Route path="notifications" element={<ShipperNotificationsPage />} />
       </Route>
     </Routes>
