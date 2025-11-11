@@ -13,7 +13,7 @@ const restaurantData: Restaurant = restaurants.find(r => r.id === '1001')!;
 // Custom toggle switch component
 const ToggleSwitch: React.FC<{ checked: boolean; onChange: () => void; }> = ({ checked, onChange }) => (
     <button
-        onClick={onChange}
+        onClick={(e) => { e.stopPropagation(); onChange(); }}
         role="switch"
         aria-checked={checked}
         className={`relative inline-flex h-5 w-10 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 ${checked ? 'bg-green-500' : 'bg-gray-300'}`}
@@ -24,13 +24,20 @@ const ToggleSwitch: React.FC<{ checked: boolean; onChange: () => void; }> = ({ c
 
 // Card for managing menu items
 const MenuItemCard: React.FC<{ item: FoodItem; onEdit: () => void; onDelete: () => void; onToggle: () => void; }> = ({ item, onEdit, onDelete, onToggle }) => (
-    <div className={`bg-white rounded-lg shadow-md border overflow-hidden flex flex-col h-full transition-all duration-300 hover:shadow-xl hover:border-orange-300 ${!item.isAvailable ? 'opacity-60' : ''}`}>
+    <div className="bg-white rounded-lg shadow-md border overflow-hidden flex flex-col h-full transition-all duration-300 hover:shadow-xl hover:border-orange-300">
         <div className="relative w-full h-32 bg-gray-100">
             {item.image ? (
-                <img className="h-full w-full object-cover" src={item.image} alt={item.name} />
+                <img className={`h-full w-full object-cover ${!item.isAvailable ? 'filter grayscale' : ''}`} src={item.image} alt={item.name} />
             ) : (
-                <div className="h-full w-full flex items-center justify-center">
+                <div className={`h-full w-full flex items-center justify-center ${!item.isAvailable ? 'filter grayscale' : ''}`}>
                     <ImageIcon className="h-12 w-12 text-gray-400" />
+                </div>
+            )}
+             {!item.isAvailable && (
+                <div className="absolute inset-0 bg-white bg-opacity-50 flex items-center justify-center">
+                    <span className="border-2 border-red-500 text-red-500 font-bold uppercase px-4 py-2 rounded transform -rotate-12 text-lg">
+                        Hết hàng
+                    </span>
                 </div>
             )}
             {item.bestseller && (
