@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, NavLink } from 'react-router-dom';
-import { UserIcon } from './Icons';
+import { UserIcon, BellIcon } from './Icons';
 
 const RestaurantNavbar: React.FC = () => {
   const activeLinkStyle = {
@@ -45,6 +45,10 @@ const RestaurantNavbar: React.FC = () => {
 
           {/* Right section: Profile */}
           <div className="flex items-center">
+             <button className="relative p-2 rounded-full text-gray-500 hover:text-orange-500 hover:bg-orange-50 focus:outline-none focus:bg-orange-100 transition" aria-label="Thông báo">
+                <BellIcon className="h-6 w-6" />
+                <span className="absolute top-1.5 right-1.5 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white"></span>
+            </button>
             <div className="ml-3 relative">
               <Link to="/restaurant/store" className="bg-gray-100 rounded-full flex items-center justify-center h-9 w-9 text-sm focus:outline-none ring-2 ring-offset-2 hover:ring-orange-500 transition" aria-label="Mở menu người dùng">
                 <UserIcon className="h-5 w-5 text-gray-500" />
