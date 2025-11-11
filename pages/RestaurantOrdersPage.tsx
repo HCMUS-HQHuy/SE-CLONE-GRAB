@@ -73,6 +73,55 @@ const mockOrders: Order[] = [
     status: 'Đã hủy',
     createdAt: '2024-07-29T12:00:00Z',
   },
+    {
+    id: '#12350',
+    customerName: 'Trần Thị B',
+    address: '456 Đường XYZ, Q3, TPHCM',
+    items: [{ name: 'Pizza Hải Sản', quantity: 1, price: 119000 }],
+    total: 119000,
+    status: 'Đang chuẩn bị',
+    createdAt: '2024-07-30T10:25:00Z',
+  },
+    {
+    id: '#12351',
+    customerName: 'Lê Văn C',
+    address: '789 Đường LMN, Q7, TPHCM',
+    items: [
+        { name: 'Miến xào lòng gà', quantity: 1, price: 35000 },
+        { name: 'Nem chua rán', quantity: 2, price: 30000 },
+    ],
+    total: 95000,
+    status: 'Sẵn sàng giao',
+    createdAt: '2024-07-30T10:15:00Z',
+  },
+   {
+    id: '#12352',
+    customerName: 'Phạm Thị D',
+    address: '101 Đường OPQ, Bình Thạnh, TPHCM',
+    items: [{ name: 'Cơm tấm sườn bì chả', quantity: 1, price: 35000 }],
+    total: 35000,
+    status: 'Hoàn thành',
+    createdAt: '2024-07-30T02:30:00Z',
+  },
+   {
+    id: '#12353',
+    customerName: 'Võ Văn E',
+    address: '222 Đường UVW, Q2, TPHCM',
+    items: [{ name: 'Pizza Hải Sản', quantity: 1, price: 119000 }],
+    total: 119000,
+    status: 'Đã hủy',
+    createdAt: '2024-07-29T12:00:00Z',
+  },
+  
+   {
+    id: '#12354',
+    customerName: 'Võ Văn E',
+    address: '222 Đường UVW, Q2, TPHCM',
+    items: [{ name: 'Pizza Hải Sản', quantity: 1, price: 119000 }],
+    total: 119000,
+    status: 'Đã hủy',
+    createdAt: '2024-07-29T12:00:00Z',
+  },
 ];
 
 
