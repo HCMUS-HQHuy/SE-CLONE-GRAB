@@ -50,67 +50,68 @@ const HeaderStat: React.FC<{ icon: React.ReactNode; title: string; value: string
 );
 
 
-const RatingBreakdown: React.FC = () => (
+const PerformanceAnalysisCard: React.FC = () => (
     <div className="bg-white p-6 rounded-lg shadow-md border h-full">
-        <h3 className="text-xl font-semibold text-gray-800 mb-4">Phân tích đánh giá</h3>
-        <div className="flex justify-between items-baseline text-xs text-gray-500 mb-4">
-            <p>Từ 100 chuyến xe gần nhất</p>
-            <p>Cập nhật 6 giờ trước</p>
-        </div>
-        <div className="flex items-center">
-            <div className="text-center pr-6 border-r mr-6">
-                <p className="text-4xl font-bold text-gray-800">{ratingData.average.toFixed(2)}</p>
-                <p className="text-sm text-gray-500">Tỷ lệ</p>
+        {/* Rating Breakdown Section */}
+        <div>
+            <h3 className="text-xl font-semibold text-gray-800 mb-4">Phân tích đánh giá</h3>
+            <div className="flex justify-between items-baseline text-xs text-gray-500 mb-4">
+                <p>Từ 100 chuyến xe gần nhất</p>
+                <p>Cập nhật 6 giờ trước</p>
             </div>
-            <div className="flex-grow space-y-1">
-                {ratingData.breakdown.map(({ stars, count }) => (
-                    <div key={stars} className="flex items-center">
-                        <span className="text-sm font-medium text-gray-600 w-3 text-center mr-2">{stars}</span>
-                        <div className="w-full bg-gray-200 rounded-full h-1.5">
-                            <div 
-                                className="bg-orange-400 h-1.5 rounded-full" 
-                                style={{ width: `${(count / ratingData.totalReviews) * 100}%` }}
-                            ></div>
+            <div className="flex items-center">
+                <div className="text-center pr-6 border-r mr-6">
+                    <p className="text-4xl font-bold text-gray-800">{ratingData.average.toFixed(2)}</p>
+                    <p className="text-sm text-gray-500">Tỷ lệ</p>
+                </div>
+                <div className="flex-grow space-y-1">
+                    {ratingData.breakdown.map(({ stars, count }) => (
+                        <div key={stars} className="flex items-center">
+                            <span className="text-sm font-medium text-gray-600 w-3 text-center mr-2">{stars}</span>
+                            <div className="w-full bg-gray-200 rounded-full h-1.5">
+                                <div 
+                                    className="bg-orange-400 h-1.5 rounded-full" 
+                                    style={{ width: `${(count / ratingData.totalReviews) * 100}%` }}
+                                ></div>
+                            </div>
+                            <span className="text-sm text-gray-600 ml-2 w-6 text-right">{count}</span>
                         </div>
-                        <span className="text-sm text-gray-600 ml-2 w-6 text-right">{count}</span>
+                    ))}
+                </div>
+            </div>
+        </div>
+
+        {/* Badges Section */}
+        <div className="border-t pt-6 mt-6">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4">Huy hiệu & Thành tích</h3>
+            <div className="grid grid-cols-2 gap-4">
+                {mockBadges.map((badge, index) => (
+                    <div key={index} className="bg-gray-50 p-3 rounded-lg flex items-center space-x-3">
+                        <div className="flex-shrink-0">{badge.icon}</div>
+                        <p className="text-sm font-medium text-gray-700">{badge.text}</p>
                     </div>
                 ))}
             </div>
         </div>
-    </div>
-);
-
-const ShipperBadges: React.FC = () => (
-    <div className="bg-white p-6 rounded-lg shadow-md border">
-        <h3 className="text-xl font-semibold text-gray-800 mb-4">Huy hiệu & Thành tích</h3>
-        <div className="grid grid-cols-2 gap-4">
-            {mockBadges.map((badge, index) => (
-                <div key={index} className="bg-gray-50 p-3 rounded-lg flex items-center space-x-3">
-                    <div className="flex-shrink-0">{badge.icon}</div>
-                    <p className="text-sm font-medium text-gray-700">{badge.text}</p>
-                </div>
-            ))}
-        </div>
-    </div>
-);
-
-const RecentComments: React.FC = () => (
-    <div className="bg-white p-6 rounded-lg shadow-md border">
-        <h3 className="text-xl font-semibold text-gray-800 mb-4">Khách hàng nói gì</h3>
-        <div className="space-y-4">
-            {mockRecentComments.map((review, index) => (
-                <div key={index} className="border-b border-gray-100 pb-3 last:border-b-0 last:pb-0">
-                    <div className="flex justify-between items-center mb-1">
-                        <p className="text-sm font-semibold text-gray-800">{review.author}</p>
-                        <div className="flex items-center">
-                            {[...Array(5)].map((_, i) => (
-                                <StarIcon key={i} className={`w-3.5 h-3.5 ${i < review.rating ? 'text-yellow-400' : 'text-gray-300'}`} />
-                            ))}
+        
+        {/* Recent Comments Section */}
+        <div className="border-t pt-6 mt-6">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4">Khách hàng nói gì</h3>
+            <div className="space-y-4">
+                {mockRecentComments.map((review, index) => (
+                    <div key={index} className="border-b border-gray-100 pb-3 last:border-b-0 last:pb-0">
+                        <div className="flex justify-between items-center mb-1">
+                            <p className="text-sm font-semibold text-gray-800">{review.author}</p>
+                            <div className="flex items-center">
+                                {[...Array(5)].map((_, i) => (
+                                    <StarIcon key={i} className={`w-3.5 h-3.5 ${i < review.rating ? 'text-yellow-400' : 'text-gray-300'}`} />
+                                ))}
+                            </div>
                         </div>
+                        <p className="text-sm text-gray-600 italic">"{review.comment}"</p>
                     </div>
-                    <p className="text-sm text-gray-600 italic">"{review.comment}"</p>
-                </div>
-            ))}
+                ))}
+            </div>
         </div>
     </div>
 );
@@ -226,10 +227,8 @@ const ShipperProfilePage: React.FC = () => {
                 </div>
 
                 {/* Right side - Stats & Info */}
-                <div className="lg:col-span-1 space-y-8">
-                    <RatingBreakdown />
-                    <ShipperBadges />
-                    <RecentComments />
+                <div className="lg:col-span-1">
+                    <PerformanceAnalysisCard />
                 </div>
             </div>
         </div>
