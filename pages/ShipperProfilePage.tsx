@@ -14,6 +14,18 @@ const mockShipper = {
     cancellationRate: 2.5,
 };
 
+const ratingData = {
+    average: 4.85,
+    totalReviews: 102,
+    breakdown: [
+        { stars: 5, count: 76 },
+        { stars: 4, count: 16 },
+        { stars: 3, count: 2 },
+        { stars: 2, count: 5 },
+        { stars: 1, count: 3 },
+    ],
+};
+
 // Stat card component
 const StatCard: React.FC<{ icon: React.ReactNode; title: string; value: string | number; }> = ({ icon, title, value }) => (
     <div className="flex items-center p-3 bg-gray-50 rounded-lg">
@@ -23,6 +35,35 @@ const StatCard: React.FC<{ icon: React.ReactNode; title: string; value: string |
         <div className="ml-3">
             <p className="text-sm text-gray-600">{title}</p>
             <p className="text-lg font-bold text-gray-900">{value}</p>
+        </div>
+    </div>
+);
+
+const RatingBreakdown: React.FC = () => (
+    <div className="bg-white p-6 rounded-lg shadow-md border">
+        <div className="flex justify-between items-baseline text-xs text-gray-500 mb-4">
+            <p>Từ 100 chuyến xe gần nhất</p>
+            <p>Cập nhật 6 giờ trước</p>
+        </div>
+        <div className="flex items-center">
+            <div className="text-center pr-6 border-r mr-6">
+                <p className="text-4xl font-bold text-gray-800">{ratingData.average.toFixed(2)}</p>
+                <p className="text-sm text-gray-500">Tỷ lệ</p>
+            </div>
+            <div className="flex-grow space-y-1">
+                {ratingData.breakdown.map(({ stars, count }) => (
+                    <div key={stars} className="flex items-center">
+                        <span className="text-sm font-medium text-gray-600 w-3 text-center mr-2">{stars}</span>
+                        <div className="w-full bg-gray-200 rounded-full h-1.5">
+                            <div 
+                                className="bg-orange-400 h-1.5 rounded-full" 
+                                style={{ width: `${(count / ratingData.totalReviews) * 100}%` }}
+                            ></div>
+                        </div>
+                        <span className="text-sm text-gray-600 ml-2 w-6 text-right">{count}</span>
+                    </div>
+                ))}
+            </div>
         </div>
     </div>
 );
@@ -137,6 +178,9 @@ const ShipperProfilePage: React.FC = () => {
                             <StatCard icon={<XCircleIcon className="h-6 w-6"/>} title="Tỉ lệ hủy" value={`${shipper.cancellationRate}%`} />
                         </div>
                     </div>
+                    
+                    {/* Rating Breakdown */}
+                    <RatingBreakdown />
                 </div>
             </div>
         </div>
