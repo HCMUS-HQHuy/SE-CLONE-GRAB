@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { ClockIcon, CheckCircleIcon, XCircleIcon, TruckIcon } from '../components/Icons';
+import React, { useState, useMemo, useEffect } from 'react';
+import { ClockIcon, CheckCircleIcon, XCircleIcon, TruckIcon, ChevronLeftIcon, ChevronRightIcon } from '../components/Icons';
 import OrderDetailModal from '../components/OrderDetailModal';
 
 type OrderStatus = 'Mới' | 'Đang chuẩn bị' | 'Sẵn sàng giao' | 'Hoàn thành' | 'Đã hủy';
@@ -236,8 +236,14 @@ const RestaurantOrdersPage: React.FC = () => {
     const [orders, setOrders] = useState<Order[]>(mockOrders);
     const [activeTab, setActiveTab] = useState('Tất cả');
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 9;
     
     const tabs = ['Tất cả', 'Mới', 'Đang chuẩn bị', 'Sẵn sàng giao', 'Hoàn thành'];
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [activeTab]);
 
     const handleUpdateStatus = (orderId: string, newStatus: OrderStatus) => {
         setOrders(prevOrders => 
@@ -268,6 +274,13 @@ const RestaurantOrdersPage: React.FC = () => {
             .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     }, [orders, activeTab]);
 
+    const totalPages = Math.ceil(filteredOrders.length / ITEMS_PER_PAGE);
+
+    const paginatedOrders = useMemo(() => {
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+        return filteredOrders.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    }, [filteredOrders, currentPage]);
+
     return (
         <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-6">Đơn hàng</h1>
@@ -292,9 +305,9 @@ const RestaurantOrdersPage: React.FC = () => {
             </div>
             
             {/* Orders List */}
-            {filteredOrders.length > 0 ? (
+            {paginatedOrders.length > 0 ? (
                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredOrders.map(order => (
+                    {paginatedOrders.map(order => (
                         <OrderCard 
                           key={order.id} 
                           order={order} 
@@ -307,6 +320,43 @@ const RestaurantOrdersPage: React.FC = () => {
                 <div className="text-center py-16 px-4 bg-white rounded-lg shadow-sm border">
                     <h3 className="text-lg font-semibold text-gray-700">Không có đơn hàng nào</h3>
                     <p className="text-gray-500 mt-1">Hiện tại không có đơn hàng nào trong mục này.</p>
+                </div>
+            )}
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+                <div className="mt-8 flex justify-center items-center space-x-1">
+                    <button
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                        className="p-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+                        aria-label="Previous Page"
+                    >
+                        <ChevronLeftIcon className="h-5 w-5" />
+                    </button>
+                    
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNumber => (
+                        <button
+                            key={pageNumber}
+                            onClick={() => setCurrentPage(pageNumber)}
+                            className={`px-3 py-1 rounded-md text-sm font-medium ${
+                                currentPage === pageNumber 
+                                ? 'bg-orange-500 text-white' 
+                                : 'bg-white text-gray-700 hover:bg-gray-100'
+                            }`}
+                        >
+                            {pageNumber}
+                        </button>
+                    ))}
+
+                    <button
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                        className="p-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+                        aria-label="Next Page"
+                    >
+                        <ChevronRightIcon className="h-5 w-5" />
+                    </button>
                 </div>
             )}
 
