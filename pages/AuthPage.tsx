@@ -1,8 +1,15 @@
 import React, { useState } from 'react';
 import { MailIcon, LockIcon, UserIcon, GoogleIcon, FacebookIcon } from '../components/Icons';
+import ForgotPasswordModal from '../components/ForgotPasswordModal';
 
 const AuthPage: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
+
+  const handleForgotPasswordSuccess = () => {
+    setIsForgotPasswordOpen(false);
+    setIsLogin(true);
+  };
 
   const AuthFormHeader: React.FC = () => (
     <div className="text-center mb-8">
@@ -78,7 +85,7 @@ const AuthPage: React.FC = () => {
           <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">Ghi nhớ tôi</label>
         </div>
         <div className="text-sm">
-          <a href="#" className="font-medium text-orange-600 hover:text-orange-500">Quên mật khẩu?</a>
+          <button type="button" onClick={() => setIsForgotPasswordOpen(true)} className="font-medium text-orange-600 hover:text-orange-500">Quên mật khẩu?</button>
         </div>
       </div>
       <div>
@@ -168,15 +175,22 @@ const AuthPage: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 bg-cover bg-center" style={{backgroundImage: "url('https://picsum.photos/1920/1080?food,delivery')"}}>
-      <div className="absolute inset-0 bg-black opacity-50"></div>
-      <div className="relative w-full max-w-md bg-slate-50 rounded-xl shadow-2xl p-8 space-y-8 transition-all duration-500">
-        <AuthFormHeader />
-        <AuthFormToggle />
-        {isLogin ? <LoginForm /> : <SignupForm />}
-        <SocialLogin />
+    <>
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 bg-cover bg-center" style={{backgroundImage: "url('https://picsum.photos/1920/1080?food,delivery')"}}>
+        <div className="absolute inset-0 bg-black opacity-50"></div>
+        <div className="relative w-full max-w-md bg-slate-50 rounded-xl shadow-2xl p-8 space-y-8 transition-all duration-500">
+          <AuthFormHeader />
+          <AuthFormToggle />
+          {isLogin ? <LoginForm /> : <SignupForm />}
+          <SocialLogin />
+        </div>
       </div>
-    </div>
+      <ForgotPasswordModal 
+        isOpen={isForgotPasswordOpen} 
+        onClose={() => setIsForgotPasswordOpen(false)}
+        onSuccess={handleForgotPasswordSuccess}
+      />
+    </>
   );
 };
 
