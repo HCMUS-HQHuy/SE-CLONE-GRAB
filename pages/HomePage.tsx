@@ -163,7 +163,7 @@ export const foodCategories: { name: string; items: Omit<FoodItem, 'distance' | 
       { id: 9, name: 'Bún bò Huế', description: 'Bún bò cay nồng, đậm đà hương vị cố đô.', oldPrice: '50.000đ', newPrice: '40.000đ', image: 'https://i.ytimg.com/vi/A_o2qfaTgKs/maxresdefault.jpg', bestseller: true, restaurantId: '1003', isAvailable: true },
       { id: 10, name: 'Combo Gà Rán', description: '2 miếng gà giòn tan, khoai tây chiên và nước ngọt.', oldPrice: '85.000đ', newPrice: '69.000đ', image: 'https://images.unsplash.com/photo-1562967914-608f82629710?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80', bestseller: false, restaurantId: '1005', isAvailable: true },
       { id: 17, name: 'Cá hồi nướng măng tây', description: 'Cá hồi nướng ăn kèm măng tây, món ăn bổ dưỡng và ngon miệng.', oldPrice: '135.000đ', newPrice: '120.000đ', image: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80', bestseller: true, restaurantId: '1004', isAvailable: true },
-      { id: 18, name: 'Pizza Hải Sản', description: 'Pizza đế mỏng giòn với hải sản tươi ngon và phô mai.', oldPrice: '150.000đ', newPrice: '119.000đ', image: '', bestseller: false, restaurantId: '1001', isAvailable: true },
+      { id: 18, name: 'Pizza Hải Sản', description: 'Pizza đế mỏng giòn với hải sản tươi ngon và phô mai.', oldPrice: '150.000đ', newPrice: '119.000đ', image: 'https://img.lazcdn.com/g/ff/kf/S0da19c9c16194ced8c8b846f6aafffd6V.jpg_720x720q80.jpg', bestseller: false, restaurantId: '1001', isAvailable: true },
       { id: 19, name: 'Lẩu Thái Tom Yum', description: 'Lẩu thái chua cay đậm đà với hải sản, nấm và rau.', oldPrice: '250.000đ', newPrice: '199.000đ', image: '', bestseller: true, restaurantId: '1005', isAvailable: true },
     ]
   },
@@ -172,7 +172,7 @@ export const foodCategories: { name: string; items: Omit<FoodItem, 'distance' | 
     items: [
        { id: 3, name: 'Bánh tráng trộn Sài Gòn', description: 'Đầy đủ topping: xoài, trứng cút, bò khô, rau răm...', price: '25.000đ', image: 'https://cdn.xanhsm.com/2025/01/1b04f701-banh-trang-tron-sai-gon-1.jpg', bestseller: true, restaurantId: '1002', isAvailable: true },
        { id: 4, name: 'Gỏi cuốn tôm thịt', description: 'Tôm, thịt, bún, rau sống tươi ngon cuốn trong bánh tráng.', price: '30.000đ', image: 'https://cdn.tgdd.vn/2021/08/CookRecipe/Avatar/goi-cuon-tom-thit-thumbnail-1.jpg', bestseller: false, restaurantId: '1003', isAvailable: true },
-       { id: 11, name: 'Nem chua rán', description: 'Nem chua rán nóng giòn, chấm cùng tương ớt cay cay.', price: '30.000đ', image: '', bestseller: true, restaurantId: '1001', isAvailable: true },
+       { id: 11, name: 'Nem chua rán', description: 'Nem chua rán nóng giòn, chấm cùng tương ớt cay cay.', price: '30.000đ', image: 'https://cdn2.fptshop.com.vn/unsafe/1920x0/filters:format(webp):quality(75)/2023_10_10_638325283829511738_nem-chua-ran.jpg', bestseller: true, restaurantId: '1001', isAvailable: true },
        { id: 12, name: 'Chè khúc bạch', description: 'Chè thanh mát với khúc bạch phô mai, nhãn và hạnh nhân.', price: '35.000đ', image: '', bestseller: false, restaurantId: '1004', isAvailable: true },
     ]
   },

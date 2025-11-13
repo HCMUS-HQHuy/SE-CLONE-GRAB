@@ -34,7 +34,6 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({ isOpen, onClo
   }, [isOpen]);
 
   useEffect(() => {
-    // FIX: Use ReturnType<typeof setTimeout> for browser compatibility instead of NodeJS.Timeout
     let timer: ReturnType<typeof setTimeout>;
     if (step === 'enter-otp' && countdown > 0) {
       timer = setTimeout(() => setCountdown(countdown - 1), 1000);
