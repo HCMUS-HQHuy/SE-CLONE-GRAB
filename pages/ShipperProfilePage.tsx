@@ -5,7 +5,6 @@ import { UserIcon, PhoneIcon, PencilIcon, UploadIcon, StarIcon, ShieldCheckIcon,
 const mockShipper = {
     name: 'Trần Văn An',
     phone: '0912 345 678',
-    avatarUrl: 'https://i.pravatar.cc/150?u=driver',
     licensePlate: '59-T1 123.45',
     vehicleImageUrl: 'https://s3.cloud.cmctelecom.vn/tinhte2/2019/07/4710186_cover_honda-wave-alpha-110cc-phien-ban-2019.jpg',
     reputationScore: 98,
@@ -139,7 +138,9 @@ const ShipperProfilePage: React.FC = () => {
                 <div className="flex flex-col sm:flex-row items-center sm:space-x-8">
                     <div className="flex-shrink-0 flex flex-col items-center text-center mb-6 sm:mb-0">
                         <div className="relative">
-                            <img className="w-24 h-24 rounded-full object-cover ring-4 ring-orange-100" src={shipper.avatarUrl} alt="Avatar" />
+                            <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center ring-4 ring-orange-100">
+                                <UserIcon className="h-16 w-16 text-gray-400" />
+                            </div>
                             {isEditing && (
                                 <button className="absolute bottom-0 right-0 bg-orange-500 p-2 rounded-full text-white hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500" aria-label="Change profile picture">
                                     <PencilIcon className="h-4 w-4" />
