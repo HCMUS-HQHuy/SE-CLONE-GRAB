@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { UserIcon, SearchIcon, HeartIcon, ShoppingCartIcon, BellIcon, DocumentTextIcon, MenuIcon, LocationMarkerIcon, PackageIcon, CheckCircleIcon, XCircleIcon } from './Icons';
+import { UserIcon, SearchIcon, HeartIcon, ShoppingCartIcon, BellIcon, DocumentTextIcon, MenuIcon, LocationMarkerIcon, PackageIcon, CheckCircleIcon, XCircleIcon, ImageIcon } from './Icons';
 import { useCart } from '../contexts/CartContext';
 import NotificationDropdown from './NotificationDropdown';
 import type { Notification } from './NotificationDropdown';
+import { restaurants, foodCategories, FoodItem, Restaurant } from '../pages/HomePage';
+
 
 type NavbarProps = {
   onCartClick: () => void;
@@ -13,6 +15,69 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
   const { items } = useCart();
   const cartItemCount = items.reduce((sum, item) => sum + item.quantity, 0);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<{ dishes: FoodItem[], restaurants: Restaurant[] }>({ dishes: [], restaurants: [] });
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  // Pre-process food items to include restaurant info for easy searching
+  const allFoodItems = useMemo(() => {
+      return foodCategories.flatMap(category =>
+          category.items.map(item => {
+              const restaurant = restaurants.find(r => r.id === item.restaurantId);
+              // Make sure to add restaurant to the item
+              return { ...item, restaurant };
+          })
+      );
+  }, []);
+
+  // Effect to perform search when query changes
+  useEffect(() => {
+    const performSearch = () => {
+        if (searchQuery.trim().length < 1) {
+            setSearchResults({ dishes: [], restaurants: [] });
+            return;
+        }
+
+        const lowercasedQuery = searchQuery.toLowerCase();
+
+        const foundDishes = allFoodItems
+            .filter(item => item.name.toLowerCase().includes(lowercasedQuery))
+            .slice(0, 4);
+
+        const foundRestaurants = restaurants
+            .filter(r => r.name.toLowerCase().includes(lowercasedQuery))
+            .slice(0, 3);
+
+        setSearchResults({ dishes: foundDishes, restaurants: foundRestaurants });
+    };
+
+    // Debounce search to avoid excessive processing
+    const handler = setTimeout(() => {
+        performSearch();
+    }, 200);
+
+    return () => clearTimeout(handler);
+  }, [searchQuery, allFoodItems]);
+
+  // Effect to handle clicks outside the search component to close the dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+        if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+            setIsSearchFocused(false);
+        }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleSearchItemClick = () => {
+    setIsSearchFocused(false);
+    setSearchQuery('');
+  };
+
+  const hasResults = searchResults.dishes.length > 0 || searchResults.restaurants.length > 0;
 
   // Mock data for user notifications
   const mockUserNotifications: Notification[] = [
@@ -44,7 +109,7 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
   ];
 
   return (
-    <header className="bg-white shadow-md sticky top-0 z-10">
+    <header className="bg-white shadow-md sticky top-0 z-20">
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           
@@ -55,9 +120,9 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
             </Link>
           </div>
 
-          {/* Center section: Search Bar */}
+          {/* Center section: Search Bar with Dropdown */}
           <div className="flex-1 flex justify-center px-2 lg:ml-6 lg:justify-center">
-            <div className="w-full max-w-3xl">
+            <div ref={searchContainerRef} className="w-full max-w-3xl relative">
               <div className="flex items-center w-full bg-gray-100 rounded-full border border-gray-200 focus-within:ring-2 focus-within:ring-orange-400 focus-within:border-orange-400 focus-within:bg-white transition-all duration-300">
                 {/* Location Part */}
                 <div className="flex items-center pl-4 pr-2 py-1 flex-shrink-0 cursor-pointer group">
@@ -79,12 +144,79 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
                   <input
                     id="search"
                     className="block w-full bg-transparent py-3 pl-10 pr-4 border-none rounded-r-full leading-5 text-gray-900 placeholder-gray-500 focus:outline-none"
-                    placeholder="Bạn thèm ăn gì hôm nay?"
+                    placeholder="Tìm Bún bò Huế, Pizza..."
                     type="search"
                     name="search"
+                    autoComplete="off"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onFocus={() => setIsSearchFocused(true)}
                   />
                 </div>
               </div>
+              
+              {/* Search Results Dropdown */}
+              {isSearchFocused && searchQuery.length > 0 && (
+                <div className="absolute top-full mt-2 w-full bg-white rounded-lg shadow-2xl border border-gray-200 overflow-hidden z-30">
+                  {hasResults ? (
+                    <div>
+                      {/* Dishes Section */}
+                      {searchResults.dishes.length > 0 && (
+                        <div className="p-4">
+                          <h3 className="text-xs font-semibold text-gray-500 uppercase mb-2">Món ăn</h3>
+                          <ul className="space-y-2">
+                            {searchResults.dishes.map(dish => (
+                              <li key={`dish-${dish.id}`}>
+                                <Link to={`/user/restaurant/${dish.restaurantId}`} onClick={handleSearchItemClick} className="flex items-center p-2 rounded-md hover:bg-gray-100">
+                                  {dish.image ? (
+                                    <img src={dish.image} alt={dish.name} className="h-12 w-12 rounded-md object-cover mr-3"/>
+                                  ) : (
+                                    <div className="h-12 w-12 rounded-md bg-gray-200 flex items-center justify-center mr-3"><ImageIcon className="h-6 w-6 text-gray-400"/></div>
+                                  )}
+                                  <div className="flex-grow">
+                                    <p className="font-semibold text-sm text-gray-800">{dish.name}</p>
+                                    <p className="text-xs text-gray-500">{dish.restaurant?.name}</p>
+                                  </div>
+                                </Link>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      
+                      {/* Separator */}
+                      {searchResults.dishes.length > 0 && searchResults.restaurants.length > 0 && (
+                        <hr className="border-gray-100" />
+                      )}
+
+                      {/* Restaurants Section */}
+                      {searchResults.restaurants.length > 0 && (
+                        <div className="p-4">
+                           <h3 className="text-xs font-semibold text-gray-500 uppercase mb-2">Nhà hàng</h3>
+                           <ul className="space-y-2">
+                             {searchResults.restaurants.map(restaurant => (
+                                <li key={`res-${restaurant.id}`}>
+                                  <Link to={`/user/restaurant/${restaurant.id}`} onClick={handleSearchItemClick} className="flex items-center p-2 rounded-md hover:bg-gray-100">
+                                    <img src={restaurant.logoUrl} alt={restaurant.name} className="h-12 w-12 rounded-full object-cover mr-3"/>
+                                    <div className="flex-grow">
+                                        <p className="font-semibold text-sm text-gray-800">{restaurant.name}</p>
+                                        <p className="text-xs text-gray-500 truncate">{restaurant.address}</p>
+                                    </div>
+                                  </Link>
+                                </li>
+                             ))}
+                           </ul>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="p-6 text-center text-sm text-gray-500">
+                        <p>Không tìm thấy kết quả cho "{searchQuery}"</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
             </div>
           </div>
 
