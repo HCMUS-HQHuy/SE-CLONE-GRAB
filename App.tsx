@@ -17,6 +17,7 @@ import ShipperProfilePage from './pages/ShipperProfilePage';
 import ShipperOrdersPage from './pages/ShipperOrdersPage';
 import ShipperNotificationsPage from './pages/ShipperNotificationsPage';
 import ShipperHistoryPage from './pages/ShipperHistoryPage';
+import SupportPage from './pages/SupportPage';
 
 const App: React.FC = () => {
   return (
@@ -27,6 +28,7 @@ const App: React.FC = () => {
         <Route index element={<Navigate to="home" replace />} />
         <Route path="home" element={<HomePage />} />
         <Route path="profile" element={<UserProfile />} />
+        <Route path="support" element={<SupportPage />} />
         <Route path="restaurant/:id" element={<UserRestaurantProfilePage />} />
         <Route path="checkout" element={<CheckoutPage />} />
         <Route path="order/:orderId" element={<OrderTrackingPage />} />

@@ -1,5 +1,6 @@
 import React from 'react';
-import { UserIcon, MailIcon, PhoneIcon, HomeIcon, PencilIcon, TrashIcon, PlusIcon } from '../components/Icons';
+import { Link } from 'react-router-dom';
+import { UserIcon, MailIcon, PhoneIcon, HomeIcon, PencilIcon, TrashIcon, PlusIcon, ChatAltIcon } from '../components/Icons';
 
 const UserProfile: React.FC = () => {
   return (
@@ -100,6 +101,18 @@ const UserProfile: React.FC = () => {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Support Section */}
+      <div className="mt-8 bg-white p-6 rounded-lg shadow-md">
+        <h2 className="text-xl font-semibold text-gray-800 border-b pb-4 mb-6">Trợ giúp</h2>
+        <Link to="/user/support" className="flex items-center p-4 border rounded-md hover:bg-gray-50 transition-colors">
+            <ChatAltIcon className="h-8 w-8 text-orange-500 mr-4"/>
+            <div>
+                <p className="font-semibold text-gray-900">Hỗ trợ & Phản hồi</p>
+                <p className="text-sm text-gray-600">Gửi yêu cầu, khiếu nại hoặc góp ý cho chúng tôi.</p>
+            </div>
+        </Link>
       </div>
     </div>
   );
