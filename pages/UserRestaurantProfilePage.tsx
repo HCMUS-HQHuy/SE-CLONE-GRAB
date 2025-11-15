@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { restaurants, foodCategories, FoodItem } from './HomePage';
+import { restaurants, foodCategories, FoodItem, Review } from './HomePage';
 import { LocationMarkerIcon, PhoneIcon, ClockIcon, StarIcon, ImageIcon, ClipboardListIcon, ChatAltIcon } from '../components/Icons';
 import ProductDetailModal from '../components/ProductDetailModal';
 
@@ -44,6 +44,28 @@ const UserRestaurantProfilePage: React.FC = () => {
   const [selectedProduct, setSelectedProduct] = useState<FoodItem | null>(null);
 
   const restaurant = useMemo(() => restaurants.find(r => r.id === id), [id]);
+  const [reviews, setReviews] = useState<Review[]>(restaurant?.reviews || []);
+
+  useEffect(() => {
+    const newReviewJSON = localStorage.getItem('newReview');
+    if (newReviewJSON) {
+        const newReviewData = JSON.parse(newReviewJSON);
+        if (newReviewData.restaurantId === id) {
+            const fullReview: Review = {
+                id: Date.now(), // Create a mock ID
+                author: 'Bạn', // Mock author name for demo
+                avatarUrl: 'https://i.pravatar.cc/150?u=current_user', // Mock avatar
+                rating: newReviewData.rating,
+                comment: newReviewData.comment,
+                date: newReviewData.date,
+            };
+            setReviews(prevReviews => [fullReview, ...prevReviews]);
+            // Clear the item so it's not added again on re-render/re-visit
+            localStorage.removeItem('newReview');
+        }
+    }
+  }, [id]);
+
 
   const menuByCategory = useMemo(() => {
     if (!restaurant) return {};
@@ -160,9 +182,9 @@ const UserRestaurantProfilePage: React.FC = () => {
               </div>
               <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                 <h3 className="text-lg font-semibold text-gray-800 border-b pb-3 mb-4">Đánh giá từ khách hàng</h3>
-                {restaurant.reviews.length > 0 ? (
+                {reviews.length > 0 ? (
                   <ul className="space-y-5">
-                    {restaurant.reviews.map(review => (
+                    {reviews.map(review => (
                       <li key={review.id} className="flex items-start space-x-4">
                         <img className="h-10 w-10 rounded-full object-cover" src={review.avatarUrl} alt={review.author} />
                         <div className="flex-1">
