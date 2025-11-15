@@ -26,6 +26,9 @@ import AdminUsersPage from './pages/AdminUsersPage';
 import AdminRestaurantsPage from './pages/AdminRestaurantsPage';
 import AdminShippersPage from './pages/AdminShippersPage';
 import AdminSettingsPage from './pages/AdminSettingsPage';
+import RestaurantAuthPage from './pages/RestaurantAuthPage';
+import RestaurantPendingPage from './pages/RestaurantPendingPage';
+import RestaurantAuthGuard from './guards/RestaurantAuthGuard';
 
 const App: React.FC = () => {
   return (
@@ -43,14 +46,20 @@ const App: React.FC = () => {
         <Route path="payment/:orderId" element={<BankTransferPage />} />
         {/* Add other user routes here, e.g., orders, settings */}
       </Route>
-      <Route path="/restaurant" element={<RestaurantLayout />}>
-        <Route index element={<Navigate to="store" replace />} />
-        <Route path="dashboard" element={<RestaurantDashboardPage />} />
-        <Route path="store" element={<StorePage />} />
-        <Route path="orders" element={<RestaurantOrdersPage />} />
-        <Route path="promotions" element={<PromotionsPage />} />
-        {/* Add other restaurant routes here, e.g., menu, orders */}
+
+      {/* Restaurant Portal Routes */}
+      <Route path="/restaurant/auth" element={<RestaurantAuthPage />} />
+      <Route path="/restaurant/pending" element={<RestaurantPendingPage />} />
+      <Route element={<RestaurantAuthGuard />}>
+        <Route path="/restaurant" element={<RestaurantLayout />}>
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<RestaurantDashboardPage />} />
+          <Route path="store" element={<StorePage />} />
+          <Route path="orders" element={<RestaurantOrdersPage />} />
+          <Route path="promotions" element={<PromotionsPage />} />
+        </Route>
       </Route>
+
        <Route path="/shipper" element={<ShipperLayout />}>
         <Route index element={<Navigate to="profile" replace />} />
         <Route path="profile" element={<ShipperProfilePage />} />
