@@ -23,6 +23,7 @@ import AdminAuthPage from './pages/AdminAuthPage';
 import AdminLayout from './layouts/AdminLayout';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import AdminUsersPage from './pages/AdminUsersPage';
+import AdminRestaurantsPage from './pages/AdminRestaurantsPage';
 
 const App: React.FC = () => {
   return (
@@ -62,6 +63,7 @@ const App: React.FC = () => {
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<AdminDashboardPage />} />
         <Route path="users" element={<AdminUsersPage />} />
+        <Route path="restaurants" element={<AdminRestaurantsPage />} />
         {/* Add other admin routes here, e.g., restaurants */}
       </Route>
     </Routes>
