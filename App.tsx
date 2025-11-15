@@ -19,6 +19,9 @@ import ShipperNotificationsPage from './pages/ShipperNotificationsPage';
 import ShipperHistoryPage from './pages/ShipperHistoryPage';
 import SupportPage from './pages/SupportPage';
 import BankTransferPage from './pages/BankTransferPage';
+import AdminAuthPage from './pages/AdminAuthPage';
+import AdminLayout from './layouts/AdminLayout';
+import AdminDashboardPage from './pages/AdminDashboardPage';
 
 const App: React.FC = () => {
   return (
@@ -50,6 +53,14 @@ const App: React.FC = () => {
         <Route path="orders" element={<ShipperOrdersPage />} />
         <Route path="history" element={<ShipperHistoryPage />} />
         <Route path="notifications" element={<ShipperNotificationsPage />} />
+      </Route>
+      
+      {/* Admin Portal Routes */}
+      <Route path="/admin/login" element={<AdminAuthPage />} />
+      <Route path="/admin" element={<AdminLayout />}>
+        <Route index element={<Navigate to="dashboard" replace />} />
+        <Route path="dashboard" element={<AdminDashboardPage />} />
+        {/* Add other admin routes here, e.g., users, restaurants */}
       </Route>
     </Routes>
   );
