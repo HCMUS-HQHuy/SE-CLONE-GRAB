@@ -24,6 +24,7 @@ import AdminLayout from './layouts/AdminLayout';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import AdminUsersPage from './pages/AdminUsersPage';
 import AdminRestaurantsPage from './pages/AdminRestaurantsPage';
+import AdminShippersPage from './pages/AdminShippersPage';
 
 const App: React.FC = () => {
   return (
@@ -64,6 +65,7 @@ const App: React.FC = () => {
         <Route path="dashboard" element={<AdminDashboardPage />} />
         <Route path="users" element={<AdminUsersPage />} />
         <Route path="restaurants" element={<AdminRestaurantsPage />} />
+        <Route path="shippers" element={<AdminShippersPage />} />
         {/* Add other admin routes here, e.g., restaurants */}
       </Route>
     </Routes>
