@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserIcon, PhoneIcon, PencilIcon, UploadIcon, StarIcon, ShieldCheckIcon, IdentificationIcon, CheckCircleIcon, XCircleIcon, LightningBoltIcon, CalendarIcon, ThumbUpIcon } from '../components/Icons';
 
 // Mock data for the shipper
@@ -49,7 +49,7 @@ const HeaderStat: React.FC<{ icon: React.ReactNode; title: string; value: string
 );
 
 
-const PerformanceAnalysisCard: React.FC = () => (
+const PerformanceAnalysisCard: React.FC<{ comments: typeof mockRecentComments }> = ({ comments }) => (
     <div className="bg-white p-6 rounded-lg shadow-md border h-full">
         {/* Rating Breakdown Section */}
         <div>
@@ -97,7 +97,7 @@ const PerformanceAnalysisCard: React.FC = () => (
         <div className="border-t pt-6 mt-6">
             <h3 className="text-xl font-semibold text-gray-800 mb-4">Khách hàng nói gì</h3>
             <div className="space-y-4">
-                {mockRecentComments.map((review, index) => (
+                {comments.map((review, index) => (
                     <div key={index} className="border-b border-gray-100 pb-3 last:border-b-0 last:pb-0">
                         <div className="flex justify-between items-center mb-1">
                             <p className="text-sm font-semibold text-gray-800">{review.author}</p>
@@ -119,7 +119,28 @@ const PerformanceAnalysisCard: React.FC = () => (
 const ShipperProfilePage: React.FC = () => {
     const [shipper, setShipper] = useState(mockShipper);
     const [isEditing, setIsEditing] = useState(false);
+    const [recentComments, setRecentComments] = useState(mockRecentComments);
     
+    useEffect(() => {
+        const newReviewJSON = localStorage.getItem('newDriverReview');
+        if (newReviewJSON) {
+            const newReviewData = JSON.parse(newReviewJSON);
+            let combinedComment = '';
+            if (newReviewData.tags && newReviewData.tags.length > 0) {
+                combinedComment = newReviewData.tags.join(', ') + '. ';
+            }
+            combinedComment += newReviewData.comment;
+
+            const newComment = {
+                author: newReviewData.author || 'Khách hàng',
+                rating: newReviewData.rating,
+                comment: combinedComment.trim()
+            };
+            setRecentComments(prev => [newComment, ...prev]);
+            localStorage.removeItem('newDriverReview');
+        }
+    }, []);
+
     // In a real app, you'd handle form state changes
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -229,7 +250,7 @@ const ShipperProfilePage: React.FC = () => {
 
                 {/* Right side - Stats & Info */}
                 <div className="lg:col-span-1">
-                    <PerformanceAnalysisCard />
+                    <PerformanceAnalysisCard comments={recentComments} />
                 </div>
             </div>
         </div>

@@ -3,6 +3,7 @@ import { useLocation, useParams, Link } from 'react-router-dom';
 import { Restaurant, FoodItem } from './HomePage';
 import { HomeIcon, LocationMarkerIcon, MotorcycleIcon, ClockIcon, CheckCircleIcon } from '../components/Icons';
 import ReviewModal from '../components/ReviewModal';
+import DriverReviewModal from '../components/DriverReviewModal';
 
 type CartItem = FoodItem & { quantity: number };
 
@@ -20,14 +21,26 @@ const statuses = [
   { text: 'Giao hàng thành công!', progress: 100, time: '20 phút' }
 ];
 
+// Mock driver info, already present on the page
+const driverInfo = {
+    name: 'Trần Văn An',
+    avatar: 'https://i.pravatar.cc/150?u=driver'
+};
+
+
 const OrderTrackingPage: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
   const location = useLocation();
   const { restaurant, items, total } = (location.state as OrderState) || {};
   
   const [currentStatusIndex, setCurrentStatusIndex] = useState(0);
+  
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
+  
+  const [isDriverReviewModalOpen, setIsDriverReviewModalOpen] = useState(false);
+  const [driverReviewSubmitted, setDriverReviewSubmitted] = useState(false);
+
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -67,6 +80,18 @@ const OrderTrackingPage: React.FC = () => {
     setIsReviewModalOpen(false);
   };
 
+  const handleDriverReviewSubmit = (reviewData: { rating: number; comment: string; tags: string[] }) => {
+    console.log("Driver Review Submitted:", reviewData);
+    // Save to localStorage for the shipper profile page to pick up
+    localStorage.setItem('newDriverReview', JSON.stringify({
+        ...reviewData,
+        author: 'Bạn', // Mock author
+        date: new Date().toLocaleDateString('vi-VN')
+    }));
+    setDriverReviewSubmitted(true);
+    setIsDriverReviewModalOpen(false);
+  };
+
   const currentStatus = statuses[currentStatusIndex];
   const shipperProgress = currentStatus.progress > 30 ? (currentStatus.progress - 30) / (100 - 30) * 100 : 0;
 
@@ -75,29 +100,48 @@ const OrderTrackingPage: React.FC = () => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
   };
   
-  const renderReviewSection = () => {
+  const renderPostDeliveryActions = () => {
     if (currentStatus.progress < 100) return null;
 
-    if (reviewSubmitted) {
-        return (
-            <div className="mt-8 bg-green-50 p-6 rounded-lg border border-green-200 text-center">
-                <CheckCircleIcon className="h-12 w-12 text-green-500 mx-auto mb-3" />
-                <h3 className="text-xl font-semibold text-green-800">Cảm ơn bạn đã đánh giá!</h3>
-                <p className="text-green-700 mt-1">Ý kiến của bạn giúp chúng tôi và nhà hàng cải thiện dịch vụ.</p>
-            </div>
-        )
-    }
-
     return (
-        <div className="mt-8 bg-white p-6 rounded-lg shadow-md text-center">
-            <h3 className="text-xl font-semibold text-gray-800">Đơn hàng đã hoàn tất!</h3>
-            <p className="text-gray-600 mt-2">Vui lòng dành chút thời gian để đánh giá trải nghiệm của bạn với nhà hàng <span className="font-bold">{restaurant.name}</span>.</p>
-            <button
-                onClick={() => setIsReviewModalOpen(true)}
-                className="mt-6 inline-block bg-orange-500 text-white font-bold py-3 px-8 rounded-lg hover:bg-orange-600 transition-colors text-lg"
-            >
-                Viết đánh giá
-            </button>
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Restaurant Review Card */}
+            {reviewSubmitted ? (
+                 <div className="bg-green-50 p-6 rounded-lg border border-green-200 text-center flex flex-col justify-center">
+                    <CheckCircleIcon className="h-10 w-10 text-green-500 mx-auto mb-2" />
+                    <h3 className="text-lg font-semibold text-green-800">Cảm ơn đã đánh giá nhà hàng!</h3>
+                </div>
+            ) : (
+                <div className="bg-white p-6 rounded-lg shadow-md text-center">
+                    <h3 className="text-xl font-semibold text-gray-800">Đánh giá nhà hàng</h3>
+                    <p className="text-gray-600 mt-2">Chia sẻ cảm nhận của bạn về <span className="font-bold">{restaurant.name}</span>.</p>
+                    <button
+                        onClick={() => setIsReviewModalOpen(true)}
+                        className="mt-4 inline-block bg-orange-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-orange-600 transition-colors"
+                    >
+                        Viết đánh giá
+                    </button>
+                </div>
+            )}
+
+             {/* Driver Review Card */}
+            {driverReviewSubmitted ? (
+                <div className="bg-green-50 p-6 rounded-lg border border-green-200 text-center flex flex-col justify-center">
+                    <CheckCircleIcon className="h-10 w-10 text-green-500 mx-auto mb-2" />
+                    <h3 className="text-lg font-semibold text-green-800">Cảm ơn đã đánh giá tài xế!</h3>
+                </div>
+            ) : (
+                <div className="bg-white p-6 rounded-lg shadow-md text-center">
+                    <h3 className="text-xl font-semibold text-gray-800">Đánh giá tài xế</h3>
+                    <p className="text-gray-600 mt-2">Tài xế <span className="font-bold">{driverInfo.name}</span> đã phục vụ bạn thế nào?</p>
+                    <button
+                        onClick={() => setIsDriverReviewModalOpen(true)}
+                        className="mt-4 inline-block bg-orange-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-orange-600 transition-colors"
+                    >
+                        Viết đánh giá
+                    </button>
+                </div>
+            )}
         </div>
     )
   }
@@ -170,9 +214,9 @@ const OrderTrackingPage: React.FC = () => {
               <div className="bg-white p-6 rounded-lg shadow-md">
                   <h3 className="text-lg font-semibold text-gray-800 border-b pb-3 mb-4">Tài xế</h3>
                   <div className="flex items-center space-x-4">
-                      <img className="h-14 w-14 rounded-full object-cover" src="https://i.pravatar.cc/150?u=driver" alt="Shipper"/>
+                      <img className="h-14 w-14 rounded-full object-cover" src={driverInfo.avatar} alt="Shipper"/>
                       <div>
-                          <p className="font-semibold text-gray-800">Trần Văn An</p>
+                          <p className="font-semibold text-gray-800">{driverInfo.name}</p>
                           <p className="text-sm text-gray-500">BS: 59-T1 123.45</p>
                       </div>
                   </div>
@@ -196,7 +240,7 @@ const OrderTrackingPage: React.FC = () => {
               </div>
           </div>
         </div>
-        {renderReviewSection()}
+        {renderPostDeliveryActions()}
       </div>
       <ReviewModal 
         isOpen={isReviewModalOpen}
@@ -204,6 +248,13 @@ const OrderTrackingPage: React.FC = () => {
         onSubmit={handleReviewSubmit}
         orderId={orderId!}
         restaurantName={restaurant.name}
+      />
+      <DriverReviewModal
+        isOpen={isDriverReviewModalOpen}
+        onClose={() => setIsDriverReviewModalOpen(false)}
+        onSubmit={handleDriverReviewSubmit}
+        driverName={driverInfo.name}
+        driverAvatar={driverInfo.avatar}
       />
     </>
   );
