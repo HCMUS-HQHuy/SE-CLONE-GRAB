@@ -29,6 +29,9 @@ import AdminSettingsPage from './pages/AdminSettingsPage';
 import RestaurantAuthPage from './pages/RestaurantAuthPage';
 import RestaurantPendingPage from './pages/RestaurantPendingPage';
 import RestaurantAuthGuard from './guards/RestaurantAuthGuard';
+import ShipperAuthPage from './pages/ShipperAuthPage';
+import ShipperPendingPage from './pages/ShipperPendingPage';
+import ShipperAuthGuard from './guards/ShipperAuthGuard';
 
 const App: React.FC = () => {
   return (
@@ -60,12 +63,17 @@ const App: React.FC = () => {
         </Route>
       </Route>
 
-       <Route path="/shipper" element={<ShipperLayout />}>
-        <Route index element={<Navigate to="profile" replace />} />
-        <Route path="profile" element={<ShipperProfilePage />} />
-        <Route path="orders" element={<ShipperOrdersPage />} />
-        <Route path="history" element={<ShipperHistoryPage />} />
-        <Route path="notifications" element={<ShipperNotificationsPage />} />
+       {/* Shipper Portal Routes */}
+      <Route path="/shipper/auth" element={<ShipperAuthPage />} />
+      <Route path="/shipper/pending" element={<ShipperPendingPage />} />
+      <Route element={<ShipperAuthGuard />}>
+        <Route path="/shipper" element={<ShipperLayout />}>
+          <Route index element={<Navigate to="profile" replace />} />
+          <Route path="profile" element={<ShipperProfilePage />} />
+          <Route path="orders" element={<ShipperOrdersPage />} />
+          <Route path="history" element={<ShipperHistoryPage />} />
+          <Route path="notifications" element={<ShipperNotificationsPage />} />
+        </Route>
       </Route>
       
       {/* Admin Portal Routes */}

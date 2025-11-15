@@ -13,8 +13,9 @@ const AdminAuthPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-sm bg-gray-800 border border-gray-700 rounded-xl shadow-2xl p-8 space-y-8">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-cover bg-center" style={{backgroundImage: "url('https://picsum.photos/1920/1080?abstract,dark')"}}>
+      <div className="absolute inset-0 bg-black opacity-60"></div>
+      <div className="relative w-full max-w-sm bg-gray-800 border border-gray-700 rounded-xl shadow-2xl p-8 space-y-8">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-white">
             Admin Portal
