@@ -1,11 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
-import { HomeIcon, PencilIcon, LocationMarkerIcon, ClockIcon } from '../components/Icons';
+import { HomeIcon, PencilIcon, CashIcon, CreditCardIcon } from '../components/Icons';
+
+type PaymentMethod = 'cash' | 'bank_transfer';
 
 const CheckoutPage: React.FC = () => {
   const { items, restaurant, clearCart } = useCart();
   const navigate = useNavigate();
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
 
   const subtotal = items.reduce((sum, item) => {
     const price = parseFloat((item.newPrice || item.price || '0').replace(/\D/g, ''));
@@ -20,11 +23,17 @@ const CheckoutPage: React.FC = () => {
   };
   
   const handlePlaceOrder = () => {
-    // In a real app, this would submit the order to the backend.
-    // For this prototype, we'll just clear the cart and navigate to a tracking page.
-    const orderId = Math.random().toString(36).substr(2, 9);
-    clearCart();
-    navigate(`/user/order/${orderId}`, { state: { restaurant, items, total } });
+    const orderId = `DH${Math.random().toString(36).substr(2, 7).toUpperCase()}`;
+    const orderState = { restaurant, items, total, paymentMethod };
+
+    if (paymentMethod === 'bank_transfer') {
+      // Don't clear cart yet, user needs to complete payment
+      navigate(`/user/payment/${orderId}`, { state: orderState });
+    } else {
+      // For cash, clear cart and go to tracking
+      clearCart();
+      navigate(`/user/order/${orderId}`, { state: orderState });
+    }
   };
 
 
@@ -62,6 +71,28 @@ const CheckoutPage: React.FC = () => {
             </div>
           </div>
           
+           {/* Payment Method */}
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">Phương thức thanh toán</h2>
+            <div className="space-y-3">
+              <label className={`flex items-center p-4 border rounded-lg cursor-pointer transition-all ${paymentMethod === 'cash' ? 'border-orange-500 ring-2 ring-orange-200' : 'border-gray-200'}`}>
+                <input type="radio" name="paymentMethod" value="cash" checked={paymentMethod === 'cash'} onChange={() => setPaymentMethod('cash')} className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300"/>
+                <span className="ml-3 flex items-center">
+                  <CashIcon className="h-6 w-6 text-green-500 mr-3"/>
+                  <span className="text-sm font-medium text-gray-800">Thanh toán khi nhận hàng (COD)</span>
+                </span>
+              </label>
+               <label className={`flex items-center p-4 border rounded-lg cursor-pointer transition-all ${paymentMethod === 'bank_transfer' ? 'border-orange-500 ring-2 ring-orange-200' : 'border-gray-200'}`}>
+                <input type="radio" name="paymentMethod" value="bank_transfer" checked={paymentMethod === 'bank_transfer'} onChange={() => setPaymentMethod('bank_transfer')} className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300"/>
+                <span className="ml-3 flex items-center">
+                    <CreditCardIcon className="h-6 w-6 text-blue-500 mr-3"/>
+                  <span className="text-sm font-medium text-gray-800">Chuyển khoản ngân hàng</span>
+                </span>
+              </label>
+            </div>
+          </div>
+
+
           {/* Order Summary */}
           <div className="bg-white p-6 rounded-lg shadow-md">
              <h2 className="text-xl font-semibold text-gray-800 mb-4">Chi tiết đơn hàng</h2>

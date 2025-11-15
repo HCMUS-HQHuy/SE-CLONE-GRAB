@@ -18,6 +18,7 @@ import ShipperOrdersPage from './pages/ShipperOrdersPage';
 import ShipperNotificationsPage from './pages/ShipperNotificationsPage';
 import ShipperHistoryPage from './pages/ShipperHistoryPage';
 import SupportPage from './pages/SupportPage';
+import BankTransferPage from './pages/BankTransferPage';
 
 const App: React.FC = () => {
   return (
@@ -32,6 +33,7 @@ const App: React.FC = () => {
         <Route path="restaurant/:id" element={<UserRestaurantProfilePage />} />
         <Route path="checkout" element={<CheckoutPage />} />
         <Route path="order/:orderId" element={<OrderTrackingPage />} />
+        <Route path="payment/:orderId" element={<BankTransferPage />} />
         {/* Add other user routes here, e.g., orders, settings */}
       </Route>
       <Route path="/restaurant" element={<RestaurantLayout />}>
