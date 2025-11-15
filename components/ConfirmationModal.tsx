@@ -7,10 +7,23 @@ type ConfirmationModalProps = {
   onConfirm: () => void;
   title: string;
   message: string;
+  confirmButtonColor?: 'orange' | 'red';
 };
 
-const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ isOpen, onClose, onConfirm, title, message }) => {
+const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  onConfirm, 
+  title, 
+  message, 
+  confirmButtonColor = 'orange' 
+}) => {
   if (!isOpen) return null;
+
+  const colorClasses = {
+    orange: 'bg-orange-500 hover:bg-orange-600 focus:ring-orange-500',
+    red: 'bg-red-600 hover:bg-red-700 focus:ring-red-500',
+  };
 
   return (
     <div
@@ -38,7 +51,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ isOpen, onClose, 
           </button>
           <button
             onClick={onConfirm}
-            className="px-4 py-2 text-sm font-medium text-white bg-orange-500 border border-transparent rounded-md shadow-sm hover:bg-orange-600 focus:outline-none"
+            className={`px-4 py-2 text-sm font-medium text-white border border-transparent rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 ${colorClasses[confirmButtonColor]}`}
           >
             Đồng ý
           </button>
