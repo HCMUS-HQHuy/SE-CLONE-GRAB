@@ -32,6 +32,8 @@ import RestaurantAuthGuard from './guards/RestaurantAuthGuard';
 import ShipperAuthPage from './pages/ShipperAuthPage';
 import ShipperPendingPage from './pages/ShipperPendingPage';
 import ShipperAuthGuard from './guards/ShipperAuthGuard';
+import RestaurantApplicationPage from './pages/RestaurantApplicationPage';
+import ShipperApplicationPage from './pages/ShipperApplicationPage';
 
 const App: React.FC = () => {
   return (
@@ -53,6 +55,7 @@ const App: React.FC = () => {
       {/* Restaurant Portal Routes */}
       <Route path="/restaurant/auth" element={<RestaurantAuthPage />} />
       <Route path="/restaurant/pending" element={<RestaurantPendingPage />} />
+      <Route path="/restaurant/application" element={<RestaurantApplicationPage />} />
       <Route element={<RestaurantAuthGuard />}>
         <Route path="/restaurant" element={<RestaurantLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
@@ -66,6 +69,7 @@ const App: React.FC = () => {
        {/* Shipper Portal Routes */}
       <Route path="/shipper/auth" element={<ShipperAuthPage />} />
       <Route path="/shipper/pending" element={<ShipperPendingPage />} />
+      <Route path="/shipper/application" element={<ShipperApplicationPage />} />
       <Route element={<ShipperAuthGuard />}>
         <Route path="/shipper" element={<ShipperLayout />}>
           <Route index element={<Navigate to="profile" replace />} />

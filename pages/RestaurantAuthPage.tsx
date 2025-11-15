@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MailIcon, LockIcon, UserIcon, OfficeBuildingIcon, HomeIcon } from '../components/Icons';
+import { MailIcon, LockIcon, UserIcon } from '../components/Icons';
 
 const RestaurantAuthPage: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -8,16 +8,16 @@ const RestaurantAuthPage: React.FC = () => {
 
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, you would call an API to submit registration data.
-    // For this prototype, we'll simulate the registration and pending state.
-    localStorage.setItem('restaurant_authed', 'pending');
-    navigate('/restaurant/pending');
+    // Step 1: Create a basic account and set status to "unsubmitted"
+    localStorage.setItem('restaurant_profile_status', 'unsubmitted');
+    // Step 2: Navigate to the application form
+    navigate('/restaurant/application');
   };
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     // Simulate a successful login for an already approved user.
-    localStorage.setItem('restaurant_authed', 'approved');
+    localStorage.setItem('restaurant_profile_status', 'approved');
     navigate('/restaurant/dashboard');
   };
 
@@ -66,13 +66,7 @@ const RestaurantAuthPage: React.FC = () => {
   const SignupForm: React.FC = () => (
     <form className="space-y-4" onSubmit={handleRegister}>
        <div>
-        <div className="relative"><span className="absolute inset-y-0 left-0 flex items-center pl-3"><UserIcon className="h-5 w-5 text-gray-400" /></span><input type="text" required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md" placeholder="Tên chủ sở hữu" /></div>
-      </div>
-       <div>
-        <div className="relative"><span className="absolute inset-y-0 left-0 flex items-center pl-3"><OfficeBuildingIcon className="h-5 w-5 text-gray-400" /></span><input type="text" required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md" placeholder="Tên nhà hàng" /></div>
-      </div>
-      <div>
-        <div className="relative"><span className="absolute inset-y-0 left-0 flex items-center pl-3"><HomeIcon className="h-5 w-5 text-gray-400" /></span><input type="text" required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md" placeholder="Địa chỉ kinh doanh" /></div>
+        <div className="relative"><span className="absolute inset-y-0 left-0 flex items-center pl-3"><UserIcon className="h-5 w-5 text-gray-400" /></span><input type="text" required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md" placeholder="Họ và tên" /></div>
       </div>
       <div>
         <div className="relative"><span className="absolute inset-y-0 left-0 flex items-center pl-3"><MailIcon className="h-5 w-5 text-gray-400" /></span><input type="email" required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md" placeholder="Email" /></div>
@@ -81,7 +75,7 @@ const RestaurantAuthPage: React.FC = () => {
         <div className="relative"><span className="absolute inset-y-0 left-0 flex items-center pl-3"><LockIcon className="h-5 w-5 text-gray-400" /></span><input type="password" required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md" placeholder="Mật khẩu" /></div>
       </div>
       <div>
-        <button type="submit" className="w-full py-3 px-4 rounded-md text-white bg-orange-500 hover:bg-orange-600 font-medium">Đăng ký ngay</button>
+        <button type="submit" className="w-full py-3 px-4 rounded-md text-white bg-orange-500 hover:bg-orange-600 font-medium">Đăng ký</button>
       </div>
     </form>
   );

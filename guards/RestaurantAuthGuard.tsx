@@ -5,13 +5,14 @@ const RestaurantAuthGuard: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const authStatus = localStorage.getItem('restaurant_authed');
+    const profileStatus = localStorage.getItem('restaurant_profile_status');
     
-    if (authStatus === 'approved') {
+    if (profileStatus === 'approved') {
       // User is approved, do nothing, let them access the content.
-    } else if (authStatus === 'pending') {
-      // User has registered but is pending approval.
+    } else if (profileStatus === 'pending') {
       navigate('/restaurant/pending', { replace: true });
+    } else if (profileStatus === 'unsubmitted') {
+      navigate('/restaurant/application', { replace: true });
     } else {
       // No status or invalid status, redirect to auth page.
       navigate('/restaurant/auth', { replace: true });
@@ -19,8 +20,8 @@ const RestaurantAuthGuard: React.FC = () => {
   }, [navigate]);
 
   // A second check to prevent content flashing while useEffect runs.
-  const authStatus = localStorage.getItem('restaurant_authed');
-  if (authStatus !== 'approved') {
+  const profileStatus = localStorage.getItem('restaurant_profile_status');
+  if (profileStatus !== 'approved') {
     return null; // Or a loading spinner component.
   }
 

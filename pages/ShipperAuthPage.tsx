@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MailIcon, LockIcon, UserIcon, PhoneIcon, MotorcycleIcon, IdentificationIcon } from '../components/Icons';
+import { LockIcon, UserIcon, PhoneIcon } from '../components/Icons';
 
 const ShipperAuthPage: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -8,13 +8,13 @@ const ShipperAuthPage: React.FC = () => {
 
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
-    localStorage.setItem('shipper_authed', 'pending');
-    navigate('/shipper/pending');
+    localStorage.setItem('shipper_profile_status', 'unsubmitted');
+    navigate('/shipper/application');
   };
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    localStorage.setItem('shipper_authed', 'approved');
+    localStorage.setItem('shipper_profile_status', 'approved');
     navigate('/shipper/profile');
   };
 
@@ -69,16 +69,10 @@ const ShipperAuthPage: React.FC = () => {
         <div className="relative"><span className="absolute inset-y-0 left-0 flex items-center pl-3"><PhoneIcon className="h-5 w-5 text-gray-400" /></span><input type="tel" required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md" placeholder="Số điện thoại" /></div>
       </div>
       <div>
-        <div className="relative"><span className="absolute inset-y-0 left-0 flex items-center pl-3"><MotorcycleIcon className="h-5 w-5 text-gray-400" /></span><input type="text" required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md" placeholder="Loại xe (VD: Honda Wave)" /></div>
-      </div>
-      <div>
-        <div className="relative"><span className="absolute inset-y-0 left-0 flex items-center pl-3"><IdentificationIcon className="h-5 w-5 text-gray-400" /></span><input type="text" required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md" placeholder="Biển số xe (VD: 59-T1 123.45)" /></div>
-      </div>
-      <div>
         <div className="relative"><span className="absolute inset-y-0 left-0 flex items-center pl-3"><LockIcon className="h-5 w-5 text-gray-400" /></span><input type="password" required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md" placeholder="Mật khẩu" /></div>
       </div>
       <div>
-        <button type="submit" className="w-full py-3 px-4 rounded-md text-white bg-orange-500 hover:bg-orange-600 font-medium">Đăng ký làm tài xế</button>
+        <button type="submit" className="w-full py-3 px-4 rounded-md text-white bg-orange-500 hover:bg-orange-600 font-medium">Đăng ký</button>
       </div>
     </form>
   );
