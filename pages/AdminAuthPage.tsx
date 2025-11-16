@@ -1,14 +1,21 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MailIcon, LockIcon } from '../components/Icons';
 
 const AdminAuthPage: React.FC = () => {
   const navigate = useNavigate();
 
+  useEffect(() => {
+    if (localStorage.getItem('admin_logged_in') === 'true') {
+      navigate('/admin/dashboard', { replace: true });
+    }
+  }, [navigate]);
+
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     // In a real app, you would have authentication logic here.
     // For this prototype, we'll just navigate to the dashboard.
+    localStorage.setItem('admin_logged_in', 'true');
     navigate('/admin/dashboard');
   };
 

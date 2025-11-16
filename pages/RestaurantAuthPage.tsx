@@ -1,10 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MailIcon, LockIcon, UserIcon } from '../components/Icons';
 
 const RestaurantAuthPage: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (localStorage.getItem('restaurant_profile_status') === 'approved') {
+      navigate('/restaurant/dashboard', { replace: true });
+    }
+  }, [navigate]);
 
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();

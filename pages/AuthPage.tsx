@@ -1,10 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { MailIcon, LockIcon, UserIcon, GoogleIcon, FacebookIcon } from '../components/Icons';
 import ForgotPasswordModal from '../components/ForgotPasswordModal';
 
 const AuthPage: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (localStorage.getItem('user_logged_in') === 'true') {
+      navigate('/user/home', { replace: true });
+    }
+  }, [navigate]);
 
   const handleForgotPasswordSuccess = () => {
     setIsForgotPasswordOpen(false);
@@ -43,8 +51,14 @@ const AuthPage: React.FC = () => {
       </div>
   );
 
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    localStorage.setItem('user_logged_in', 'true');
+    navigate('/user/home');
+  };
+
   const LoginForm: React.FC = () => (
-    <form className="space-y-6">
+    <form className="space-y-6" onSubmit={handleLogin}>
       <div>
         <label htmlFor="email" className="text-sm font-medium text-gray-700 sr-only">Email</label>
         <div className="relative">

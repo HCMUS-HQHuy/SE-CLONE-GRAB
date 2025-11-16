@@ -34,22 +34,26 @@ import ShipperPendingPage from './pages/ShipperPendingPage';
 import ShipperAuthGuard from './guards/ShipperAuthGuard';
 import RestaurantApplicationPage from './pages/RestaurantApplicationPage';
 import ShipperApplicationPage from './pages/ShipperApplicationPage';
+import UserAuthGuard from './guards/UserAuthGuard';
+import AdminAuthGuard from './guards/AdminAuthGuard';
 
 const App: React.FC = () => {
   return (
     <Routes>
       <Route path="/" element={<AuthPage />} />
-      <Route path="/user" element={<UserLayout />}>
-        {/* Redirect /user to /user/home by default */}
-        <Route index element={<Navigate to="home" replace />} />
-        <Route path="home" element={<HomePage />} />
-        <Route path="profile" element={<UserProfile />} />
-        <Route path="support" element={<SupportPage />} />
-        <Route path="restaurant/:id" element={<UserRestaurantProfilePage />} />
-        <Route path="checkout" element={<CheckoutPage />} />
-        <Route path="order/:orderId" element={<OrderTrackingPage />} />
-        <Route path="payment/:orderId" element={<BankTransferPage />} />
-        {/* Add other user routes here, e.g., orders, settings */}
+      <Route element={<UserAuthGuard />}>
+        <Route path="/user" element={<UserLayout />}>
+          {/* Redirect /user to /user/home by default */}
+          <Route index element={<Navigate to="home" replace />} />
+          <Route path="home" element={<HomePage />} />
+          <Route path="profile" element={<UserProfile />} />
+          <Route path="support" element={<SupportPage />} />
+          <Route path="restaurant/:id" element={<UserRestaurantProfilePage />} />
+          <Route path="checkout" element={<CheckoutPage />} />
+          <Route path="order/:orderId" element={<OrderTrackingPage />} />
+          <Route path="payment/:orderId" element={<BankTransferPage />} />
+          {/* Add other user routes here, e.g., orders, settings */}
+        </Route>
       </Route>
 
       {/* Restaurant Portal Routes */}
@@ -82,14 +86,16 @@ const App: React.FC = () => {
       
       {/* Admin Portal Routes */}
       <Route path="/admin/login" element={<AdminAuthPage />} />
-      <Route path="/admin" element={<AdminLayout />}>
-        <Route index element={<Navigate to="dashboard" replace />} />
-        <Route path="dashboard" element={<AdminDashboardPage />} />
-        <Route path="users" element={<AdminUsersPage />} />
-        <Route path="restaurants" element={<AdminRestaurantsPage />} />
-        <Route path="shippers" element={<AdminShippersPage />} />
-        <Route path="settings" element={<AdminSettingsPage />} />
-        {/* Add other admin routes here, e.g., restaurants */}
+      <Route element={<AdminAuthGuard />}>
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<AdminDashboardPage />} />
+          <Route path="users" element={<AdminUsersPage />} />
+          <Route path="restaurants" element={<AdminRestaurantsPage />} />
+          <Route path="shippers" element={<AdminShippersPage />} />
+          <Route path="settings" element={<AdminSettingsPage />} />
+          {/* Add other admin routes here, e.g., restaurants */}
+        </Route>
       </Route>
     </Routes>
   );
