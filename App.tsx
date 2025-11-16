@@ -36,6 +36,7 @@ import RestaurantApplicationPage from './pages/RestaurantApplicationPage';
 import ShipperApplicationPage from './pages/ShipperApplicationPage';
 import UserAuthGuard from './guards/UserAuthGuard';
 import AdminAuthGuard from './guards/AdminAuthGuard';
+import NotFoundPage from './pages/NotFoundPage';
 
 const App: React.FC = () => {
   return (
@@ -97,6 +98,9 @@ const App: React.FC = () => {
           {/* Add other admin routes here, e.g., restaurants */}
         </Route>
       </Route>
+
+      {/* Catch-all route for 404 Not Found */}
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 };
