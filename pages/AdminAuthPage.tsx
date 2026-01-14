@@ -25,7 +25,8 @@ const AdminAuthPage: React.FC = () => {
     const password = formData.get('password') as string;
 
     try {
-      await apiService.login({ email, password });
+      // Cập nhật: Truyền role 'admin'
+      await apiService.login({ email, password }, 'admin');
       localStorage.setItem('admin_logged_in', 'true');
       navigate('/admin/dashboard');
     } catch (err: any) {

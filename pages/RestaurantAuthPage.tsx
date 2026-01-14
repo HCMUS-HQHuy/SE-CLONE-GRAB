@@ -26,7 +26,8 @@ const RestaurantAuthPage: React.FC = () => {
     const password = formData.get('password') as string;
 
     try {
-      await apiService.login({ email, password });
+      // Cập nhật: Truyền role 'seller'
+      await apiService.login({ email, password }, 'seller');
       // Giả định login thành công cho account đã duyệt
       localStorage.setItem('restaurant_profile_status', 'approved');
       navigate('/restaurant/dashboard');

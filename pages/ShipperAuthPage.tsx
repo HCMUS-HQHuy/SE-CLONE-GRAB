@@ -26,7 +26,8 @@ const ShipperAuthPage: React.FC = () => {
     const password = formData.get('password') as string;
 
     try {
-      await apiService.login({ email, password });
+      // Cập nhật: Truyền role 'shipper'
+      await apiService.login({ email, password }, 'shipper');
       localStorage.setItem('shipper_profile_status', 'approved');
       navigate('/shipper/profile');
     } catch (err: any) {
@@ -38,7 +39,7 @@ const ShipperAuthPage: React.FC = () => {
 
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
-    localStorage.setItem('shipper_profile_status', 'unsubmitted');
+    localStorage.setItem('shipper_profile_status', 'pending');
     navigate('/shipper/application');
   };
 

@@ -28,7 +28,8 @@ const AuthPage: React.FC = () => {
     const password = formData.get('password') as string;
 
     try {
-      await apiService.login({ email, password });
+      // Cập nhật: Truyền role 'user'
+      await apiService.login({ email, password }, 'user');
       localStorage.setItem('user_logged_in', 'true');
       navigate('/user/home');
     } catch (err: any) {
