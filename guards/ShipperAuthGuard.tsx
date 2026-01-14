@@ -1,36 +1,47 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
 
 const ShipperAuthGuard: React.FC = () => {
   const navigate = useNavigate();
+  const [isVerifying, setIsVerifying] = useState(true);
 
   useEffect(() => {
-    const token = apiService.getToken('shipper');
-    const profileStatus = localStorage.getItem('shipper_profile_status');
-    
-    if (!token) {
-        navigate('/shipper/auth', { replace: true });
-        return;
-    }
+    const checkAuth = async () => {
+      const token = apiService.getToken('shipper');
+      
+      if (!token) {
+          navigate('/shipper/auth', { replace: true });
+          return;
+      }
 
-    if (profileStatus === 'approved') {
-      // Approved
-    } else if (profileStatus === 'pending') {
-      navigate('/shipper/pending', { replace: true });
-    } else if (profileStatus === 'unsubmitted') {
-      navigate('/shipper/application', { replace: true });
-    } else {
-      navigate('/shipper/auth', { replace: true });
-    }
+      try {
+        const profile = await apiService.getMe('shipper');
+        if (profile.is_active === false) {
+          const currentStatus = localStorage.getItem('shipper_profile_status');
+          if (currentStatus === 'pending') {
+            navigate('/shipper/pending', { replace: true });
+          } else {
+            navigate('/shipper/application', { replace: true });
+          }
+        } else {
+          setIsVerifying(false);
+        }
+      } catch (error) {
+        navigate('/shipper/auth', { replace: true });
+      }
+    };
+
+    checkAuth();
   }, [navigate]);
 
-  const token = apiService.getToken('shipper');
-  const profileStatus = localStorage.getItem('shipper_profile_status');
-  
-  if (!token || profileStatus !== 'approved') {
-    return null;
+  if (isVerifying) {
+    return (
+        <div className="min-h-screen flex items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+        </div>
+    );
   }
 
   return <Outlet />;

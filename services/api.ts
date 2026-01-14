@@ -4,6 +4,13 @@ const BASE_URL = process.env.API_BASE_URL || 'http://localhost:8000';
 
 export type UserRole = 'user' | 'seller' | 'shipper' | 'admin';
 
+export interface UserMe {
+  id: number;
+  email: string;
+  role: UserRole;
+  is_active: boolean;
+}
+
 export const apiService = {
   async register(userData: { email: string; password: string; role: UserRole }) {
     const response = await fetch(`${BASE_URL}/auth/register`, {
@@ -43,14 +50,38 @@ export const apiService = {
     localStorage.setItem(`${role}_token_type`, data.token_type);
     localStorage.setItem(`${role}_logged_in`, 'true');
     
-    // Trả về data để component xử lý is_active
     return data;
+  },
+
+  async getMe(role: UserRole): Promise<UserMe> {
+    const headers = this.getAuthHeaders(role);
+    const response = await fetch(`${BASE_URL}/auth/me`, {
+      method: 'GET',
+      headers: {
+        ...headers,
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      if (response.status === 401) {
+        this.logout(role);
+      }
+      throw new Error(errorData.detail || 'Không thể lấy thông tin người dùng.');
+    }
+
+    const userData = await response.json();
+    // Lưu trạng thái active vào localStorage để Guard check nhanh (vẫn check API trong Guard)
+    localStorage.setItem(`${role}_is_active`, String(userData.is_active));
+    return userData;
   },
 
   logout(role: UserRole) {
     localStorage.removeItem(`${role}_token`);
     localStorage.removeItem(`${role}_token_type`);
     localStorage.removeItem(`${role}_logged_in`);
+    localStorage.removeItem(`${role}_is_active`);
     
     if (role === 'seller') {
       localStorage.removeItem('restaurant_profile_status');

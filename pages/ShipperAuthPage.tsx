@@ -12,7 +12,7 @@ const ShipperAuthPage: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (apiService.getToken('shipper') && localStorage.getItem('shipper_profile_status') === 'approved') {
+    if (apiService.getToken('shipper') && localStorage.getItem('shipper_is_active') === 'true') {
       navigate('/shipper/profile', { replace: true });
     }
   }, [navigate]);
@@ -28,10 +28,10 @@ const ShipperAuthPage: React.FC = () => {
     const password = formData.get('password') as string;
 
     try {
-      const data = await apiService.login({ email, password }, 'shipper');
+      await apiService.login({ email, password }, 'shipper');
+      const profile = await apiService.getMe('shipper');
       
-      if (data.is_active === false) {
-        // Shipper account not active: Needs KYC/Application
+      if (profile.is_active === false) {
         localStorage.setItem('shipper_profile_status', 'unsubmitted');
         navigate('/shipper/application');
       } else {

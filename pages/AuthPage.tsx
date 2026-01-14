@@ -30,8 +30,11 @@ const AuthPage: React.FC = () => {
     const password = formData.get('password') as string;
 
     try {
-      const data = await apiService.login({ email, password }, 'user');
-      if (data.is_active === false) {
+      await apiService.login({ email, password }, 'user');
+      // Sau khi login thành công, fetch profile để check is_active
+      const userProfile = await apiService.getMe('user');
+      
+      if (userProfile.is_active === false) {
         navigate('/user/profile');
       } else {
         navigate('/user/home');

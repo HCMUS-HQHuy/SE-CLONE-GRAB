@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MailIcon, LockIcon, UserIcon } from '../components/Icons';
+import { MailIcon, LockIcon } from '../components/Icons';
 import { apiService } from '../services/api';
 
 const RestaurantAuthPage: React.FC = () => {
@@ -12,7 +12,7 @@ const RestaurantAuthPage: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (apiService.getToken('seller') && localStorage.getItem('restaurant_profile_status') === 'approved') {
+    if (apiService.getToken('seller') && localStorage.getItem('seller_is_active') === 'true') {
       navigate('/restaurant/dashboard', { replace: true });
     }
   }, [navigate]);
@@ -28,10 +28,11 @@ const RestaurantAuthPage: React.FC = () => {
     const password = formData.get('password') as string;
 
     try {
-      const data = await apiService.login({ email, password }, 'seller');
+      await apiService.login({ email, password }, 'seller');
+      const profile = await apiService.getMe('seller');
       
-      if (data.is_active === false) {
-        // Seller account not yet active: Needs to submit application
+      if (profile.is_active === false) {
+        // Nếu chưa active, buộc vào trang hoàn tất hồ sơ
         localStorage.setItem('restaurant_profile_status', 'unsubmitted');
         navigate('/restaurant/application');
       } else {
