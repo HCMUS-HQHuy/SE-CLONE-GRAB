@@ -1,23 +1,24 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
-import { SearchIcon, PlusIcon, ChevronLeftIcon, ChevronRightIcon, UserIcon, TrashIcon, PencilIcon, LockIcon as LockClosedIcon } from '../components/Icons';
-import UserDetailModal from '../components/UserDetailModal';
+import { SearchIcon, PlusIcon, ChevronLeftIcon, ChevronRightIcon, UserIcon, TrashIcon, LockIcon as LockClosedIcon } from '../components/Icons';
+import { apiService, AdminUserListItem, UserRole, UserStatus } from '../services/api';
 import ConfirmationModal from '../components/ConfirmationModal';
+// FIX: Import UserDetailModal to allow detailed user management
+import UserDetailModal from '../components/UserDetailModal';
 
-type UserRole = 'Admin' | 'Customer' | 'Shipper' | 'Merchant Owner';
-type UserStatus = 'active' | 'locked';
-
+// FIX: Define and export types needed by UserDetailModal.tsx to fix member missing errors
 export type UserSession = {
     id: string;
-    device: 'desktop' | 'mobile';
     ip: string;
+    device: 'desktop' | 'mobile';
     location: string;
     lastSeen: string;
 };
 
 export type ActivityLog = {
-    id: number;
-    admin: string;
+    id: string;
     action: string;
+    admin: string;
     timestamp: string;
 };
 
@@ -25,51 +26,27 @@ export type User = {
     id: number;
     name: string;
     email: string;
-    avatar: string;
-    role: UserRole;
-    status: UserStatus;
+    role: 'Admin' | 'Customer' | 'Shipper' | 'Merchant Owner';
+    status: 'active' | 'inactive';
     createdAt: string;
     lastLogin: string;
     sessions: UserSession[];
     activityLog: ActivityLog[];
 };
 
-// Mock Data
-const mockUsers: User[] = [
-    { id: 1, name: 'Admin One', email: 'admin@example.com', avatar: '', role: 'Admin', status: 'active', createdAt: '2023-01-15', lastLogin: '2024-07-30T10:00:00Z', sessions: [
-        { id: 'sess1', device: 'desktop', ip: '192.168.1.1', location: 'HCMC, Vietnam', lastSeen: '2 giờ trước' }
-    ], activityLog: [] },
-    { id: 2, name: 'Nguyễn Văn A', email: 'nguyenvana@email.com', avatar: '', role: 'Customer', status: 'active', createdAt: '2023-05-20', lastLogin: '2024-07-29T14:30:00Z', sessions: [
-        { id: 'sess2', device: 'mobile', ip: '203.0.113.25', location: 'Hanoi, Vietnam', lastSeen: '1 ngày trước' }
-    ], activityLog: [{ id: 1, admin: 'Admin One', action: 'Đặt lại mật khẩu', timestamp: '2024-07-15T09:00:00Z' }] },
-    { id: 3, name: 'Trần Văn An', email: 'tranvanan@shipper.com', avatar: '', role: 'Shipper', status: 'active', createdAt: '2023-06-10', lastLogin: '2024-07-30T08:00:00Z', sessions: [
-        { id: 'sess3', device: 'mobile', ip: '198.51.100.10', location: 'Danang, Vietnam', lastSeen: '3 giờ trước' }
-    ], activityLog: [] },
-    { id: 4, name: 'Quán Ăn Gỗ Owner', email: 'owner@quanango.com', avatar: '', role: 'Merchant Owner', status: 'locked', createdAt: '2023-02-01', lastLogin: '2024-06-10T11:00:00Z', sessions: [], activityLog: [
-        { id: 2, admin: 'Admin One', action: 'Khóa tài khoản', timestamp: '2024-07-20T15:00:00Z' }
-    ] },
-     ...Array.from({ length: 15 }, (_, i) => ({
-        id: i + 5,
-        name: `Customer User ${i + 1}`,
-        email: `customer${i + 1}@example.com`,
-        avatar: '',
-        role: 'Customer' as UserRole,
-        status: i % 3 === 0 ? 'locked' : 'active' as UserStatus,
-        createdAt: `2024-0${Math.floor(i/5) + 1}-0${i%9 + 1}`,
-        lastLogin: `2024-07-${10+i}T12:00:00Z`,
-        sessions: [],
-        activityLog: []
-    }))
-];
-
 const ITEMS_PER_PAGE = 10;
 
 const AdminUsersPage: React.FC = () => {
-    const [users, setUsers] = useState<User[]>(mockUsers);
+    const [users, setUsers] = useState<AdminUserListItem[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    
     const [searchTerm, setSearchTerm] = useState('');
     const [roleFilter, setRoleFilter] = useState('All');
+    const [statusFilter, setStatusFilter] = useState('All');
     const [currentPage, setCurrentPage] = useState(1);
     
+    // FIX: Add state for the detailed user modal integration
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     
@@ -81,58 +58,152 @@ const AdminUsersPage: React.FC = () => {
         color?: 'orange' | 'red';
     } | null>(null);
 
+    useEffect(() => {
+        fetchUsers();
+    }, []);
+
+    const fetchUsers = async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const data = await apiService.adminGetUsers();
+            setUsers(data);
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const filteredUsers = useMemo(() => {
         return users
             .filter(user => roleFilter === 'All' || user.role === roleFilter)
+            .filter(user => statusFilter === 'All' || user.status === statusFilter)
             .filter(user => 
-                user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                 user.email.toLowerCase().includes(searchTerm.toLowerCase())
             );
-    }, [users, searchTerm, roleFilter]);
+    }, [users, searchTerm, roleFilter, statusFilter]);
 
     const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
     const paginatedUsers = filteredUsers.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
-    const handleViewDetails = (user: User) => {
-        setSelectedUser(user);
-        setIsDetailModalOpen(true);
-    };
-
-    const handleUpdateUser = (updatedUser: User) => {
-        setUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
-    };
-
-    const handleToggleLock = (user: User) => {
+    const handleToggleLock = (user: AdminUserListItem) => {
+        const isCurrentlyActive = user.status === 'active';
         setConfirmation({
             isOpen: true,
-            title: `${user.status === 'active' ? 'Khóa' : 'Mở khóa'} người dùng?`,
-            message: `Bạn có chắc chắn muốn ${user.status === 'active' ? 'khóa' : 'mở khóa'} tài khoản ${user.name}?`,
+            title: `${isCurrentlyActive ? 'Khóa' : 'Mở khóa'} người dùng?`,
+            message: `Bạn có chắc chắn muốn ${isCurrentlyActive ? 'khóa' : 'mở khóa'} tài khoản ${user.email}?`,
             onConfirm: () => {
-                const newStatus = user.status === 'active' ? 'locked' : 'active';
-                handleUpdateUser({ ...user, status: newStatus });
+                // Trong thực tế sẽ gọi API PUT/PATCH /admin/users/:id
+                const newStatus: UserStatus = isCurrentlyActive ? 'inactive' : 'active';
+                setUsers(prev => prev.map(u => u.id === user.id ? { ...u, status: newStatus } : u));
                 setConfirmation(null);
             },
             color: 'red'
         });
     };
     
-    const handleDelete = (user: User) => {
+    const handleDelete = (user: AdminUserListItem) => {
          setConfirmation({
             isOpen: true,
             title: 'Xóa người dùng?',
-            message: `Hành động này không thể hoàn tác. Bạn có chắc muốn xóa vĩnh viễn tài khoản ${user.name}?`,
+            message: `Hành động này sẽ đánh dấu tài khoản ${user.email} là đã xóa. Tiếp tục?`,
             onConfirm: () => {
-                setUsers(prev => prev.filter(u => u.id !== user.id));
+                // Trong thực tế sẽ gọi API DELETE /admin/users/:id
+                setUsers(prev => prev.map(u => u.id === user.id ? { ...u, is_deleted: true } : u));
                 setConfirmation(null);
             },
             color: 'red'
         });
     }
 
+    // FIX: Add function to map list data to full user object and open detail modal
+    const handleViewDetail = (adminUser: AdminUserListItem) => {
+        const detailedUser: User = {
+            id: adminUser.id,
+            name: adminUser.email.split('@')[0],
+            email: adminUser.email,
+            role: adminUser.role === 'admin' ? 'Admin' : 
+                  adminUser.role === 'shipper' ? 'Shipper' : 
+                  adminUser.role === 'seller' ? 'Merchant Owner' : 'Customer',
+            status: adminUser.status === 'active' ? 'active' : 'inactive',
+            createdAt: new Date(adminUser.created_at).toLocaleDateString('vi-VN'),
+            lastLogin: adminUser.updated_at,
+            sessions: [
+                { id: '1', ip: '192.168.1.1', device: 'desktop', location: 'TP. Hồ Chí Minh', lastSeen: '10 phút trước' }
+            ],
+            activityLog: [
+                { id: '1', action: 'Truy cập tài khoản', admin: 'Hệ thống', timestamp: adminUser.updated_at }
+            ]
+        };
+        setSelectedUser(detailedUser);
+        setIsDetailModalOpen(true);
+    };
+
+    // FIX: Add function to update state when details are changed in the modal
+    const handleUpdateUser = (updatedUser: User) => {
+        setUsers(prev => prev.map(u => u.id === updatedUser.id ? { 
+            ...u, 
+            email: updatedUser.email,
+            status: updatedUser.status === 'active' ? 'active' : 'inactive' 
+        } : u));
+        setSelectedUser(updatedUser);
+    };
+
+    const formatDate = (dateStr: string) => {
+        return new Date(dateStr).toLocaleDateString('vi-VN', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    };
+
+    const getStatusStyle = (status: UserStatus, isDeleted: boolean) => {
+        if (isDeleted) return 'bg-gray-100 text-gray-500';
+        switch (status) {
+            case 'active': return 'bg-green-100 text-green-800';
+            case 'pending': return 'bg-yellow-100 text-yellow-800';
+            case 'inactive': return 'bg-orange-100 text-orange-800';
+            case 'banned': return 'bg-red-100 text-red-800';
+            default: return 'bg-gray-100 text-gray-800';
+        }
+    };
+
+    const getStatusText = (status: UserStatus, isDeleted: boolean) => {
+        if (isDeleted) return 'Đã xóa';
+        switch (status) {
+            case 'active': return 'Hoạt động';
+            case 'pending': return 'Chờ duyệt';
+            case 'inactive': return 'Vô hiệu';
+            case 'banned': return 'Bị cấm';
+            default: return status;
+        }
+    };
+
+    if (isLoading) {
+        return (
+            <div className="flex flex-col items-center justify-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mb-4"></div>
+                <p className="text-gray-500">Đang tải danh sách người dùng...</p>
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-6">
-            <h1 className="text-3xl font-bold text-gray-900">Quản lý người dùng</h1>
+            <div className="flex justify-between items-center">
+                <h1 className="text-3xl font-bold text-gray-900">Quản lý người dùng</h1>
+                <button onClick={fetchUsers} className="text-sm text-orange-600 hover:underline font-medium">Làm mới dữ liệu</button>
+            </div>
             
+            {error && (
+                <div className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-lg">
+                    {error}
+                </div>
+            )}
+
             <div className="bg-white p-4 rounded-lg shadow-md border flex flex-wrap items-center justify-between gap-4">
                 <div className="relative flex-grow max-w-md">
                     <span className="absolute inset-y-0 left-0 flex items-center pl-3">
@@ -140,7 +211,7 @@ const AdminUsersPage: React.FC = () => {
                     </span>
                     <input 
                         type="text" 
-                        placeholder="Tìm kiếm theo tên hoặc email..." 
+                        placeholder="Tìm kiếm theo email..." 
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
                         className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
@@ -150,17 +221,28 @@ const AdminUsersPage: React.FC = () => {
                      <select 
                         value={roleFilter}
                         onChange={e => setRoleFilter(e.target.value)}
-                        className="border border-gray-300 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        className="border border-gray-300 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm"
                      >
                         <option value="All">Tất cả vai trò</option>
-                        <option value="Admin">Admin</option>
-                        <option value="Customer">Customer</option>
-                        <option value="Shipper">Shipper</option>
-                        <option value="Merchant Owner">Merchant Owner</option>
+                        <option value="admin">Admin</option>
+                        <option value="user">User</option>
+                        <option value="shipper">Shipper</option>
+                        <option value="seller">Seller</option>
                     </select>
-                    <button className="flex items-center text-white bg-orange-600 hover:bg-orange-700 px-4 py-2 rounded-lg shadow-sm">
-                        <PlusIcon className="h-5 w-5 mr-2" />
-                        Thêm người dùng
+                    <select 
+                        value={statusFilter}
+                        onChange={e => setStatusFilter(e.target.value)}
+                        className="border border-gray-300 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm"
+                     >
+                        <option value="All">Tất cả trạng thái</option>
+                        <option value="active">Hoạt động</option>
+                        <option value="pending">Chờ duyệt</option>
+                        <option value="inactive">Vô hiệu hóa</option>
+                        <option value="banned">Bị cấm</option>
+                    </select>
+                    <button className="flex items-center text-white bg-orange-600 hover:bg-orange-700 px-4 py-2 rounded-lg shadow-sm text-sm">
+                        <PlusIcon className="h-4 w-4 mr-2" />
+                        Thêm mới
                     </button>
                 </div>
             </div>
@@ -169,72 +251,98 @@ const AdminUsersPage: React.FC = () => {
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                         <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Người dùng</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vai trò</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ngày tạo</th>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Hành động</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vai trò</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày tham gia</th>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Hành động</th>
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                        {paginatedUsers.map(user => (
-                            <tr key={user.id}>
+                        {paginatedUsers.length > 0 ? paginatedUsers.map(user => (
+                            <tr key={user.id} className={user.is_deleted ? 'bg-gray-50 opacity-75' : ''}>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">#{user.id}</td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <div className="flex items-center">
-                                        <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center mr-3">
-                                            <UserIcon className="h-6 w-6 text-gray-500"/>
+                                        <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center mr-3">
+                                            <UserIcon className="h-4 w-4 text-orange-600"/>
                                         </div>
-                                        <div>
-                                            <div className="font-medium text-gray-900">{user.name}</div>
-                                            <div className="text-sm text-gray-500">{user.email}</div>
-                                        </div>
+                                        <div className="text-sm font-medium text-gray-900">{user.email}</div>
                                     </div>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{user.role}</td>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${user.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                        {user.status === 'active' ? 'Hoạt động' : 'Bị khóa'}
+                                    <span className="px-2 py-1 text-xs font-semibold capitalize bg-blue-50 text-blue-700 rounded-md">
+                                        {user.role}
                                     </span>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{user.createdAt}</td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusStyle(user.status, user.is_deleted)}`}>
+                                        {getStatusText(user.status, user.is_deleted)}
+                                    </span>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDate(user.created_at)}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <div className="relative inline-block text-left">
-                                        <button onClick={() => handleViewDetails(user)} className="text-orange-600 hover:text-orange-900 font-semibold mr-4">Xem chi tiết</button>
-                                        <button onClick={() => handleToggleLock(user)} className="text-yellow-600 hover:text-yellow-900 mr-4" title={user.status === 'active' ? 'Khóa' : 'Mở khóa'}>
-                                            <LockClosedIcon className="h-5 w-5"/>
-                                        </button>
-                                        <button onClick={() => handleDelete(user)} className="text-red-600 hover:text-red-900" title="Xóa">
-                                            <TrashIcon className="h-5 w-5"/>
-                                        </button>
-                                    </div>
+                                    {!user.is_deleted && (
+                                        <div className="flex justify-end space-x-3 items-center">
+                                            {/* FIX: Add button to open detailed view modal */}
+                                            <button 
+                                                onClick={() => handleViewDetail(user)} 
+                                                className="text-orange-600 hover:text-orange-900 font-semibold mr-2"
+                                            >
+                                                Chi tiết
+                                            </button>
+                                            <button 
+                                                onClick={() => handleToggleLock(user)} 
+                                                className="text-orange-600 hover:text-orange-900" 
+                                                title={user.status === 'active' ? 'Vô hiệu hóa' : 'Kích hoạt'}
+                                            >
+                                                <LockClosedIcon className="h-5 w-5"/>
+                                            </button>
+                                            <button 
+                                                onClick={() => handleDelete(user)} 
+                                                className="text-red-600 hover:text-red-900" 
+                                                title="Xóa"
+                                            >
+                                                <TrashIcon className="h-5 w-5"/>
+                                            </button>
+                                        </div>
+                                    )}
                                 </td>
                             </tr>
-                        ))}
+                        )) : (
+                            <tr>
+                                <td colSpan={6} className="px-6 py-10 text-center text-gray-500">
+                                    Không tìm thấy người dùng nào phù hợp.
+                                </td>
+                            </tr>
+                        )}
                     </tbody>
                 </table>
             </div>
             
             {/* Pagination */}
             {totalPages > 1 && (
-                 <div className="flex justify-between items-center bg-white px-4 py-3 border-t rounded-b-lg">
+                 <div className="flex justify-between items-center bg-white px-4 py-3 border rounded-lg">
                     <p className="text-sm text-gray-700">Hiển thị {paginatedUsers.length} trên {filteredUsers.length} kết quả</p>
                     <div className="flex items-center space-x-1">
                         <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="p-2 rounded-md disabled:opacity-50 hover:bg-gray-100"><ChevronLeftIcon className="h-5 w-5" /></button>
-                        <span className="text-sm">{currentPage} / {totalPages}</span>
+                        <span className="text-sm px-2 font-medium">{currentPage} / {totalPages}</span>
                         <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="p-2 rounded-md disabled:opacity-50 hover:bg-gray-100"><ChevronRightIcon className="h-5 w-5" /></button>
                     </div>
                 </div>
             )}
-
+            
+            {/* FIX: Render the UserDetailModal when isDetailModalOpen is true */}
             {isDetailModalOpen && selectedUser && (
-                <UserDetailModal
-                    isOpen={isDetailModalOpen}
-                    onClose={() => setIsDetailModalOpen(false)}
-                    user={selectedUser}
-                    onUpdateUser={handleUpdateUser}
+                <UserDetailModal 
+                    isOpen={isDetailModalOpen} 
+                    onClose={() => setIsDetailModalOpen(false)} 
+                    user={selectedUser} 
+                    onUpdateUser={handleUpdateUser} 
                 />
             )}
-            
+
             {confirmation?.isOpen && (
                 <ConfirmationModal 
                     isOpen={confirmation.isOpen}

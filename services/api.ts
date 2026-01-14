@@ -12,6 +12,16 @@ export interface UserMe {
   status: UserStatus;
 }
 
+export interface AdminUserListItem {
+  id: number;
+  email: string;
+  role: UserRole;
+  status: UserStatus;
+  is_deleted: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export const apiService = {
   async register(userData: { email: string; password: string; role: UserRole }) {
     const response = await fetch(`${BASE_URL}/auth/register`, {
@@ -76,6 +86,25 @@ export const apiService = {
     // Lưu trạng thái vào localStorage để Guard check nhanh
     localStorage.setItem(`${role}_status`, userData.status);
     return userData;
+  },
+
+  // --- Admin API Methods ---
+  async adminGetUsers(): Promise<AdminUserListItem[]> {
+    const headers = this.getAuthHeaders('admin');
+    const response = await fetch(`${BASE_URL}/admin/users`, {
+      method: 'GET',
+      headers: {
+        ...headers,
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || 'Không thể lấy danh sách người dùng.');
+    }
+
+    return await response.json();
   },
 
   logout(role: UserRole) {
