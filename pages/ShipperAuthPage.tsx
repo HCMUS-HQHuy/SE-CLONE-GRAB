@@ -12,7 +12,7 @@ const ShipperAuthPage: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (apiService.getToken('shipper') && localStorage.getItem('shipper_is_active') === 'true') {
+    if (apiService.getToken('shipper') && localStorage.getItem('shipper_status') === 'active') {
       navigate('/shipper/profile', { replace: true });
     }
   }, [navigate]);
@@ -31,9 +31,15 @@ const ShipperAuthPage: React.FC = () => {
       await apiService.login({ email, password }, 'shipper');
       const profile = await apiService.getMe('shipper');
       
-      if (profile.is_active === false) {
+      if (profile.status === 'pending') {
         localStorage.setItem('shipper_profile_status', 'unsubmitted');
         navigate('/shipper/application');
+      } else if (profile.status === 'inactive') {
+        setError('Tài khoản tài xế đã bị tạm khóa. Vui lòng liên hệ hỗ trợ.');
+        apiService.logout('shipper');
+      } else if (profile.status === 'banned') {
+        setError('Tài khoản tài xế này đã bị cấm vĩnh viễn.');
+        apiService.logout('shipper');
       } else {
         localStorage.setItem('shipper_profile_status', 'approved');
         navigate('/shipper/profile');

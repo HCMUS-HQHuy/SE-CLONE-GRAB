@@ -12,7 +12,7 @@ const RestaurantAuthPage: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (apiService.getToken('seller') && localStorage.getItem('seller_is_active') === 'true') {
+    if (apiService.getToken('seller') && localStorage.getItem('seller_status') === 'active') {
       navigate('/restaurant/dashboard', { replace: true });
     }
   }, [navigate]);
@@ -31,10 +31,15 @@ const RestaurantAuthPage: React.FC = () => {
       await apiService.login({ email, password }, 'seller');
       const profile = await apiService.getMe('seller');
       
-      if (profile.is_active === false) {
-        // Nếu chưa active, buộc vào trang hoàn tất hồ sơ
+      if (profile.status === 'pending') {
         localStorage.setItem('restaurant_profile_status', 'unsubmitted');
         navigate('/restaurant/application');
+      } else if (profile.status === 'inactive') {
+        setError('Tài khoản đối tác đã bị tạm khóa. Vui lòng liên hệ quản trị viên.');
+        apiService.logout('seller');
+      } else if (profile.status === 'banned') {
+        setError('Tài khoản đối tác này đã bị cấm vĩnh viễn.');
+        apiService.logout('seller');
       } else {
         localStorage.setItem('restaurant_profile_status', 'approved');
         navigate('/restaurant/dashboard');

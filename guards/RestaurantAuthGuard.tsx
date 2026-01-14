@@ -18,8 +18,9 @@ const RestaurantAuthGuard: React.FC = () => {
 
       try {
         const profile = await apiService.getMe('seller');
-        if (profile.is_active === false) {
-          // Người dùng chưa active không được xem trang dashboard/orders...
+        if (profile.status === 'active') {
+          setIsVerifying(false);
+        } else if (profile.status === 'pending') {
           const currentStatus = localStorage.getItem('restaurant_profile_status');
           if (currentStatus === 'pending') {
             navigate('/restaurant/pending', { replace: true });
@@ -27,10 +28,11 @@ const RestaurantAuthGuard: React.FC = () => {
             navigate('/restaurant/application', { replace: true });
           }
         } else {
-          setIsVerifying(false);
+          // Inactive or Banned
+          apiService.logout('seller');
+          navigate('/restaurant/auth', { replace: true });
         }
       } catch (error) {
-        // Token hết hạn hoặc lỗi API
         navigate('/restaurant/auth', { replace: true });
       }
     };

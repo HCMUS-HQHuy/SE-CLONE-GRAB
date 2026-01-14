@@ -19,10 +19,14 @@ const UserAuthGuard: React.FC = () => {
 
       try {
         const profile = await apiService.getMe('user');
-        if (profile.is_active === false) {
+        if (profile.status === 'active') {
+            setIsVerifying(false);
+        } else if (profile.status === 'pending') {
             navigate('/user/profile', { replace: true });
         } else {
-            setIsVerifying(false);
+            // Inactive or Banned
+            apiService.logout('user');
+            navigate('/', { replace: true });
         }
       } catch (error) {
         navigate('/', { replace: true });

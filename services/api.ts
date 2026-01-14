@@ -3,12 +3,13 @@
 const BASE_URL = process.env.API_BASE_URL || 'http://localhost:8000';
 
 export type UserRole = 'user' | 'seller' | 'shipper' | 'admin';
+export type UserStatus = 'active' | 'inactive' | 'pending' | 'banned';
 
 export interface UserMe {
   id: number;
   email: string;
   role: UserRole;
-  is_active: boolean;
+  status: UserStatus;
 }
 
 export const apiService = {
@@ -72,8 +73,8 @@ export const apiService = {
     }
 
     const userData = await response.json();
-    // Lưu trạng thái active vào localStorage để Guard check nhanh (vẫn check API trong Guard)
-    localStorage.setItem(`${role}_is_active`, String(userData.is_active));
+    // Lưu trạng thái vào localStorage để Guard check nhanh
+    localStorage.setItem(`${role}_status`, userData.status);
     return userData;
   },
 
@@ -81,7 +82,7 @@ export const apiService = {
     localStorage.removeItem(`${role}_token`);
     localStorage.removeItem(`${role}_token_type`);
     localStorage.removeItem(`${role}_logged_in`);
-    localStorage.removeItem(`${role}_is_active`);
+    localStorage.removeItem(`${role}_status`);
     
     if (role === 'seller') {
       localStorage.removeItem('restaurant_profile_status');

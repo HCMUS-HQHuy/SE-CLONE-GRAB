@@ -18,7 +18,9 @@ const ShipperAuthGuard: React.FC = () => {
 
       try {
         const profile = await apiService.getMe('shipper');
-        if (profile.is_active === false) {
+        if (profile.status === 'active') {
+          setIsVerifying(false);
+        } else if (profile.status === 'pending') {
           const currentStatus = localStorage.getItem('shipper_profile_status');
           if (currentStatus === 'pending') {
             navigate('/shipper/pending', { replace: true });
@@ -26,7 +28,9 @@ const ShipperAuthGuard: React.FC = () => {
             navigate('/shipper/application', { replace: true });
           }
         } else {
-          setIsVerifying(false);
+          // Inactive or Banned
+          apiService.logout('shipper');
+          navigate('/shipper/auth', { replace: true });
         }
       } catch (error) {
         navigate('/shipper/auth', { replace: true });

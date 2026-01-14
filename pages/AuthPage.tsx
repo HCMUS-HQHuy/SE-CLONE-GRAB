@@ -14,7 +14,7 @@ const AuthPage: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (apiService.getToken('user')) {
+    if (apiService.getToken('user') && localStorage.getItem('user_status') === 'active') {
       navigate('/user/home', { replace: true });
     }
   }, [navigate]);
@@ -31,11 +31,16 @@ const AuthPage: React.FC = () => {
 
     try {
       await apiService.login({ email, password }, 'user');
-      // Sau khi login thành công, fetch profile để check is_active
       const userProfile = await apiService.getMe('user');
       
-      if (userProfile.is_active === false) {
+      if (userProfile.status === 'pending') {
         navigate('/user/profile');
+      } else if (userProfile.status === 'inactive') {
+        setError('Tài khoản đã bị vô hiệu hóa. Vui lòng liên hệ hỗ trợ.');
+        apiService.logout('user');
+      } else if (userProfile.status === 'banned') {
+        setError('Tài khoản này đã bị cấm vĩnh viễn.');
+        apiService.logout('user');
       } else {
         navigate('/user/home');
       }
@@ -163,7 +168,7 @@ const AuthPage: React.FC = () => {
           </div>
           <div className="flex rounded-md shadow-sm mb-6">
             <button onClick={() => { setIsLogin(true); setError(null); setSuccessMsg(null); }} className={`w-1/2 p-3 text-sm font-medium rounded-l-md transition-colors ${isLogin ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}>Đăng nhập</button>
-            <button onClick={() => { setIsLogin(false); setError(null); setSuccessMsg(null); }} className={`w-1/2 p-3 text-sm font-medium rounded-r-md transition-colors ${!isLogin ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}>Đăng ký</button>
+            <button onClick={() => { setIsLogin(false); setError(null); setSuccessMsg(null); }} className={`w-1/2 p-3 text-sm font-medium rounded-r-md transition-colors ${!isLogin ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-600'}`}>Đăng ký</button>
           </div>
           {isLogin ? <LoginForm /> : <SignupForm />}
           
