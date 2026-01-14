@@ -1,22 +1,38 @@
-import React, { useEffect } from 'react';
+
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MailIcon, LockIcon } from '../components/Icons';
+import { apiService } from '../services/api';
 
 const AdminAuthPage: React.FC = () => {
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (localStorage.getItem('admin_logged_in') === 'true') {
+    if (apiService.getToken()) {
       navigate('/admin/dashboard', { replace: true });
     }
   }, [navigate]);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, you would have authentication logic here.
-    // For this prototype, we'll just navigate to the dashboard.
-    localStorage.setItem('admin_logged_in', 'true');
-    navigate('/admin/dashboard');
+    setError(null);
+    setIsLoading(true);
+
+    const formData = new FormData(e.currentTarget as HTMLFormElement);
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+
+    try {
+      await apiService.login({ email, password });
+      localStorage.setItem('admin_logged_in', 'true');
+      navigate('/admin/dashboard');
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -24,15 +40,16 @@ const AdminAuthPage: React.FC = () => {
       <div className="absolute inset-0 bg-black opacity-60"></div>
       <div className="relative w-full max-w-sm bg-gray-800 border border-gray-700 rounded-xl shadow-2xl p-8 space-y-8">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-white">
-            Admin Portal
-          </h1>
-          <p className="text-gray-400 mt-2">
-            Đăng nhập để tiếp tục
-          </p>
+          <h1 className="text-3xl font-bold text-white">Admin Portal</h1>
+          <p className="text-gray-400 mt-2">Đăng nhập để tiếp tục</p>
         </div>
         
         <form className="space-y-6" onSubmit={handleLogin}>
+          {error && (
+            <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded-md text-sm">
+              {error}
+            </div>
+          )}
           <div>
             <label htmlFor="email" className="sr-only">Email</label>
             <div className="relative">
@@ -43,7 +60,6 @@ const AdminAuthPage: React.FC = () => {
                 id="email"
                 name="email"
                 type="email"
-                autoComplete="email"
                 required
                 className="w-full pl-10 pr-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-md placeholder-gray-400 focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
                 placeholder="admin@example.com"
@@ -60,7 +76,6 @@ const AdminAuthPage: React.FC = () => {
                 id="password"
                 name="password"
                 type="password"
-                autoComplete="current-password"
                 required
                 className="w-full pl-10 pr-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-md placeholder-gray-400 focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
                 placeholder="••••••••"
@@ -70,9 +85,10 @@ const AdminAuthPage: React.FC = () => {
           <div>
             <button
               type="submit"
-              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-orange-500"
+              disabled={isLoading}
+              className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-opacity ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
             >
-              Đăng nhập
+              {isLoading ? 'Đang xác thực...' : 'Đăng nhập'}
             </button>
           </div>
         </form>

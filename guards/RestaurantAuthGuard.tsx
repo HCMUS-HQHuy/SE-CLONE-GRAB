@@ -1,28 +1,36 @@
+
 import React, { useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
+import { apiService } from '../services/api';
 
 const RestaurantAuthGuard: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    const token = apiService.getToken();
     const profileStatus = localStorage.getItem('restaurant_profile_status');
     
+    if (!token) {
+        navigate('/restaurant/auth', { replace: true });
+        return;
+    }
+
     if (profileStatus === 'approved') {
-      // User is approved, do nothing, let them access the content.
+      // Approved, okay
     } else if (profileStatus === 'pending') {
       navigate('/restaurant/pending', { replace: true });
     } else if (profileStatus === 'unsubmitted') {
       navigate('/restaurant/application', { replace: true });
     } else {
-      // No status or invalid status, redirect to auth page.
       navigate('/restaurant/auth', { replace: true });
     }
   }, [navigate]);
 
-  // A second check to prevent content flashing while useEffect runs.
+  const token = apiService.getToken();
   const profileStatus = localStorage.getItem('restaurant_profile_status');
-  if (profileStatus !== 'approved') {
-    return null; // Or a loading spinner component.
+  
+  if (!token || profileStatus !== 'approved') {
+    return null;
   }
 
   return <Outlet />;

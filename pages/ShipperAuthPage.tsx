@@ -1,16 +1,40 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LockIcon, UserIcon, PhoneIcon } from '../components/Icons';
+import { apiService } from '../services/api';
 
 const ShipperAuthPage: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (localStorage.getItem('shipper_profile_status') === 'approved') {
+    if (apiService.getToken() && localStorage.getItem('shipper_profile_status') === 'approved') {
       navigate('/shipper/profile', { replace: true });
     }
   }, [navigate]);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setIsLoading(true);
+
+    const formData = new FormData(e.currentTarget as HTMLFormElement);
+    const email = formData.get('phone') as string; // API yêu cầu email nhưng shipper login bằng phone/email chung
+    const password = formData.get('password') as string;
+
+    try {
+      await apiService.login({ email, password });
+      localStorage.setItem('shipper_profile_status', 'approved');
+      navigate('/shipper/profile');
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,78 +42,40 @@ const ShipperAuthPage: React.FC = () => {
     navigate('/shipper/application');
   };
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    localStorage.setItem('shipper_profile_status', 'approved');
-    navigate('/shipper/profile');
-  };
-
-  const AuthFormHeader = () => (
-    <div className="text-center mb-8">
-      <h1 className="text-3xl font-bold text-gray-800">
-        Cổng Đối tác Tài xế
-      </h1>
-      <p className="text-gray-500 mt-2">
-        {isLogin ? 'Đăng nhập để nhận đơn' : 'Đăng ký trở thành tài xế'}
-      </p>
-    </div>
-  );
-
-  const AuthFormToggle = () => (
-     <div className="flex rounded-md shadow-sm mb-6">
-        <button onClick={() => setIsLogin(true)} className={`w-1/2 p-3 text-sm font-medium rounded-l-md transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-orange-500 ${isLogin ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-600'}`}>
-          Đăng nhập
-        </button>
-        <button onClick={() => setIsLogin(false)} className={`w-1/2 p-3 text-sm font-medium rounded-r-md transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-orange-500 ${!isLogin ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-600'}`}>
-          Đăng ký
-        </button>
-      </div>
-  );
-
-  const LoginForm: React.FC = () => (
-    <form className="space-y-6" onSubmit={handleLogin}>
-      <div>
-        <div className="relative">
-          <span className="absolute inset-y-0 left-0 flex items-center pl-3"><PhoneIcon className="h-5 w-5 text-gray-400" /></span>
-          <input type="tel" required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500" placeholder="Số điện thoại"/>
-        </div>
-      </div>
-      <div>
-        <div className="relative">
-          <span className="absolute inset-y-0 left-0 flex items-center pl-3"><LockIcon className="h-5 w-5 text-gray-400" /></span>
-          <input type="password" required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500" placeholder="Mật khẩu" />
-        </div>
-      </div>
-      <div>
-        <button type="submit" className="w-full py-3 px-4 rounded-md text-white bg-orange-500 hover:bg-orange-600 font-medium">Đăng nhập</button>
-      </div>
-    </form>
-  );
-
-  const SignupForm: React.FC = () => (
-    <form className="space-y-4" onSubmit={handleRegister}>
-       <div>
-        <div className="relative"><span className="absolute inset-y-0 left-0 flex items-center pl-3"><UserIcon className="h-5 w-5 text-gray-400" /></span><input type="text" required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md" placeholder="Họ và tên" /></div>
-      </div>
-      <div>
-        <div className="relative"><span className="absolute inset-y-0 left-0 flex items-center pl-3"><PhoneIcon className="h-5 w-5 text-gray-400" /></span><input type="tel" required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md" placeholder="Số điện thoại" /></div>
-      </div>
-      <div>
-        <div className="relative"><span className="absolute inset-y-0 left-0 flex items-center pl-3"><LockIcon className="h-5 w-5 text-gray-400" /></span><input type="password" required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md" placeholder="Mật khẩu" /></div>
-      </div>
-      <div>
-        <button type="submit" className="w-full py-3 px-4 rounded-md text-white bg-orange-500 hover:bg-orange-600 font-medium">Đăng ký</button>
-      </div>
-    </form>
-  );
-
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 bg-cover bg-center" style={{backgroundImage: "url('https://picsum.photos/1920/1080?motorcycle,city')"}}>
         <div className="absolute inset-0 bg-black opacity-50"></div>
         <div className="relative w-full max-w-md bg-white rounded-xl shadow-lg p-8 space-y-8">
-            <AuthFormHeader />
-            <AuthFormToggle />
-            {isLogin ? <LoginForm /> : <SignupForm />}
+            <div className="text-center mb-8">
+              <h1 className="text-3xl font-bold text-gray-800">Cổng Đối tác Tài xế</h1>
+              <p className="text-gray-500 mt-2">{isLogin ? 'Đăng nhập để nhận đơn' : 'Đăng ký trở thành tài xế'}</p>
+            </div>
+            <div className="flex rounded-md shadow-sm mb-6">
+                <button onClick={() => setIsLogin(true)} className={`w-1/2 p-3 text-sm font-medium rounded-l-md transition-colors ${isLogin ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-600'}`}>Đăng nhập</button>
+                <button onClick={() => setIsLogin(false)} className={`w-1/2 p-3 text-sm font-medium rounded-r-md transition-colors ${!isLogin ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-600'}`}>Đăng ký</button>
+            </div>
+
+            {isLogin ? (
+                <form className="space-y-6" onSubmit={handleLogin}>
+                    {error && <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm border border-red-200">{error}</div>}
+                    <div className="relative">
+                      <span className="absolute inset-y-0 left-0 flex items-center pl-3"><PhoneIcon className="h-5 w-5 text-gray-400" /></span>
+                      <input name="phone" type="text" required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500" placeholder="Email hoặc Số điện thoại"/>
+                    </div>
+                    <div className="relative">
+                      <span className="absolute inset-y-0 left-0 flex items-center pl-3"><LockIcon className="h-5 w-5 text-gray-400" /></span>
+                      <input name="password" type="password" required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500" placeholder="Mật khẩu" />
+                    </div>
+                    <button type="submit" disabled={isLoading} className="w-full py-3 px-4 rounded-md text-white bg-orange-500 hover:bg-orange-600 font-medium disabled:opacity-50">{isLoading ? 'Đang kiểm tra...' : 'Đăng nhập'}</button>
+                </form>
+            ) : (
+                <form className="space-y-4" onSubmit={handleRegister}>
+                    <div className="relative"><span className="absolute inset-y-0 left-0 flex items-center pl-3"><UserIcon className="h-5 w-5 text-gray-400" /></span><input type="text" required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md" placeholder="Họ và tên" /></div>
+                    <div className="relative"><span className="absolute inset-y-0 left-0 flex items-center pl-3"><PhoneIcon className="h-5 w-5 text-gray-400" /></span><input type="tel" required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md" placeholder="Số điện thoại" /></div>
+                    <div className="relative"><span className="absolute inset-y-0 left-0 flex items-center pl-3"><LockIcon className="h-5 w-5 text-gray-400" /></span><input type="password" required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md" placeholder="Mật khẩu" /></div>
+                    <button type="submit" className="w-full py-3 px-4 rounded-md text-white bg-orange-500 hover:bg-orange-600 font-medium">Đăng ký</button>
+                </form>
+            )}
         </div>
     </div>
   );

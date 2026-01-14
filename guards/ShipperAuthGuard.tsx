@@ -1,28 +1,36 @@
+
 import React, { useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
+import { apiService } from '../services/api';
 
 const ShipperAuthGuard: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    const token = apiService.getToken();
     const profileStatus = localStorage.getItem('shipper_profile_status');
     
+    if (!token) {
+        navigate('/shipper/auth', { replace: true });
+        return;
+    }
+
     if (profileStatus === 'approved') {
-      // User is approved, do nothing, let them access the content.
+      // Approved
     } else if (profileStatus === 'pending') {
       navigate('/shipper/pending', { replace: true });
     } else if (profileStatus === 'unsubmitted') {
       navigate('/shipper/application', { replace: true });
     } else {
-      // No status or invalid status, redirect to auth page.
       navigate('/shipper/auth', { replace: true });
     }
   }, [navigate]);
 
-  // A second check to prevent content flashing while useEffect runs.
+  const token = apiService.getToken();
   const profileStatus = localStorage.getItem('shipper_profile_status');
-  if (profileStatus !== 'approved') {
-    return null; // Or a loading spinner component.
+  
+  if (!token || profileStatus !== 'approved') {
+    return null;
   }
 
   return <Outlet />;
