@@ -20,6 +20,7 @@ const RestaurantAuthPage: React.FC = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setSuccessMsg(null);
     setIsLoading(true);
 
     const formData = new FormData(e.currentTarget as HTMLFormElement);
@@ -30,7 +31,7 @@ const RestaurantAuthPage: React.FC = () => {
       const data = await apiService.login({ email, password }, 'seller');
       
       if (data.is_active === false) {
-        // Tài khoản chưa active: Cần bổ sung thông tin hoặc chờ duyệt
+        // Seller account not yet active: Needs to submit application
         localStorage.setItem('restaurant_profile_status', 'unsubmitted');
         navigate('/restaurant/application');
       } else {
@@ -53,6 +54,13 @@ const RestaurantAuthPage: React.FC = () => {
     const formData = new FormData(e.currentTarget as HTMLFormElement);
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
+    const confirmPassword = formData.get('confirm-password') as string;
+
+    if (password !== confirmPassword) {
+      setError('Mật khẩu xác nhận không khớp.');
+      setIsLoading(false);
+      return;
+    }
 
     try {
       await apiService.register({ email, password, role: 'seller' });
@@ -74,8 +82,8 @@ const RestaurantAuthPage: React.FC = () => {
               <p className="text-gray-500 mt-2">{isLogin ? 'Đăng nhập để quản lý' : 'Trở thành đối tác của chúng tôi'}</p>
             </div>
             <div className="flex rounded-md shadow-sm mb-6">
-                <button onClick={() => setIsLogin(true)} className={`w-1/2 p-3 text-sm font-medium rounded-l-md transition-colors ${isLogin ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-600'}`}>Đăng nhập</button>
-                <button onClick={() => setIsLogin(false)} className={`w-1/2 p-3 text-sm font-medium rounded-r-md transition-colors ${!isLogin ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-600'}`}>Đăng ký</button>
+                <button onClick={() => { setIsLogin(true); setError(null); setSuccessMsg(null); }} className={`w-1/2 p-3 text-sm font-medium rounded-l-md transition-colors ${isLogin ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-600'}`}>Đăng nhập</button>
+                <button onClick={() => { setIsLogin(false); setError(null); setSuccessMsg(null); }} className={`w-1/2 p-3 text-sm font-medium rounded-r-md transition-colors ${!isLogin ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-600'}`}>Đăng ký</button>
             </div>
             
             {isLogin ? (
@@ -90,15 +98,25 @@ const RestaurantAuthPage: React.FC = () => {
                       <span className="absolute inset-y-0 left-0 flex items-center pl-3"><LockIcon className="h-5 w-5 text-gray-400" /></span>
                       <input name="password" type="password" required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500" placeholder="Mật khẩu" />
                     </div>
-                    <button type="submit" disabled={isLoading} className="w-full py-3 px-4 rounded-md text-white bg-orange-500 hover:bg-orange-600 font-medium disabled:opacity-50">{isLoading ? 'Đang xử lý...' : 'Đăng nhập'}</button>
+                    <button type="submit" disabled={isLoading} className="w-full py-3 px-4 rounded-md text-white bg-orange-500 hover:bg-orange-600 font-medium disabled:opacity-50 transition-colors">{isLoading ? 'Đang xử lý...' : 'Đăng nhập'}</button>
                 </form>
             ) : (
                 <form className="space-y-4" onSubmit={handleSignup}>
                     {error && <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm border border-red-200">{error}</div>}
-                    <div className="relative"><span className="absolute inset-y-0 left-0 flex items-center pl-3"><MailIcon className="h-5 w-5 text-gray-400" /></span><input name="email" type="email" required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md" placeholder="Email" /></div>
-                    <div className="relative"><span className="absolute inset-y-0 left-0 flex items-center pl-3"><LockIcon className="h-5 w-5 text-gray-400" /></span><input name="password" type="password" required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md" placeholder="Mật khẩu" /></div>
-                    <button type="submit" disabled={isLoading} className="w-full py-3 px-4 rounded-md text-white bg-orange-500 hover:bg-orange-600 font-medium disabled:opacity-50">
-                        {isLoading ? 'Đang xử lý...' : 'Đăng ký ngay'}
+                    <div className="relative">
+                        <span className="absolute inset-y-0 left-0 flex items-center pl-3"><MailIcon className="h-5 w-5 text-gray-400" /></span>
+                        <input name="email" type="email" required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500" placeholder="Email đăng ký" />
+                    </div>
+                    <div className="relative">
+                        <span className="absolute inset-y-0 left-0 flex items-center pl-3"><LockIcon className="h-5 w-5 text-gray-400" /></span>
+                        <input name="password" type="password" required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500" placeholder="Mật khẩu" />
+                    </div>
+                    <div className="relative">
+                        <span className="absolute inset-y-0 left-0 flex items-center pl-3"><LockIcon className="h-5 w-5 text-gray-400" /></span>
+                        <input name="confirm-password" type="password" required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500" placeholder="Xác nhận mật khẩu" />
+                    </div>
+                    <button type="submit" disabled={isLoading} className="w-full py-3 px-4 rounded-md text-white bg-orange-500 hover:bg-orange-600 font-medium disabled:opacity-50 transition-colors">
+                        {isLoading ? 'Đang xử lý...' : 'Đăng ký đối tác'}
                     </button>
                 </form>
             )}

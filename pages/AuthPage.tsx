@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MailIcon, LockIcon, UserIcon, GoogleIcon, FacebookIcon } from '../components/Icons';
+import { MailIcon, LockIcon, GoogleIcon, FacebookIcon } from '../components/Icons';
 import ForgotPasswordModal from '../components/ForgotPasswordModal';
 import { apiService } from '../services/api';
 
@@ -22,6 +22,7 @@ const AuthPage: React.FC = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setSuccessMsg(null);
     setIsLoading(true);
 
     const formData = new FormData(e.currentTarget as HTMLFormElement);
@@ -30,9 +31,8 @@ const AuthPage: React.FC = () => {
 
     try {
       const data = await apiService.login({ email, password }, 'user');
-      // Với user, is_active thường là true ngay, nhưng ta vẫn kiểm tra theo logic API
       if (data.is_active === false) {
-        navigate('/user/profile'); // Yêu cầu hoàn thiện hồ sơ nếu chưa active
+        navigate('/user/profile');
       } else {
         navigate('/user/home');
       }
@@ -84,16 +84,14 @@ const AuthPage: React.FC = () => {
         </div>
       )}
       <div>
-        <label htmlFor="email" className="sr-only">Email</label>
         <div className="relative">
           <span className="absolute inset-y-0 left-0 flex items-center pl-3">
             <MailIcon className="h-5 w-5 text-gray-400" />
           </span>
-          <input id="email" name="email" type="email" required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 sm:text-sm" placeholder="Địa chỉ email" />
+          <input id="email" name="email" type="email" required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 sm:text-sm" placeholder="Email đăng nhập" />
         </div>
       </div>
       <div>
-        <label htmlFor="password"  className="sr-only">Mật khẩu</label>
         <div className="relative">
           <span className="absolute inset-y-0 left-0 flex items-center pl-3">
             <LockIcon className="h-5 w-5 text-gray-400" />
@@ -126,7 +124,7 @@ const AuthPage: React.FC = () => {
           <span className="absolute inset-y-0 left-0 flex items-center pl-3">
             <MailIcon className="h-5 w-5 text-gray-400" />
           </span>
-          <input name="email" type="email" required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 sm:text-sm" placeholder="Địa chỉ email" />
+          <input name="email" type="email" required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 sm:text-sm" placeholder="Email đăng ký" />
         </div>
       </div>
       <div>
@@ -161,8 +159,8 @@ const AuthPage: React.FC = () => {
             <p className="text-gray-500 mt-2">{isLogin ? 'Chào mừng trở lại!' : 'Tạo tài khoản mới'}</p>
           </div>
           <div className="flex rounded-md shadow-sm mb-6">
-            <button onClick={() => setIsLogin(true)} className={`w-1/2 p-3 text-sm font-medium rounded-l-md transition-colors ${isLogin ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}>Đăng nhập</button>
-            <button onClick={() => setIsLogin(false)} className={`w-1/2 p-3 text-sm font-medium rounded-r-md transition-colors ${!isLogin ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}>Đăng ký</button>
+            <button onClick={() => { setIsLogin(true); setError(null); setSuccessMsg(null); }} className={`w-1/2 p-3 text-sm font-medium rounded-l-md transition-colors ${isLogin ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}>Đăng nhập</button>
+            <button onClick={() => { setIsLogin(false); setError(null); setSuccessMsg(null); }} className={`w-1/2 p-3 text-sm font-medium rounded-r-md transition-colors ${!isLogin ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}>Đăng ký</button>
           </div>
           {isLogin ? <LoginForm /> : <SignupForm />}
           
