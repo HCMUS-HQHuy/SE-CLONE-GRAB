@@ -5,6 +5,23 @@ const BASE_URL = process.env.API_BASE_URL || 'http://localhost:8000';
 export type UserRole = 'user' | 'seller' | 'shipper' | 'admin';
 
 export const apiService = {
+  async register(userData: { email: string; password: string; role: UserRole }) {
+    const response = await fetch(`${BASE_URL}/auth/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(userData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || 'Đăng ký thất bại. Vui lòng thử lại.');
+    }
+
+    return await response.json();
+  },
+
   async login(credentials: { email: string; password: string }, role: UserRole) {
     const response = await fetch(`${BASE_URL}/auth/login/${role}`, {
       method: 'POST',
@@ -26,16 +43,15 @@ export const apiService = {
     localStorage.setItem(`${role}_token_type`, data.token_type);
     localStorage.setItem(`${role}_logged_in`, 'true');
     
+    // Trả về data để component xử lý is_active
     return data;
   },
 
   logout(role: UserRole) {
-    // Chỉ xóa các thông tin liên quan đến role đó
     localStorage.removeItem(`${role}_token`);
     localStorage.removeItem(`${role}_token_type`);
     localStorage.removeItem(`${role}_logged_in`);
     
-    // Xóa thêm các status phụ tùy theo role
     if (role === 'seller') {
       localStorage.removeItem('restaurant_profile_status');
     }

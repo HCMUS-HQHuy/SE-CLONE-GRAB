@@ -8,10 +8,10 @@ const RestaurantAuthPage: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // FIX: getToken requires a role argument. Passing 'seller' for the Restaurant portal.
     if (apiService.getToken('seller') && localStorage.getItem('restaurant_profile_status') === 'approved') {
       navigate('/restaurant/dashboard', { replace: true });
     }
@@ -27,11 +27,16 @@ const RestaurantAuthPage: React.FC = () => {
     const password = formData.get('password') as string;
 
     try {
-      // Cập nhật: Truyền role 'seller'
-      await apiService.login({ email, password }, 'seller');
-      // Giả định login thành công cho account đã duyệt
-      localStorage.setItem('restaurant_profile_status', 'approved');
-      navigate('/restaurant/dashboard');
+      const data = await apiService.login({ email, password }, 'seller');
+      
+      if (data.is_active === false) {
+        // Tài khoản chưa active: Cần bổ sung thông tin hoặc chờ duyệt
+        localStorage.setItem('restaurant_profile_status', 'unsubmitted');
+        navigate('/restaurant/application');
+      } else {
+        localStorage.setItem('restaurant_profile_status', 'approved');
+        navigate('/restaurant/dashboard');
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -39,10 +44,25 @@ const RestaurantAuthPage: React.FC = () => {
     }
   };
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    localStorage.setItem('restaurant_profile_status', 'unsubmitted');
-    navigate('/restaurant/application');
+    setError(null);
+    setSuccessMsg(null);
+    setIsLoading(true);
+
+    const formData = new FormData(e.currentTarget as HTMLFormElement);
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+
+    try {
+      await apiService.register({ email, password, role: 'seller' });
+      setSuccessMsg('Đăng ký đối tác thành công! Vui lòng đăng nhập.');
+      setIsLogin(true);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -61,6 +81,7 @@ const RestaurantAuthPage: React.FC = () => {
             {isLogin ? (
                 <form className="space-y-6" onSubmit={handleLogin}>
                     {error && <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm border border-red-200">{error}</div>}
+                    {successMsg && <div className="bg-green-50 text-green-600 p-3 rounded-md text-sm border border-green-200">{successMsg}</div>}
                     <div className="relative">
                       <span className="absolute inset-y-0 left-0 flex items-center pl-3"><MailIcon className="h-5 w-5 text-gray-400" /></span>
                       <input name="email" type="email" required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500" placeholder="Email đăng nhập"/>
@@ -72,11 +93,13 @@ const RestaurantAuthPage: React.FC = () => {
                     <button type="submit" disabled={isLoading} className="w-full py-3 px-4 rounded-md text-white bg-orange-500 hover:bg-orange-600 font-medium disabled:opacity-50">{isLoading ? 'Đang xử lý...' : 'Đăng nhập'}</button>
                 </form>
             ) : (
-                <form className="space-y-4" onSubmit={handleRegister}>
-                    <div className="relative"><span className="absolute inset-y-0 left-0 flex items-center pl-3"><UserIcon className="h-5 w-5 text-gray-400" /></span><input type="text" required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md" placeholder="Họ và tên" /></div>
-                    <div className="relative"><span className="absolute inset-y-0 left-0 flex items-center pl-3"><MailIcon className="h-5 w-5 text-gray-400" /></span><input type="email" required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md" placeholder="Email" /></div>
-                    <div className="relative"><span className="absolute inset-y-0 left-0 flex items-center pl-3"><LockIcon className="h-5 w-5 text-gray-400" /></span><input type="password" required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md" placeholder="Mật khẩu" /></div>
-                    <button type="submit" className="w-full py-3 px-4 rounded-md text-white bg-orange-500 hover:bg-orange-600 font-medium">Đăng ký</button>
+                <form className="space-y-4" onSubmit={handleSignup}>
+                    {error && <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm border border-red-200">{error}</div>}
+                    <div className="relative"><span className="absolute inset-y-0 left-0 flex items-center pl-3"><MailIcon className="h-5 w-5 text-gray-400" /></span><input name="email" type="email" required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md" placeholder="Email" /></div>
+                    <div className="relative"><span className="absolute inset-y-0 left-0 flex items-center pl-3"><LockIcon className="h-5 w-5 text-gray-400" /></span><input name="password" type="password" required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md" placeholder="Mật khẩu" /></div>
+                    <button type="submit" disabled={isLoading} className="w-full py-3 px-4 rounded-md text-white bg-orange-500 hover:bg-orange-600 font-medium disabled:opacity-50">
+                        {isLoading ? 'Đang xử lý...' : 'Đăng ký ngay'}
+                    </button>
                 </form>
             )}
         </div>
