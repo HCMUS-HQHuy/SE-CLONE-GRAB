@@ -1,12 +1,10 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { SearchIcon, PlusIcon, ChevronLeftIcon, ChevronRightIcon, UserIcon, TrashIcon, LockIcon as LockClosedIcon } from '../components/Icons';
+import { SearchIcon, PlusIcon, ChevronLeftIcon, ChevronRightIcon, UserIcon, TrashIcon, LockIcon as LockClosedIcon, CheckBadgeIcon, BanIcon } from '../components/Icons';
 import { apiService, AdminUserListItem, UserRole, UserStatus } from '../services/api';
 import ConfirmationModal from '../components/ConfirmationModal';
-// FIX: Import UserDetailModal to allow detailed user management
 import UserDetailModal from '../components/UserDetailModal';
 
-// FIX: Define and export types needed by UserDetailModal.tsx to fix member missing errors
 export type UserSession = {
     id: string;
     ip: string;
@@ -46,7 +44,6 @@ const AdminUsersPage: React.FC = () => {
     const [statusFilter, setStatusFilter] = useState('All');
     const [currentPage, setCurrentPage] = useState(1);
     
-    // FIX: Add state for the detailed user modal integration
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     
@@ -87,19 +84,54 @@ const AdminUsersPage: React.FC = () => {
     const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
     const paginatedUsers = filteredUsers.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
+    const handleUpdateUserStatus = async (userId: number, newStatus: UserStatus) => {
+        try {
+            await apiService.adminUpdateUserStatus(userId, newStatus);
+            fetchUsers(); // Refresh data
+        } catch (err: any) {
+            alert(err.message);
+        }
+    };
+
+    const handleActionPending = (user: AdminUserListItem) => {
+        setConfirmation({
+            isOpen: true,
+            title: 'Duyệt người dùng mới',
+            message: `Bạn muốn Kích hoạt hay Từ chối tài khoản ${user.email}?`,
+            onConfirm: () => {
+                handleUpdateUserStatus(user.id, 'active');
+                setConfirmation(null);
+            },
+            color: 'orange'
+        });
+    };
+
+    const handleRejectPending = (user: AdminUserListItem) => {
+        setConfirmation({
+            isOpen: true,
+            title: 'Từ chối người dùng',
+            message: `Bạn có chắc chắn muốn Từ chối (Khóa) tài khoản ${user.email}?`,
+            onConfirm: () => {
+                handleUpdateUserStatus(user.id, 'banned');
+                setConfirmation(null);
+            },
+            color: 'red'
+        });
+    };
+
     const handleToggleLock = (user: AdminUserListItem) => {
         const isCurrentlyActive = user.status === 'active';
+        const targetStatus: UserStatus = isCurrentlyActive ? 'inactive' : 'active';
+        
         setConfirmation({
             isOpen: true,
             title: `${isCurrentlyActive ? 'Khóa' : 'Mở khóa'} người dùng?`,
             message: `Bạn có chắc chắn muốn ${isCurrentlyActive ? 'khóa' : 'mở khóa'} tài khoản ${user.email}?`,
             onConfirm: () => {
-                // Trong thực tế sẽ gọi API PUT/PATCH /admin/users/:id
-                const newStatus: UserStatus = isCurrentlyActive ? 'inactive' : 'active';
-                setUsers(prev => prev.map(u => u.id === user.id ? { ...u, status: newStatus } : u));
+                handleUpdateUserStatus(user.id, targetStatus);
                 setConfirmation(null);
             },
-            color: 'red'
+            color: isCurrentlyActive ? 'red' : 'orange'
         });
     };
     
@@ -107,17 +139,20 @@ const AdminUsersPage: React.FC = () => {
          setConfirmation({
             isOpen: true,
             title: 'Xóa người dùng?',
-            message: `Hành động này sẽ đánh dấu tài khoản ${user.email} là đã xóa. Tiếp tục?`,
-            onConfirm: () => {
-                // Trong thực tế sẽ gọi API DELETE /admin/users/:id
-                setUsers(prev => prev.map(u => u.id === user.id ? { ...u, is_deleted: true } : u));
+            message: `Hành động này sẽ xóa vĩnh viễn tài khoản ${user.email}. Tiếp tục?`,
+            onConfirm: async () => {
+                try {
+                    await apiService.adminDeleteUser(user.id);
+                    fetchUsers();
+                } catch (err: any) {
+                    alert(err.message);
+                }
                 setConfirmation(null);
             },
             color: 'red'
         });
     }
 
-    // FIX: Add function to map list data to full user object and open detail modal
     const handleViewDetail = (adminUser: AdminUserListItem) => {
         const detailedUser: User = {
             id: adminUser.id,
@@ -140,13 +175,9 @@ const AdminUsersPage: React.FC = () => {
         setIsDetailModalOpen(true);
     };
 
-    // FIX: Add function to update state when details are changed in the modal
     const handleUpdateUser = (updatedUser: User) => {
-        setUsers(prev => prev.map(u => u.id === updatedUser.id ? { 
-            ...u, 
-            email: updatedUser.email,
-            status: updatedUser.status === 'active' ? 'active' : 'inactive' 
-        } : u));
+        const targetStatus: UserStatus = updatedUser.status === 'active' ? 'active' : 'inactive';
+        handleUpdateUserStatus(updatedUser.id, targetStatus);
         setSelectedUser(updatedUser);
     };
 
@@ -285,23 +316,43 @@ const AdminUsersPage: React.FC = () => {
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     {!user.is_deleted && (
                                         <div className="flex justify-end space-x-3 items-center">
-                                            {/* FIX: Add button to open detailed view modal */}
                                             <button 
                                                 onClick={() => handleViewDetail(user)} 
                                                 className="text-orange-600 hover:text-orange-900 font-semibold mr-2"
                                             >
                                                 Chi tiết
                                             </button>
-                                            <button 
-                                                onClick={() => handleToggleLock(user)} 
-                                                className="text-orange-600 hover:text-orange-900" 
-                                                title={user.status === 'active' ? 'Vô hiệu hóa' : 'Kích hoạt'}
-                                            >
-                                                <LockClosedIcon className="h-5 w-5"/>
-                                            </button>
+                                            
+                                            {user.status === 'pending' ? (
+                                                <>
+                                                    <button 
+                                                        onClick={() => handleActionPending(user)} 
+                                                        className="text-green-600 hover:text-green-900" 
+                                                        title="Kích hoạt"
+                                                    >
+                                                        <CheckBadgeIcon className="h-5 w-5"/>
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleRejectPending(user)} 
+                                                        className="text-red-600 hover:text-red-900" 
+                                                        title="Từ chối/Khóa"
+                                                    >
+                                                        <BanIcon className="h-5 w-5"/>
+                                                    </button>
+                                                </>
+                                            ) : (
+                                                <button 
+                                                    onClick={() => handleToggleLock(user)} 
+                                                    className={`${user.status === 'active' ? 'text-red-500' : 'text-green-500'} hover:opacity-75`} 
+                                                    title={user.status === 'active' ? 'Vô hiệu hóa' : 'Kích hoạt'}
+                                                >
+                                                    <LockClosedIcon className="h-5 w-5"/>
+                                                </button>
+                                            )}
+
                                             <button 
                                                 onClick={() => handleDelete(user)} 
-                                                className="text-red-600 hover:text-red-900" 
+                                                className="text-gray-400 hover:text-red-600" 
                                                 title="Xóa"
                                             >
                                                 <TrashIcon className="h-5 w-5"/>
@@ -321,7 +372,6 @@ const AdminUsersPage: React.FC = () => {
                 </table>
             </div>
             
-            {/* Pagination */}
             {totalPages > 1 && (
                  <div className="flex justify-between items-center bg-white px-4 py-3 border rounded-lg">
                     <p className="text-sm text-gray-700">Hiển thị {paginatedUsers.length} trên {filteredUsers.length} kết quả</p>
@@ -333,7 +383,6 @@ const AdminUsersPage: React.FC = () => {
                 </div>
             )}
             
-            {/* FIX: Render the UserDetailModal when isDetailModalOpen is true */}
             {isDetailModalOpen && selectedUser && (
                 <UserDetailModal 
                     isOpen={isDetailModalOpen} 

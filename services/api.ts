@@ -107,6 +107,42 @@ export const apiService = {
     return await response.json();
   },
 
+  async adminUpdateUserStatus(userId: number, status: UserStatus): Promise<AdminUserListItem> {
+    const headers = this.getAuthHeaders('admin');
+    const response = await fetch(`${BASE_URL}/admin/users/${userId}/status`, {
+      method: 'PATCH',
+      headers: {
+        ...headers,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ status }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || 'Cập nhật trạng thái thất bại.');
+    }
+
+    return await response.json();
+  },
+
+  async adminDeleteUser(userId: number): Promise<{ message: string }> {
+    const headers = this.getAuthHeaders('admin');
+    const response = await fetch(`${BASE_URL}/admin/users/${userId}/delete`, {
+      method: 'PATCH',
+      headers: {
+        ...headers,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || 'Xóa người dùng thất bại.');
+    }
+
+    return await response.json();
+  },
+
   logout(role: UserRole) {
     localStorage.removeItem(`${role}_token`);
     localStorage.removeItem(`${role}_token_type`);
