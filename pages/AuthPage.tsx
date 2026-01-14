@@ -13,7 +13,8 @@ const AuthPage: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (apiService.getToken()) {
+    // FIX: getToken requires a role argument. Passing 'user' as this is the main auth page for customers.
+    if (apiService.getToken('user')) {
       navigate('/user/home', { replace: true });
     }
   }, [navigate]);

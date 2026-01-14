@@ -16,52 +16,40 @@ export const apiService = {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      // Hiển thị message chi tiết từ server (ví dụ: "User is not allowed to login as...")
       throw new Error(errorData.detail || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.');
     }
 
     const data = await response.json();
     
-    // Lưu trữ thông tin định danh vào localStorage
-    localStorage.setItem('access_token', data.access_token);
-    localStorage.setItem('token_type', data.token_type);
+    // Lưu trữ token theo prefix role
+    localStorage.setItem(`${role}_token`, data.access_token);
+    localStorage.setItem(`${role}_token_type`, data.token_type);
+    localStorage.setItem(`${role}_logged_in`, 'true');
     
     return data;
   },
 
-  async signup(userData: any) {
-    const response = await fetch(`${BASE_URL}/auth/signup`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(userData),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.detail || 'Đăng ký thất bại. Vui lòng thử lại.');
+  logout(role: UserRole) {
+    // Chỉ xóa các thông tin liên quan đến role đó
+    localStorage.removeItem(`${role}_token`);
+    localStorage.removeItem(`${role}_token_type`);
+    localStorage.removeItem(`${role}_logged_in`);
+    
+    // Xóa thêm các status phụ tùy theo role
+    if (role === 'seller') {
+      localStorage.removeItem('restaurant_profile_status');
     }
-
-    return await response.json();
+    if (role === 'shipper') {
+      localStorage.removeItem('shipper_profile_status');
+    }
   },
 
-  logout() {
-    // Xóa toàn bộ trạng thái phiên làm việc
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('token_type');
-    localStorage.removeItem('user_logged_in');
-    localStorage.removeItem('admin_logged_in');
-    localStorage.removeItem('restaurant_profile_status');
-    localStorage.removeItem('shipper_profile_status');
+  getToken(role: UserRole) {
+    return localStorage.getItem(`${role}_token`);
   },
 
-  getToken() {
-    return localStorage.getItem('access_token');
-  },
-
-  getAuthHeaders() {
-    const token = this.getToken();
+  getAuthHeaders(role: UserRole) {
+    const token = this.getToken(role);
     return token ? { 'Authorization': `Bearer ${token}` } : {};
   }
 };

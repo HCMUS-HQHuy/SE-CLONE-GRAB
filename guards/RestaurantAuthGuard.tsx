@@ -7,7 +7,7 @@ const RestaurantAuthGuard: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = apiService.getToken();
+    const token = apiService.getToken('seller');
     const profileStatus = localStorage.getItem('restaurant_profile_status');
     
     if (!token) {
@@ -26,7 +26,7 @@ const RestaurantAuthGuard: React.FC = () => {
     }
   }, [navigate]);
 
-  const token = apiService.getToken();
+  const token = apiService.getToken('seller');
   const profileStatus = localStorage.getItem('restaurant_profile_status');
   
   if (!token || profileStatus !== 'approved') {

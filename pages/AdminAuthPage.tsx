@@ -10,7 +10,8 @@ const AdminAuthPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (apiService.getToken()) {
+    // FIX: getToken requires a role argument. Passing 'admin' for the Admin portal.
+    if (apiService.getToken('admin')) {
       navigate('/admin/dashboard', { replace: true });
     }
   }, [navigate]);

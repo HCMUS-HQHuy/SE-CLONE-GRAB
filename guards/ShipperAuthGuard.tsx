@@ -7,7 +7,7 @@ const ShipperAuthGuard: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = apiService.getToken();
+    const token = apiService.getToken('shipper');
     const profileStatus = localStorage.getItem('shipper_profile_status');
     
     if (!token) {
@@ -26,7 +26,7 @@ const ShipperAuthGuard: React.FC = () => {
     }
   }, [navigate]);
 
-  const token = apiService.getToken();
+  const token = apiService.getToken('shipper');
   const profileStatus = localStorage.getItem('shipper_profile_status');
   
   if (!token || profileStatus !== 'approved') {

@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { NavLink, Link } from 'react-router-dom';
+import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { 
   ChartBarIcon, 
   UsersIcon, 
@@ -8,10 +9,18 @@ import {
   CogIcon,
   LogoutIcon 
 } from './Icons';
+import { apiService } from '../services/api';
 
 const AdminNavbar: React.FC = () => {
+  const navigate = useNavigate();
   const commonLinkClasses = "flex items-center px-4 py-3 text-gray-300 rounded-lg hover:bg-gray-700 hover:text-white transition-colors duration-200";
   const activeLinkClasses = "bg-gray-900 text-white font-semibold";
+
+  const handleLogout = (e: React.MouseEvent) => {
+    e.preventDefault();
+    apiService.logout('admin');
+    navigate('/admin/login');
+  };
 
   const NavItem: React.FC<{ to: string, icon: React.ReactNode, text: string }> = ({ to, icon, text }) => (
     <li>
@@ -42,10 +51,10 @@ const AdminNavbar: React.FC = () => {
         </ul>
       </nav>
       <div className="p-4 border-t border-gray-700">
-        <Link to="/admin/login" className={commonLinkClasses}>
+        <button onClick={handleLogout} className={`w-full ${commonLinkClasses}`}>
           <LogoutIcon className="h-6 w-6" />
           <span className="ml-3">Đăng xuất</span>
-        </Link>
+        </button>
       </div>
     </div>
   );

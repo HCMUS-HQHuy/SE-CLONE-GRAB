@@ -11,7 +11,8 @@ const RestaurantAuthPage: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (apiService.getToken() && localStorage.getItem('restaurant_profile_status') === 'approved') {
+    // FIX: getToken requires a role argument. Passing 'seller' for the Restaurant portal.
+    if (apiService.getToken('seller') && localStorage.getItem('restaurant_profile_status') === 'approved') {
       navigate('/restaurant/dashboard', { replace: true });
     }
   }, [navigate]);

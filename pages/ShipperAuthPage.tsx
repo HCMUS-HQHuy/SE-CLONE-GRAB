@@ -11,7 +11,8 @@ const ShipperAuthPage: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (apiService.getToken() && localStorage.getItem('shipper_profile_status') === 'approved') {
+    // FIX: getToken requires a role argument. Passing 'shipper' for the Shipper portal.
+    if (apiService.getToken('shipper') && localStorage.getItem('shipper_profile_status') === 'approved') {
       navigate('/shipper/profile', { replace: true });
     }
   }, [navigate]);
