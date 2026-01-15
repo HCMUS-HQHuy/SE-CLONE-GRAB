@@ -1,6 +1,6 @@
 
 // Sử dụng biến môi trường cho BASE_URL, mặc định là localhost:8000
-const BASE_URL = process.env.API_BASE_URL || 'http://localhost:8000';
+const BASE_URL = 'http://localhost:8003';
 
 export type UserRole = 'user' | 'seller' | 'shipper' | 'admin';
 export type UserStatus = 'active' | 'inactive' | 'pending' | 'banned';
