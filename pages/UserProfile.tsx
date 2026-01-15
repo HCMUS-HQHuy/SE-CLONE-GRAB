@@ -185,7 +185,7 @@ const UserProfile: React.FC = () => {
               </div>
             </div>
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email (Không thể thay đổi)</label>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
               <div className="relative">
                 <span className="absolute inset-y-0 left-0 flex items-center pl-3"><MailIcon className="h-5 w-5 text-gray-400" /></span>
                 <input 
@@ -230,40 +230,6 @@ const UserProfile: React.FC = () => {
         </div>
       </div>
       
-      {/* Address Card (Simplified) */}
-      <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-        <div className="flex justify-between items-center border-b pb-4 mb-6">
-          <h2 className="text-xl font-semibold text-gray-800">Địa chỉ của tôi</h2>
-          <button className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-orange-500 hover:bg-orange-600 focus:outline-none transition-colors">
-            <PlusIcon className="h-5 w-5 mr-2" />
-            Thêm địa chỉ mới
-          </button>
-        </div>
-        <div className="space-y-4">
-          {profile.address ? (
-              <div className="p-4 border border-orange-200 bg-orange-50 rounded-md flex justify-between items-start">
-                <div className="flex items-start">
-                  <HomeIcon className="h-6 w-6 text-orange-500 mt-1 mr-4" />
-                  <div>
-                    <div className="flex items-center">
-                      <p className="font-semibold text-gray-900">Địa chỉ mặc định</p>
-                      <span className="ml-3 bg-orange-100 text-orange-800 text-xs font-medium px-2.5 py-0.5 rounded-full border border-orange-200">Mặc định</span>
-                    </div>
-                    <p className="text-gray-600 font-medium">{profile.name || 'Chưa cập nhật tên'}</p>
-                    <p className="text-gray-600 text-sm">{profile.phone || 'Chưa cập nhật SĐT'}</p>
-                    <p className="text-gray-500 text-sm mt-1">{profile.address}</p>
-                  </div>
-                </div>
-                <button className="text-gray-400 hover:text-blue-600 transition-colors"><PencilIcon className="h-5 w-5" /></button>
-              </div>
-          ) : (
-              <div className="text-center py-6 bg-gray-50 rounded-md border border-dashed border-gray-300 text-gray-500 italic text-sm">
-                  Vui lòng cập nhật địa chỉ để thuận tiện cho việc giao hàng.
-              </div>
-          )}
-        </div>
-      </div>
-
       {/* Support Section */}
       <div className="mt-8 bg-white p-6 rounded-lg shadow-md border border-gray-100">
         <h2 className="text-xl font-semibold text-gray-800 border-b pb-4 mb-6">Trợ giúp</h2>
