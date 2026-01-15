@@ -2,6 +2,8 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UploadIcon, PaperClipIcon } from '../components/Icons';
+import { restaurantApiService } from '../services/restaurantApi';
+import { apiService } from '../services/api';
 
 const FileUploadField: React.FC<{ label: string; file: File | null; onFileSelect: (file: File | null) => void; }> = ({ label, file, onFileSelect }) => {
     const inputRef = useRef<HTMLInputElement>(null);
@@ -13,8 +15,8 @@ const FileUploadField: React.FC<{ label: string; file: File | null; onFileSelect
                     {file ? (
                         <>
                             <PaperClipIcon className="mx-auto h-10 w-10 text-green-500"/>
-                            <p className="text-sm text-gray-600 font-medium">{file.name}</p>
-                            <button onClick={(e) => { e.stopPropagation(); onFileSelect(null); }} className="text-xs text-red-500 hover:underline">Xóa và chọn lại</button>
+                            <p className="text-sm text-gray-600 font-medium truncate max-w-xs mx-auto">{file.name}</p>
+                            <button type="button" onClick={(e) => { e.stopPropagation(); onFileSelect(null); }} className="text-xs text-red-500 hover:underline">Xóa và chọn lại</button>
                         </>
                     ) : (
                         <>
@@ -33,10 +35,13 @@ const FileUploadField: React.FC<{ label: string; file: File | null; onFileSelect
 
 const RestaurantApplicationPage: React.FC = () => {
     const navigate = useNavigate();
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     
     // Form fields state
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
+    const [address, setAddress] = useState(''); // New field for API
     const [phone, setPhone] = useState('');
     const [openingHours, setOpeningHours] = useState('');
     
@@ -44,24 +49,46 @@ const RestaurantApplicationPage: React.FC = () => {
     const [businessLicense, setBusinessLicense] = useState<File | null>(null);
     const [foodSafetyCert, setFoodSafetyCert] = useState<File | null>(null);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setError(null);
         
-        if (!name || !description || !phone || !openingHours) {
-            alert('Vui lòng điền đầy đủ thông tin nhà hàng.');
+        if (!name || !description || !address || !phone || !openingHours) {
+            setError('Vui lòng điền đầy đủ thông tin nhà hàng.');
             return;
         }
 
         if (!businessLicense || !foodSafetyCert) {
-            alert('Vui lòng tải lên đầy đủ các giấy tờ pháp lý cần thiết.');
+            setError('Vui lòng tải lên đầy đủ các giấy tờ pháp lý (GPKD & ATVSTP).');
             return;
         }
 
-        // Simulate API call
-        console.log('Submitting Application:', { name, description, phone, openingHours, businessLicense, foodSafetyCert });
-        
-        localStorage.setItem('restaurant_profile_status', 'pending');
-        navigate('/restaurant/pending', { replace: true });
+        setIsLoading(true);
+        try {
+            // 1. Get owner_id from Auth service (port 8003)
+            const userProfile = await apiService.getMe('seller');
+            const owner_id = userProfile.id;
+
+            // 2. Submit to Restaurant service (port 8004)
+            await restaurantApiService.createRestaurant({
+                owner_id,
+                name,
+                address,
+                phone,
+                description,
+                opening_hours: openingHours,
+                business_license_image: businessLicense,
+                food_safety_certificate_image: foodSafetyCert
+            });
+
+            localStorage.setItem('restaurant_profile_status', 'pending');
+            navigate('/restaurant/pending', { replace: true });
+        } catch (err: any) {
+            console.error('Submit error:', err);
+            setError(err.message || 'Có lỗi xảy ra trong quá trình gửi hồ sơ. Vui lòng thử lại.');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -71,6 +98,12 @@ const RestaurantApplicationPage: React.FC = () => {
                     <h1 className="text-3xl font-bold text-gray-800">Hoàn tất hồ sơ đối tác</h1>
                     <p className="text-gray-600 mt-2">Cung cấp thông tin chi tiết về nhà hàng của bạn để Admin xét duyệt.</p>
                 </div>
+
+                {error && (
+                    <div className="mb-6 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
+                        {error}
+                    </div>
+                )}
 
                 <form onSubmit={handleSubmit} className="space-y-8">
                     {/* Section 1: Store Information */}
@@ -88,6 +121,17 @@ const RestaurantApplicationPage: React.FC = () => {
                                     onChange={(e) => setName(e.target.value)}
                                     className="mt-1 w-full border border-gray-300 p-2.5 rounded-md focus:ring-orange-500 focus:border-orange-500 outline-none" 
                                     placeholder="Ví dụ: Quán Ăn Ngon Sài Gòn"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Địa chỉ cụ thể *</label>
+                                <input 
+                                    type="text" 
+                                    required 
+                                    value={address}
+                                    onChange={(e) => setAddress(e.target.value)}
+                                    className="mt-1 w-full border border-gray-300 p-2.5 rounded-md focus:ring-orange-500 focus:border-orange-500 outline-none" 
+                                    placeholder="Số nhà, tên đường, Phường/Xã, Quận/Huyện..."
                                 />
                             </div>
                             <div>
@@ -150,9 +194,15 @@ const RestaurantApplicationPage: React.FC = () => {
                     <div className="pt-4">
                         <button 
                             type="submit" 
-                            className="w-full py-4 px-4 rounded-md text-white bg-orange-500 hover:bg-orange-600 font-bold text-lg shadow-md hover:shadow-lg transform active:scale-[0.98] transition-all"
+                            disabled={isLoading}
+                            className="w-full py-4 px-4 rounded-md text-white bg-orange-500 hover:bg-orange-600 font-bold text-lg shadow-md hover:shadow-lg transform active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-not-allowed"
                         >
-                            Gửi hồ sơ đăng ký
+                            {isLoading ? (
+                                <div className="flex items-center justify-center">
+                                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
+                                    Đang gửi hồ sơ...
+                                </div>
+                            ) : 'Gửi hồ sơ đăng ký'}
                         </button>
                         <p className="text-center text-xs text-gray-400 mt-4">
                             Bằng cách nhấn gửi hồ sơ, bạn đồng ý với các Điều khoản & Chính sách của chúng tôi.
