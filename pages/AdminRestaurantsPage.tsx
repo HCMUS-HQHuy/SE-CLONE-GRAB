@@ -1,9 +1,10 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { SearchIcon, ChevronLeftIcon, ChevronRightIcon, OfficeBuildingIcon, CheckBadgeIcon, LockIcon as LockClosedIcon, XCircleIcon } from '../components/Icons';
+import { SearchIcon, ChevronLeftIcon, ChevronRightIcon } from '../components/Icons';
 import { restaurantApiService, RestaurantListItem } from '../services/restaurantApi';
 import RestaurantDetailModal from '../components/RestaurantDetailModal';
 import ConfirmationModal from '../components/ConfirmationModal';
+import { apiService, UserStatus } from '../services/api';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -13,7 +14,7 @@ const AdminRestaurantsPage: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     
     const [searchTerm, setSearchTerm] = useState('');
-    const [statusFilter, setStatusFilter] = useState('PENDING'); // Mặc định hiển thị chờ duyệt
+    const [statusFilter, setStatusFilter] = useState('PENDING');
     const [currentPage, setCurrentPage] = useState(1);
     
     const [selectedRestaurant, setSelectedRestaurant] = useState<RestaurantListItem | null>(null);
@@ -48,23 +49,23 @@ const AdminRestaurantsPage: React.FC = () => {
         return restaurants.filter(r => r.name.toLowerCase().includes(searchTerm.toLowerCase()));
     }, [restaurants, searchTerm]);
 
-    const handleUpdateStatus = async (restaurantId: number, status: string) => {
+    const handleUpdateAuthStatus = async (ownerId: number, status: UserStatus) => {
         try {
-            await restaurantApiService.updateStatus(restaurantId, status);
+            await apiService.adminUpdateUserStatus(ownerId, status);
             fetchRestaurants();
             setConfirmation(null);
-            setIsDetailModalOpen(false); // Đóng modal nếu đang thao tác từ trong đó
+            setIsDetailModalOpen(false);
         } catch (err: any) {
-            alert(err.message);
+            alert(err.message || 'Lỗi cập nhật trạng thái Auth.');
         }
     };
     
     const handleApprove = (res: RestaurantListItem) => {
         setConfirmation({
             isOpen: true,
-            title: 'Phê duyệt nhà hàng',
-            message: `Bạn xác nhận hồ sơ của "${res.name}" đã hợp lệ và cho phép hoạt động?`,
-            onConfirm: () => handleUpdateStatus(res.id, 'ACTIVE'),
+            title: 'Phê duyệt đối tác',
+            message: `Kích hoạt tài khoản của "${res.name}"? Sau khi duyệt, chủ quán có thể bắt đầu bán hàng.`,
+            onConfirm: () => handleUpdateAuthStatus(res.owner_id, 'active'),
             color: 'orange'
         });
     };
@@ -73,26 +74,16 @@ const AdminRestaurantsPage: React.FC = () => {
         setConfirmation({
             isOpen: true,
             title: 'Từ chối hồ sơ',
-            message: `Từ chối hồ sơ của "${res.name}"? Bạn nên thông báo lý do cho chủ quán.`,
-            onConfirm: () => handleUpdateStatus(res.id, 'REJECTED'),
+            message: `Bạn muốn từ chối hồ sơ của "${res.name}"? Trạng thái tài khoản sẽ chuyển về Inactive.`,
+            onConfirm: () => handleUpdateAuthStatus(res.owner_id, 'inactive'),
             color: 'red'
         });
-    };
-
-    const getStatusBadge = (status: string) => {
-        switch (status) {
-            case 'PENDING': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-            case 'ACTIVE': return 'bg-green-100 text-green-800 border-green-200';
-            case 'REJECTED': return 'bg-red-100 text-red-800 border-red-200';
-            case 'BANNED': return 'bg-gray-800 text-white';
-            default: return 'bg-gray-100 text-gray-800';
-        }
     };
 
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold text-gray-900">Quản lý Đối tác Nhà hàng</h1>
+                <h1 className="text-3xl font-bold text-gray-900">Đối tác Nhà hàng</h1>
                 <button onClick={fetchRestaurants} className="text-sm text-orange-600 font-medium hover:underline">Làm mới</button>
             </div>
             
@@ -103,11 +94,9 @@ const AdminRestaurantsPage: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-4">
                      <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="border rounded-lg py-2 px-3 text-sm font-medium">
-                        <option value="All">Tất cả trạng thái</option>
-                        <option value="PENDING">Chờ duyệt (New)</option>
+                        <option value="PENDING">Hồ sơ mới</option>
                         <option value="ACTIVE">Đang hoạt động</option>
-                        <option value="REJECTED">Đã từ chối</option>
-                        <option value="BANNED">Đã khóa</option>
+                        <option value="All">Tất cả</option>
                     </select>
                 </div>
             </div>
@@ -115,22 +104,21 @@ const AdminRestaurantsPage: React.FC = () => {
             {isLoading ? (
                 <div className="py-20 text-center">
                     <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500 mx-auto"></div>
-                    <p className="text-gray-500 mt-4">Đang tải dữ liệu từ Seller Service...</p>
                 </div>
             ) : (
                 <div className="bg-white rounded-lg shadow-md border overflow-hidden">
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nhà hàng</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Địa chỉ</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Hành động</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nhà hàng</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Địa chỉ</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày đăng ký</th>
+                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Hành động</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                             {filteredRestaurants.length > 0 ? filteredRestaurants.map(res => (
-                                <tr key={res.id} className="hover:bg-gray-50">
+                                <tr key={res.id} className="hover:bg-gray-50 transition-colors">
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center">
                                             <div className="w-10 h-10 rounded bg-orange-100 flex items-center justify-center mr-3 font-bold text-orange-600">
@@ -138,29 +126,19 @@ const AdminRestaurantsPage: React.FC = () => {
                                             </div>
                                             <div>
                                                 <div className="font-semibold text-gray-900">{res.name}</div>
-                                                <div className="text-xs text-gray-500">ID: {res.id} | Owner: {res.owner_id}</div>
+                                                <div className="text-[10px] text-gray-400">ID: {res.id}</div>
                                             </div>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">{res.address}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={`px-2.5 py-1 text-xs font-bold rounded-full border ${getStatusBadge(res.status)}`}>
-                                            {res.status}
-                                        </span>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {new Date(res.created_at).toLocaleDateString('vi-VN')}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <div className="flex justify-end space-x-2">
-                                            {res.status === 'PENDING' && (
-                                                <>
-                                                    <button onClick={() => handleApprove(res)} className="p-2 text-green-600 hover:bg-green-50 rounded-full transition-colors" title="Duyệt hồ sơ"><CheckBadgeIcon className="h-6 w-6"/></button>
-                                                    <button onClick={() => handleReject(res)} className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors" title="Từ chối"><XCircleIcon className="h-6 w-6"/></button>
-                                                </>
-                                            )}
-                                            <button 
-                                                onClick={() => { setSelectedRestaurant(res); setIsDetailModalOpen(true); }} 
-                                                className="text-orange-600 hover:bg-orange-50 px-3 py-1 rounded-md transition-all font-bold border border-transparent hover:border-orange-200"
-                                            >Chi tiết</button>
-                                        </div>
+                                        <button 
+                                            onClick={() => { setSelectedRestaurant(res); setIsDetailModalOpen(true); }} 
+                                            className="text-orange-600 hover:text-orange-700 bg-orange-50 px-4 py-1.5 rounded-lg transition-all font-bold border border-orange-100"
+                                        >Xem chi tiết</button>
                                     </td>
                                 </tr>
                             )) : (
