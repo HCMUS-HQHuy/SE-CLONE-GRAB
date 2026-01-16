@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-    XIcon, UserIcon, PhoneIcon, IdentificationIcon, CheckBadgeIcon, 
+    XIcon, UserIcon, PhoneIcon, CheckBadgeIcon, 
     XCircleIcon, DocumentTextIcon, ClockIcon, MotorcycleIcon, ShieldCheckIcon 
 } from './Icons';
 import { Driver } from '../services/shipperApi';
@@ -30,7 +30,6 @@ const ShipperDetailModal: React.FC<ShipperDetailModalProps> = ({ isOpen, onClose
     const fetchAuthStatus = async () => {
         setIsLoadingAuth(true);
         try {
-            // driver id in shipper service is assumed to be user_id in auth service
             const data = await apiService.adminGetUserDetail(parseInt(shipper.id, 10));
             setAuthData(data);
         } catch (err) {
@@ -106,7 +105,7 @@ const ShipperDetailModal: React.FC<ShipperDetailModalProps> = ({ isOpen, onClose
                                     <span className="text-xs text-gray-400 font-bold uppercase mr-1.5">Auth Status:</span>
                                     {getAuthStatusBadge()}
                                 </div>
-                                <span className="text-gray-400">ID: {shipper.id}</span>
+                                <span className="text-gray-400 font-medium">DRIVER_ID: {shipper.id}</span>
                             </div>
                         </div>
                     </div>
@@ -118,7 +117,6 @@ const ShipperDetailModal: React.FC<ShipperDetailModalProps> = ({ isOpen, onClose
                 {/* Content */}
                 <div className="p-8 overflow-y-auto flex-grow bg-white">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        {/* Sidebar Info */}
                         <div className="md:col-span-1 space-y-6">
                             <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest flex items-center">
                                 <span className="w-8 h-px bg-gray-200 mr-2"></span> Thông tin liên hệ
@@ -130,22 +128,14 @@ const ShipperDetailModal: React.FC<ShipperDetailModalProps> = ({ isOpen, onClose
                                 </div>
                                 <div className="flex items-center p-3 bg-gray-50 rounded-xl border border-gray-100">
                                     <MotorcycleIcon className="h-5 w-5 text-blue-500 mr-3" />
-                                    <span className="text-gray-800 font-medium">Trạng thái: {shipper.status}</span>
+                                    <span className="text-gray-800 font-medium">Status: {shipper.status}</span>
                                 </div>
-                            </div>
-                            
-                            <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
-                                <p className="text-xs font-bold text-blue-600 uppercase mb-2">Lưu ý hệ thống</p>
-                                <p className="text-sm text-blue-800 leading-relaxed">
-                                    Vui lòng kiểm tra kỹ tính chính xác của ảnh CCCD và Bằng lái trước khi phê duyệt.
-                                </p>
                             </div>
                         </div>
 
-                        {/* Main Documents Grid */}
                         <div className="md:col-span-2 space-y-6">
                             <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest flex items-center">
-                                <span className="w-8 h-px bg-gray-200 mr-2"></span> Hồ sơ pháp lý
+                                <span className="w-8 h-px bg-gray-200 mr-2"></span> Hồ sơ định danh
                             </h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <ImagePreview label="CCCD / CMND" path={shipper.citizenIdImageUrl} />
@@ -158,40 +148,40 @@ const ShipperDetailModal: React.FC<ShipperDetailModalProps> = ({ isOpen, onClose
                     </div>
                 </div>
 
-                {/* Footer */}
+                {/* Footer Hành động: Thay thế nút Hoàn tất bằng Verify/Reject khi cần */}
                 <div className="p-5 border-t bg-gray-50 flex justify-between items-center px-8">
                     <button 
                         onClick={onClose}
                         className="text-sm font-bold text-gray-500 hover:text-gray-700 transition-colors flex items-center"
                     >
                         <XCircleIcon className="h-5 w-5 mr-2" />
-                        Đóng cửa sổ
+                        Đóng chi tiết
                     </button>
                     
                     <div className="flex space-x-3">
-                        {(!authData || authData.status === 'pending') ? (
+                        {shipper.verificationStatus === 'Pending' ? (
                             <>
                                 <button 
                                     onClick={onReject}
                                     className="px-6 py-2.5 bg-white border-2 border-red-500 text-red-500 font-bold rounded-xl hover:bg-red-50 transition-all flex items-center shadow-sm"
                                 >
                                     <XCircleIcon className="h-5 w-5 mr-2" />
-                                    Từ chối
+                                    Từ chối hồ sơ
                                 </button>
                                 <button 
                                     onClick={onApprove}
                                     className="px-8 py-2.5 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 transition-all flex items-center shadow-lg shadow-green-100"
                                 >
                                     <CheckBadgeIcon className="h-5 w-5 mr-2" />
-                                    Duyệt tài xế
+                                    Duyệt ngay
                                 </button>
                             </>
                         ) : (
-                             <button 
+                            <button 
                                 onClick={onClose}
-                                className="px-8 py-2.5 bg-gray-800 text-white font-bold rounded-xl hover:bg-gray-900 transition-colors shadow-lg shadow-gray-200"
+                                className="px-8 py-2.5 bg-gray-800 text-white font-bold rounded-xl hover:bg-gray-900 transition-colors shadow-lg"
                             >
-                                Hoàn tất
+                                Đã xử lý (Xong)
                             </button>
                         )}
                     </div>
