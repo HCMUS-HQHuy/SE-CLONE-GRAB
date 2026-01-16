@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-    UserIcon, PhoneIcon, PencilIcon, UploadIcon, StarIcon, 
+    UserIcon, PhoneIcon, PencilIcon, StarIcon, 
     ShieldCheckIcon, IdentificationIcon, CheckCircleIcon, XCircleIcon, 
     LightningBoltIcon, CalendarIcon, ThumbUpIcon, DocumentTextIcon,
     MailIcon
@@ -146,7 +146,6 @@ const ShipperProfilePage: React.FC = () => {
         try {
             const userMe = await apiService.getMe('shipper');
             const driverData = await shipperApiService.getDriverById(userMe.id.toString());
-            // Đảm bảo có email từ driverData hoặc fallback từ userMe
             setShipper({
                 ...driverData,
                 email: driverData.email || userMe.email
@@ -164,8 +163,10 @@ const ShipperProfilePage: React.FC = () => {
         setShipper({ ...shipper, [name]: value });
     }
 
-    const handleSaveProfile = async () => {
+    const handleSaveProfile = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
         if (!shipper) return;
+        
         setIsSaving(true);
         setError(null);
         setSuccessMsg(null);
@@ -177,7 +178,6 @@ const ShipperProfilePage: React.FC = () => {
             });
             setSuccessMsg('Cập nhật hồ sơ tài xế thành công!');
             setIsEditing(false);
-            // Sau khi cập nhật thành công, có thể tải lại dữ liệu để đồng bộ
             fetchProfile();
         } catch (err: any) {
             setError(err.message || 'Lỗi khi cập nhật hồ sơ.');
@@ -273,6 +273,15 @@ const ShipperProfilePage: React.FC = () => {
                             )}
                         </div>
                         <h3 className="text-lg font-bold text-gray-900 mt-3">{shipper?.fullName}</h3>
+                        <div className="flex items-center mt-1">
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
+                                shipper?.verificationStatus === 'Approved' ? 'bg-green-100 text-green-700 border-green-200' :
+                                shipper?.verificationStatus === 'Pending' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' :
+                                'bg-red-100 text-red-700 border-red-200'
+                            }`}>
+                                {shipper?.verificationStatus}
+                            </span>
+                        </div>
                     </div>
 
                     <div className="flex-grow grid grid-cols-2 md:grid-cols-4 gap-4 w-full border-t sm:border-t-0 sm:border-l pt-6 sm:pt-0 sm:pl-8 border-gray-200">
@@ -290,6 +299,7 @@ const ShipperProfilePage: React.FC = () => {
                         <div className="flex justify-between items-center border-b pb-4 mb-6">
                             <h2 className="text-xl font-semibold text-gray-800">Thông tin cá nhân</h2>
                             <button 
+                                type="button"
                                 onClick={() => { setIsEditing(!isEditing); setSuccessMsg(null); setError(null); }} 
                                 className="text-sm font-medium text-orange-600 hover:text-orange-500 flex items-center"
                             >
@@ -297,7 +307,7 @@ const ShipperProfilePage: React.FC = () => {
                                 {isEditing ? 'Hủy' : 'Chỉnh sửa'}
                             </button>
                         </div>
-                        <form className="space-y-4">
+                        <form className="space-y-4" onSubmit={handleSaveProfile}>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Họ và tên</label>
                                 <div className="relative">
@@ -314,21 +324,45 @@ const ShipperProfilePage: React.FC = () => {
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Email liên lạc</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Email liên lạc (Email đăng nhập)</label>
                                     <div className="relative">
                                         <span className="absolute inset-y-0 left-0 flex items-center pl-3"><MailIcon className="h-5 w-5 text-gray-400" /></span>
-                                        <input type="email" name="email" value={shipper?.email || ''} onChange={handleInputChange} readOnly={!isEditing} className={`w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`} />
+                                        <input 
+                                            type="email" 
+                                            name="email" 
+                                            value={shipper?.email || ''} 
+                                            readOnly={true} 
+                                            className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md bg-gray-50 cursor-not-allowed focus:outline-none text-gray-500" 
+                                        />
                                     </div>
+                                    <p className="text-[10px] text-gray-400 mt-1">* Email đăng nhập không thể thay đổi để đảm bảo tính định danh.</p>
                                 </div>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Số GPLX</label>
                                 <div className="relative">
                                     <span className="absolute inset-y-0 left-0 flex items-center pl-3"><IdentificationIcon className="h-5 w-5 text-gray-400" /></span>
-                                    <input type="text" name="licenseNumber" value={shipper?.licenseNumber || ''} onChange={handleInputChange} readOnly={true} className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md bg-gray-50 cursor-not-allowed" />
+                                    <input type="text" name="licenseNumber" value={shipper?.licenseNumber || ''} readOnly={true} className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md bg-gray-50 cursor-not-allowed text-gray-500 focus:outline-none" />
                                 </div>
                                 <p className="text-[10px] text-gray-400 mt-1">* Số bằng lái không thể tự thay đổi. Vui lòng liên hệ Admin nếu có sai sót.</p>
                             </div>
+
+                            {isEditing && (
+                                <div className="text-right pt-4">
+                                    <button 
+                                        disabled={isSaving}
+                                        type="submit" 
+                                        className="inline-flex justify-center items-center py-2.5 px-8 border border-transparent shadow-sm text-sm font-bold rounded-md text-white bg-orange-500 hover:bg-orange-600 transition-all disabled:opacity-70"
+                                    >
+                                        {isSaving ? (
+                                            <>
+                                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                                Đang lưu...
+                                            </>
+                                        ) : 'Lưu thông tin'}
+                                    </button>
+                                </div>
+                            )}
                         </form>
                     </div>
 
@@ -342,24 +376,6 @@ const ShipperProfilePage: React.FC = () => {
                             </div>
                         </div>
                     </div>
-
-                    {isEditing && (
-                        <div className="text-right">
-                             <button 
-                                onClick={handleSaveProfile} 
-                                disabled={isSaving}
-                                type="button" 
-                                className="inline-flex justify-center items-center py-2.5 px-8 border border-transparent shadow-sm text-sm font-bold rounded-md text-white bg-orange-500 hover:bg-orange-600 transition-all disabled:opacity-70"
-                             >
-                                {isSaving ? (
-                                    <>
-                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                        Đang lưu...
-                                    </>
-                                ) : 'Lưu thông tin'}
-                            </button>
-                        </div>
-                    )}
                 </div>
 
                 <div className="lg:col-span-1">
