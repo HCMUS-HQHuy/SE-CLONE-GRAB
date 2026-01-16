@@ -54,13 +54,28 @@ const AdminShippersPage: React.FC = () => {
     };
 
     const handleUpdateAuthStatus = async (driverId: string, status: UserStatus) => {
+        setIsLoading(true);
         try {
+            // Bước 1: Cập nhật trạng thái trên Auth Service (Port 8003)
             await apiService.adminUpdateUserStatus(parseInt(driverId, 10), status);
+            
+            // Bước 2: Nếu là phê duyệt (active), gọi tiếp API verify trên Shipper Service (Port 8001)
+            if (status === 'active') {
+                try {
+                    await shipperApiService.verifyDriver(driverId);
+                } catch (verifyErr: any) {
+                    throw new Error(`Auth OK nhưng Shipper Verify lỗi: ${verifyErr.message}`);
+                }
+            }
+
             fetchShippers();
             setConfirmation(null);
             setIsDetailModalOpen(false);
+            alert(status === 'active' ? 'Phê duyệt tài xế thành công trên cả 2 hệ thống!' : 'Đã từ chối tài xế.');
         } catch (err: any) {
-            alert(err.message || 'Lỗi kết nối Auth Service.');
+            alert(`Lỗi: ${err.message}`);
+        } finally {
+            setIsLoading(false);
         }
     };
     
@@ -68,7 +83,7 @@ const AdminShippersPage: React.FC = () => {
         setConfirmation({
             isOpen: true,
             title: 'Phê duyệt tài xế',
-            message: `Kích hoạt tài khoản cho tài xế "${shipper.fullName}" để có thể nhận đơn hàng ngay lập tức?`,
+            message: `Hệ thống sẽ kích hoạt tài khoản đăng nhập và xác thực hồ sơ cho tài xế "${shipper.fullName}". Bạn chắc chắn chứ?`,
             onConfirm: () => handleUpdateAuthStatus(shipper.id, 'active'),
             color: 'orange'
         });
@@ -78,7 +93,7 @@ const AdminShippersPage: React.FC = () => {
         setConfirmation({
             isOpen: true,
             title: 'Từ chối tài xế',
-            message: `Từ chối hồ sơ của "${shipper.fullName}"? Tài khoản sẽ không thể đăng nhập hoặc nhận đơn.`,
+            message: `Từ chối hồ sơ của "${shipper.fullName}"? Tài khoản sẽ chuyển sang trạng thái Inactive.`,
             onConfirm: () => handleUpdateAuthStatus(shipper.id, 'inactive'),
             color: 'red'
         });
@@ -111,7 +126,7 @@ const AdminShippersPage: React.FC = () => {
                 </div>
             </div>
 
-            {isLoading ? (
+            {isLoading && !shippers.length ? (
                 <div className="py-20 text-center">
                     <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500 mx-auto"></div>
                 </div>
