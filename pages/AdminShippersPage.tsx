@@ -56,8 +56,10 @@ const AdminShippersPage: React.FC = () => {
     const handleUpdateStatus = async (driverId: string, status: UserStatus) => {
         try {
             // Sử dụng API của Auth Service (Port 8003) theo yêu cầu
+            // Chuyển đổi driverId (string) sang number cho API
             await apiService.adminUpdateUserStatus(parseInt(driverId, 10), status);
             
+            // Tải lại danh sách sau khi cập nhật thành công
             fetchShippers();
             setConfirmation(null);
             setIsDetailModalOpen(false);
@@ -71,7 +73,7 @@ const AdminShippersPage: React.FC = () => {
             isOpen: true,
             title: 'Phê duyệt tài xế',
             message: `Bạn xác nhận hồ sơ của "${shipper.fullName}" đã hợp lệ và kích hoạt tài khoản để nhận đơn?`,
-            onConfirm: () => handleUpdateStatus(shipper.id, 'active'),
+            onConfirm: () => handleUpdateStatus(shipper.id, 'active'), // Duyệt -> active
             color: 'orange'
         });
     };
@@ -81,9 +83,18 @@ const AdminShippersPage: React.FC = () => {
             isOpen: true,
             title: 'Từ chối tài xế',
             message: `Từ chối hồ sơ của "${shipper.fullName}"? Tài khoản sẽ chuyển về trạng thái Inactive.`,
-            onConfirm: () => handleUpdateStatus(shipper.id, 'inactive'),
+            onConfirm: () => handleUpdateStatus(shipper.id, 'inactive'), // Từ chối -> inactive
             color: 'red'
         });
+    };
+
+    const getStatusBadge = (status: string) => {
+        switch (status) {
+            case 'Pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+            case 'Approved': return 'bg-green-100 text-green-800 border-green-200';
+            case 'Rejected': return 'bg-red-100 text-red-800 border-red-200';
+            default: return 'bg-gray-100 text-gray-800';
+        }
     };
 
     return (
@@ -131,7 +142,7 @@ const AdminShippersPage: React.FC = () => {
                             <tr>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tài xế</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Số điện thoại</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Mã số tài xế</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kiểm duyệt</th>
                                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Hành động</th>
                             </tr>
                         </thead>
@@ -145,13 +156,15 @@ const AdminShippersPage: React.FC = () => {
                                             </div>
                                             <div>
                                                 <div className="font-semibold text-gray-900">{shipper.fullName}</div>
-                                                <div className="text-xs text-gray-500">Hệ thống: ID_{shipper.id}</div>
+                                                <div className="text-xs text-gray-500">ID: {shipper.id} | {shipper.status}</div>
                                             </div>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 text-sm text-gray-600">{shipper.phoneNumber}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500">
-                                        {shipper.id.padStart(6, '0')}
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <span className={`px-2.5 py-1 text-xs font-bold rounded-full border ${getStatusBadge(shipper.verificationStatus)}`}>
+                                            {shipper.verificationStatus}
+                                        </span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div className="flex justify-end space-x-2">
