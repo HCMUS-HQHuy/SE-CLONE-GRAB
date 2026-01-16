@@ -14,6 +14,28 @@ export interface CreateDriverRequest {
   driverId: string;
 }
 
+export interface Driver {
+  id: string;
+  fullName: string;
+  phoneNumber: string;
+  status: string; // Online, Offline, etc.
+  verificationStatus: 'Pending' | 'Approved' | 'Rejected';
+  profileImageUrl: string | null;
+  citizenIdImageUrl: string;
+  driverLicenseImageUrl: string;
+  driverRegistrationImageUrl: string;
+}
+
+export interface DriversResponse {
+  items: Driver[];
+  pageNumber: number;
+  totalPages: number;
+  totalCount: number;
+  pageSize: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
+}
+
 export const shipperApiService = {
   async createDriverProfile(data: CreateDriverRequest) {
     const formData = new FormData();
@@ -30,17 +52,57 @@ export const shipperApiService = {
 
     const response = await fetch(`${SHIPPER_SERVICE_URL}/api/Drivers`, {
       method: 'POST',
-      headers: {
-        ...headers,
-      },
+      headers: { ...headers },
       body: formData,
     });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.detail || 'Không thể gửi hồ sơ tài xế. Vui lòng thử lại.');
+      throw new Error(errorData.detail || 'Không thể gửi hồ sơ tài xế.');
+    }
+    return await response.text();
+  },
+
+  async getDrivers(page = 1, pageSize = 20, verificationStatus?: string, searchTerm?: string): Promise<DriversResponse> {
+    const params = new URLSearchParams({
+      pageNumber: page.toString(),
+      pageSize: pageSize.toString(),
+    });
+    if (verificationStatus && verificationStatus !== 'All') params.append('verificationStatus', verificationStatus);
+    if (searchTerm) params.append('searchTerm', searchTerm);
+
+    const response = await fetch(`${SHIPPER_SERVICE_URL}/api/Drivers?${params.toString()}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        ...apiService.getAuthHeaders('admin'),
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || 'Không thể lấy danh sách tài xế.');
     }
 
-    return await response.text(); // API returns text/plain 201 Created
+    return await response.json();
+  },
+
+  async updateVerificationStatus(driverId: string, status: 'Approved' | 'Rejected') {
+    // Giả định API hỗ trợ cập nhật trạng thái verification
+    const response = await fetch(`${SHIPPER_SERVICE_URL}/api/Drivers/${driverId}/verify`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        ...apiService.getAuthHeaders('admin'),
+      },
+      body: JSON.stringify({ status }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || 'Cập nhật trạng thái kiểm duyệt thất bại.');
+    }
+
+    return await response.json();
   }
 };
