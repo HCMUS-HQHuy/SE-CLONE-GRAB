@@ -1,7 +1,8 @@
 
-import React from 'react';
-import { XIcon, ClockIcon, PhoneIcon, HomeIcon, UserIcon, DocumentTextIcon, CheckBadgeIcon, XCircleIcon } from './Icons';
+import React, { useState, useEffect } from 'react';
+import { XIcon, ClockIcon, PhoneIcon, HomeIcon, UserIcon, DocumentTextIcon, CheckBadgeIcon, XCircleIcon, ShieldCheckIcon } from './Icons';
 import { RestaurantListItem } from '../services/restaurantApi';
+import { apiService, AdminUserListItem } from '../services/api';
 
 type Props = {
     isOpen: boolean;
@@ -14,6 +15,27 @@ type Props = {
 const BASE_IMG_URL = 'http://localhost:8004/';
 
 const RestaurantDetailModal: React.FC<Props> = ({ isOpen, onClose, restaurant, onApprove, onReject }) => {
+    const [authData, setAuthData] = useState<AdminUserListItem | null>(null);
+    const [isLoadingAuth, setIsLoadingAuth] = useState(false);
+
+    useEffect(() => {
+        if (isOpen && restaurant.owner_id) {
+            fetchAuthStatus();
+        }
+    }, [isOpen, restaurant.owner_id]);
+
+    const fetchAuthStatus = async () => {
+        setIsLoadingAuth(true);
+        try {
+            const data = await apiService.adminGetUserDetail(restaurant.owner_id);
+            setAuthData(data);
+        } catch (err) {
+            console.error("Failed to fetch auth status", err);
+        } finally {
+            setIsLoadingAuth(false);
+        }
+    };
+
     if (!isOpen) return null;
 
     const ImagePreview: React.FC<{ label: string, path: string }> = ({ label, path }) => (
@@ -40,6 +62,22 @@ const RestaurantDetailModal: React.FC<Props> = ({ isOpen, onClose, restaurant, o
         </div>
     );
 
+    const getAuthStatusBadge = () => {
+        if (isLoadingAuth) return <span className="animate-pulse bg-gray-200 h-4 w-16 rounded"></span>;
+        if (!authData) return <span className="text-gray-400">N/A</span>;
+        
+        const status = authData.status;
+        const styles = status === 'active' ? 'bg-green-100 text-green-700 border-green-200' : 
+                      status === 'pending' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' : 
+                      'bg-red-100 text-red-700 border-red-200';
+        
+        return (
+            <span className={`px-2 py-0.5 rounded text-[10px] font-bold border uppercase ${styles}`}>
+                {status}
+            </span>
+        );
+    };
+
     return (
         <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4 backdrop-blur-sm" onClick={onClose}>
             <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
@@ -52,12 +90,11 @@ const RestaurantDetailModal: React.FC<Props> = ({ isOpen, onClose, restaurant, o
                         <div>
                             <h2 className="text-2xl font-bold text-gray-900">{restaurant.name}</h2>
                             <div className="flex items-center text-sm text-gray-500 mt-0.5">
-                                <span className={`px-2 py-0.5 rounded-md text-xs font-bold mr-3 border flex items-center ${
-                                    restaurant.status === 'PENDING' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : 'bg-green-50 text-green-700 border-green-200'
-                                }`}>
-                                    <ClockIcon className="h-3 w-3 mr-1" />
-                                    {restaurant.status}
-                                </span>
+                                <div className="flex items-center mr-4">
+                                    <ShieldCheckIcon className="h-3.5 w-3.5 mr-1 text-blue-500" />
+                                    <span className="text-xs mr-1 text-gray-400 font-medium">Auth Status:</span>
+                                    {getAuthStatusBadge()}
+                                </div>
                                 <span className="flex items-center"><ClockIcon className="h-3 w-3 mr-1" /> Đăng ký: {new Date(restaurant.created_at).toLocaleDateString('vi-VN')}</span>
                             </div>
                         </div>
@@ -140,7 +177,7 @@ const RestaurantDetailModal: React.FC<Props> = ({ isOpen, onClose, restaurant, o
                     </button>
                     
                     <div className="flex space-x-3">
-                        {restaurant.status === 'PENDING' ? (
+                        {(!authData || authData.status === 'pending') ? (
                             <>
                                 <button 
                                     onClick={onReject}

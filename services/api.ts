@@ -107,6 +107,24 @@ export const apiService = {
     return await response.json();
   },
 
+  async adminGetUserDetail(userId: number): Promise<AdminUserListItem> {
+    const headers = this.getAuthHeaders('admin');
+    const response = await fetch(`${BASE_URL}/admin/users/${userId}`, {
+      method: 'GET',
+      headers: {
+        ...headers,
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || 'Không thể lấy chi tiết người dùng.');
+    }
+
+    return await response.json();
+  },
+
   async adminUpdateUserStatus(userId: number, status: UserStatus): Promise<AdminUserListItem> {
     const headers = this.getAuthHeaders('admin');
     const response = await fetch(`${BASE_URL}/admin/users/${userId}/status`, {

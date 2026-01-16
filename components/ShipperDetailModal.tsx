@@ -1,10 +1,11 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
     XIcon, UserIcon, PhoneIcon, IdentificationIcon, CheckBadgeIcon, 
-    XCircleIcon, DocumentTextIcon, ClockIcon, MotorcycleIcon 
+    XCircleIcon, DocumentTextIcon, ClockIcon, MotorcycleIcon, ShieldCheckIcon 
 } from './Icons';
 import { Driver } from '../services/shipperApi';
+import { apiService, AdminUserListItem } from '../services/api';
 
 type ShipperDetailModalProps = {
     isOpen: boolean;
@@ -17,6 +18,28 @@ type ShipperDetailModalProps = {
 const SHIPPER_BASE_URL = 'http://localhost:8001';
 
 const ShipperDetailModal: React.FC<ShipperDetailModalProps> = ({ isOpen, onClose, shipper, onApprove, onReject }) => {
+    const [authData, setAuthData] = useState<AdminUserListItem | null>(null);
+    const [isLoadingAuth, setIsLoadingAuth] = useState(false);
+
+    useEffect(() => {
+        if (isOpen && shipper.id) {
+            fetchAuthStatus();
+        }
+    }, [isOpen, shipper.id]);
+
+    const fetchAuthStatus = async () => {
+        setIsLoadingAuth(true);
+        try {
+            // driver id in shipper service is assumed to be user_id in auth service
+            const data = await apiService.adminGetUserDetail(parseInt(shipper.id, 10));
+            setAuthData(data);
+        } catch (err) {
+            console.error("Failed to fetch auth status", err);
+        } finally {
+            setIsLoadingAuth(false);
+        }
+    };
+
     if (!isOpen) return null;
 
     const ImagePreview: React.FC<{ label: string, path: string }> = ({ label, path }) => (
@@ -46,6 +69,22 @@ const ShipperDetailModal: React.FC<ShipperDetailModalProps> = ({ isOpen, onClose
         </div>
     );
 
+    const getAuthStatusBadge = () => {
+        if (isLoadingAuth) return <span className="animate-pulse bg-gray-200 h-4 w-16 rounded"></span>;
+        if (!authData) return <span className="text-gray-400">N/A</span>;
+        
+        const status = authData.status;
+        const styles = status === 'active' ? 'bg-green-100 text-green-700 border-green-200' : 
+                      status === 'pending' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' : 
+                      'bg-red-100 text-red-700 border-red-200';
+        
+        return (
+            <span className={`px-2 py-0.5 rounded text-[10px] font-bold border uppercase ${styles}`}>
+                {status}
+            </span>
+        );
+    };
+
     return (
         <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4 backdrop-blur-sm" onClick={onClose}>
             <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
@@ -62,13 +101,11 @@ const ShipperDetailModal: React.FC<ShipperDetailModalProps> = ({ isOpen, onClose
                         <div>
                             <h2 className="text-2xl font-bold text-gray-900">{shipper.fullName}</h2>
                             <div className="flex items-center space-x-3 mt-1 text-sm">
-                                <span className={`px-2 py-0.5 rounded-md text-xs font-bold border flex items-center ${
-                                    shipper.verificationStatus === 'Pending' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : 
-                                    shipper.verificationStatus === 'Approved' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'
-                                }`}>
-                                    <ClockIcon className="h-3 w-3 mr-1" />
-                                    {shipper.verificationStatus}
-                                </span>
+                                <div className="flex items-center">
+                                    <ShieldCheckIcon className="h-4 w-4 mr-1 text-blue-500" />
+                                    <span className="text-xs text-gray-400 font-bold uppercase mr-1.5">Auth Status:</span>
+                                    {getAuthStatusBadge()}
+                                </div>
                                 <span className="text-gray-400">ID: {shipper.id}</span>
                             </div>
                         </div>
@@ -132,7 +169,7 @@ const ShipperDetailModal: React.FC<ShipperDetailModalProps> = ({ isOpen, onClose
                     </button>
                     
                     <div className="flex space-x-3">
-                        {shipper.verificationStatus === 'Pending' ? (
+                        {(!authData || authData.status === 'pending') ? (
                             <>
                                 <button 
                                     onClick={onReject}
