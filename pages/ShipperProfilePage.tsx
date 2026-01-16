@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { 
     UserIcon, PhoneIcon, PencilIcon, UploadIcon, StarIcon, 
     ShieldCheckIcon, IdentificationIcon, CheckCircleIcon, XCircleIcon, 
-    LightningBoltIcon, CalendarIcon, ThumbUpIcon, DocumentTextIcon 
+    LightningBoltIcon, CalendarIcon, ThumbUpIcon, DocumentTextIcon,
+    MailIcon
 } from '../components/Icons';
 import { apiService } from '../services/api';
 import { shipperApiService, Driver } from '../services/shipperApi';
@@ -111,7 +112,9 @@ const PerformanceAnalysisCard: React.FC<{ comments: typeof mockRecentComments }>
 const ShipperProfilePage: React.FC = () => {
     const [shipper, setShipper] = useState<Driver | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [successMsg, setSuccessMsg] = useState<string | null>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [recentComments, setRecentComments] = useState(mockRecentComments);
     
@@ -143,7 +146,11 @@ const ShipperProfilePage: React.FC = () => {
         try {
             const userMe = await apiService.getMe('shipper');
             const driverData = await shipperApiService.getDriverById(userMe.id.toString());
-            setShipper(driverData);
+            // Đảm bảo có email từ driverData hoặc fallback từ userMe
+            setShipper({
+                ...driverData,
+                email: driverData.email || userMe.email
+            });
         } catch (err: any) {
             setError(err.message || 'Không thể tải thông tin hồ sơ tài xế.');
         } finally {
@@ -157,6 +164,28 @@ const ShipperProfilePage: React.FC = () => {
         setShipper({ ...shipper, [name]: value });
     }
 
+    const handleSaveProfile = async () => {
+        if (!shipper) return;
+        setIsSaving(true);
+        setError(null);
+        setSuccessMsg(null);
+        try {
+            await shipperApiService.updateDriverProfile(shipper.id, {
+                fullName: shipper.fullName,
+                email: shipper.email,
+                phoneNumber: shipper.phoneNumber
+            });
+            setSuccessMsg('Cập nhật hồ sơ tài xế thành công!');
+            setIsEditing(false);
+            // Sau khi cập nhật thành công, có thể tải lại dữ liệu để đồng bộ
+            fetchProfile();
+        } catch (err: any) {
+            setError(err.message || 'Lỗi khi cập nhật hồ sơ.');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     if (isLoading) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
@@ -166,7 +195,7 @@ const ShipperProfilePage: React.FC = () => {
         );
     }
 
-    if (error || !shipper) {
+    if (error && !shipper) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center p-4">
                 <div className="bg-red-50 p-8 rounded-xl border border-red-200 text-center max-w-md">
@@ -205,17 +234,33 @@ const ShipperProfilePage: React.FC = () => {
 
     return (
         <div className="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8">
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900">Hồ sơ tài xế</h1>
-                <p className="mt-1 text-sm text-gray-500">Thông tin cá nhân và dữ liệu hiệu suất làm việc.</p>
+            <div className="mb-8 flex justify-between items-end">
+                <div>
+                    <h1 className="text-3xl font-bold text-gray-900">Hồ sơ tài xế</h1>
+                    <p className="mt-1 text-sm text-gray-500">Thông tin cá nhân và dữ liệu hiệu suất làm việc.</p>
+                </div>
             </div>
+
+            {successMsg && (
+                <div className="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md text-sm flex items-center">
+                    <CheckCircleIcon className="h-5 w-5 mr-2" />
+                    {successMsg}
+                </div>
+            )}
+            
+            {error && (
+                <div className="mb-6 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm flex items-center">
+                    <XCircleIcon className="h-5 w-5 mr-2" />
+                    {error}
+                </div>
+            )}
             
             <div className="bg-white p-6 rounded-lg shadow-md border mb-8">
                 <div className="flex flex-col sm:flex-row items-center sm:space-x-8">
                     <div className="flex-shrink-0 flex flex-col items-center text-center mb-6 sm:mb-0">
                         <div className="relative">
                             <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center ring-4 ring-orange-100 overflow-hidden">
-                                {shipper.profileImageUrl ? (
+                                {shipper?.profileImageUrl ? (
                                     <img src={`${SHIPPER_BASE_URL}${shipper.profileImageUrl}`} className="w-full h-full object-cover" alt="Avatar"/>
                                 ) : (
                                     <UserIcon className="h-16 w-16 text-gray-400" />
@@ -227,7 +272,16 @@ const ShipperProfilePage: React.FC = () => {
                                 </button>
                             )}
                         </div>
-                        <h3 className="text-lg font-bold text-gray-900 mt-3">{shipper.fullName}</h3>
+                        <h3 className="text-lg font-bold text-gray-900 mt-3">{shipper?.fullName}</h3>
+                        <div className="flex items-center mt-1">
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
+                                shipper?.verificationStatus === 'Approved' ? 'bg-green-100 text-green-700 border-green-200' :
+                                shipper?.verificationStatus === 'Pending' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' :
+                                'bg-red-100 text-red-700 border-red-200'
+                            }`}>
+                                {shipper?.verificationStatus}
+                            </span>
+                        </div>
                     </div>
 
                     <div className="flex-grow grid grid-cols-2 md:grid-cols-4 gap-4 w-full border-t sm:border-t-0 sm:border-l pt-6 sm:pt-0 sm:pl-8 border-gray-200">
@@ -245,7 +299,7 @@ const ShipperProfilePage: React.FC = () => {
                         <div className="flex justify-between items-center border-b pb-4 mb-6">
                             <h2 className="text-xl font-semibold text-gray-800">Thông tin cá nhân</h2>
                             <button 
-                                onClick={() => setIsEditing(!isEditing)} 
+                                onClick={() => { setIsEditing(!isEditing); setSuccessMsg(null); setError(null); }} 
                                 className="text-sm font-medium text-orange-600 hover:text-orange-500 flex items-center"
                             >
                                 <PencilIcon className="h-4 w-4 mr-1.5" />
@@ -257,7 +311,7 @@ const ShipperProfilePage: React.FC = () => {
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Họ và tên</label>
                                 <div className="relative">
                                     <span className="absolute inset-y-0 left-0 flex items-center pl-3"><UserIcon className="h-5 w-5 text-gray-400" /></span>
-                                    <input type="text" name="fullName" value={shipper.fullName} onChange={handleInputChange} readOnly={!isEditing} className={`w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`} />
+                                    <input type="text" name="fullName" value={shipper?.fullName || ''} onChange={handleInputChange} readOnly={!isEditing} className={`w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`} />
                                 </div>
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -265,16 +319,24 @@ const ShipperProfilePage: React.FC = () => {
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Số điện thoại</label>
                                     <div className="relative">
                                         <span className="absolute inset-y-0 left-0 flex items-center pl-3"><PhoneIcon className="h-5 w-5 text-gray-400" /></span>
-                                        <input type="tel" name="phoneNumber" value={shipper.phoneNumber} onChange={handleInputChange} readOnly={!isEditing} className={`w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`} />
+                                        <input type="tel" name="phoneNumber" value={shipper?.phoneNumber || ''} onChange={handleInputChange} readOnly={!isEditing} className={`w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`} />
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Số GPLX</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Email liên lạc</label>
                                     <div className="relative">
-                                        <span className="absolute inset-y-0 left-0 flex items-center pl-3"><IdentificationIcon className="h-5 w-5 text-gray-400" /></span>
-                                        <input type="text" name="licenseNumber" value={shipper.licenseNumber || ''} onChange={handleInputChange} readOnly={!isEditing} className={`w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`} />
+                                        <span className="absolute inset-y-0 left-0 flex items-center pl-3"><MailIcon className="h-5 w-5 text-gray-400" /></span>
+                                        <input type="email" name="email" value={shipper?.email || ''} onChange={handleInputChange} readOnly={!isEditing} className={`w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`} />
                                     </div>
                                 </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Số GPLX</label>
+                                <div className="relative">
+                                    <span className="absolute inset-y-0 left-0 flex items-center pl-3"><IdentificationIcon className="h-5 w-5 text-gray-400" /></span>
+                                    <input type="text" name="licenseNumber" value={shipper?.licenseNumber || ''} onChange={handleInputChange} readOnly={true} className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md bg-gray-50 cursor-not-allowed" />
+                                </div>
+                                <p className="text-[10px] text-gray-400 mt-1">* Số bằng lái không thể tự thay đổi. Vui lòng liên hệ Admin nếu có sai sót.</p>
                             </div>
                         </form>
                     </div>
@@ -282,18 +344,28 @@ const ShipperProfilePage: React.FC = () => {
                     <div className="bg-white p-6 rounded-lg shadow-md border">
                         <h2 className="text-xl font-semibold text-gray-800 border-b pb-4 mb-6">Hồ sơ định danh</h2>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                            <DocumentPreview label="Ảnh CCCD / CMND" path={shipper.citizenIdImageUrl} />
-                            <DocumentPreview label="Ảnh Bằng lái xe" path={shipper.driverLicenseImageUrl} />
+                            <DocumentPreview label="Ảnh CCCD / CMND" path={shipper?.citizenIdImageUrl || ''} />
+                            <DocumentPreview label="Ảnh Bằng lái xe" path={shipper?.driverLicenseImageUrl || ''} />
                             <div className="sm:col-span-2">
-                                <DocumentPreview label="Ảnh Đăng ký xe (Cà vẹt)" path={shipper.driverRegistrationImageUrl} />
+                                <DocumentPreview label="Ảnh Đăng ký xe (Cà vẹt)" path={shipper?.driverRegistrationImageUrl || ''} />
                             </div>
                         </div>
                     </div>
 
                     {isEditing && (
                         <div className="text-right">
-                             <button onClick={() => setIsEditing(false)} type="button" className="inline-flex justify-center py-2 px-8 border border-transparent shadow-sm text-sm font-bold rounded-md text-white bg-orange-500 hover:bg-orange-600 transition-all">
-                                Lưu thông tin
+                             <button 
+                                onClick={handleSaveProfile} 
+                                disabled={isSaving}
+                                type="button" 
+                                className="inline-flex justify-center items-center py-2.5 px-8 border border-transparent shadow-sm text-sm font-bold rounded-md text-white bg-orange-500 hover:bg-orange-600 transition-all disabled:opacity-70"
+                             >
+                                {isSaving ? (
+                                    <>
+                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                        Đang lưu...
+                                    </>
+                                ) : 'Lưu thông tin'}
                             </button>
                         </div>
                     )}

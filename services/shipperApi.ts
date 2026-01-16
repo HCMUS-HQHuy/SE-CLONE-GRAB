@@ -18,6 +18,7 @@ export interface Driver {
   id: string;
   fullName: string;
   phoneNumber: string;
+  email: string; // Thêm email vào đây để phục vụ update profile
   status: string; // Online, Offline, etc.
   verificationStatus: 'Pending' | 'Approved' | 'Rejected';
   profileImageUrl: string | null;
@@ -104,5 +105,22 @@ export const shipperApiService = {
     }
 
     return await response.json();
+  },
+
+  async updateDriverProfile(id: string, data: { fullName: string; email: string; phoneNumber: string }): Promise<void> {
+    const headers = apiService.getAuthHeaders('shipper');
+    const response = await fetch(`${SHIPPER_SERVICE_URL}/api/Drivers/${id}/profile`, {
+      method: 'PUT',
+      headers: {
+        ...headers,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || 'Cập nhật hồ sơ tài xế thất bại.');
+    }
   }
 };
