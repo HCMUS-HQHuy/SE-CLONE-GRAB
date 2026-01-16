@@ -4,6 +4,7 @@ import { SearchIcon, ChevronLeftIcon, ChevronRightIcon, UserIcon, CheckBadgeIcon
 import ShipperDetailModal from '../components/ShipperDetailModal';
 import ConfirmationModal from '../components/ConfirmationModal';
 import { shipperApiService, Driver } from '../services/shipperApi';
+import { apiService, UserStatus } from '../services/api';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -52,14 +53,18 @@ const AdminShippersPage: React.FC = () => {
         fetchShippers();
     };
 
-    const handleUpdateStatus = async (driverId: string, status: 'Approved' | 'Rejected') => {
+    const handleUpdateStatus = async (driverId: string, status: UserStatus) => {
         try {
-            await shipperApiService.updateVerificationStatus(driverId, status);
+            // Sử dụng API của Auth Service (Port 8003) theo yêu cầu
+            // Chuyển đổi driverId (string) sang number cho API
+            await apiService.adminUpdateUserStatus(parseInt(driverId, 10), status);
+            
+            // Tải lại danh sách sau khi cập nhật thành công
             fetchShippers();
             setConfirmation(null);
             setIsDetailModalOpen(false);
         } catch (err: any) {
-            alert(err.message);
+            alert(err.message || 'Có lỗi xảy ra khi cập nhật trạng thái tài khoản.');
         }
     };
     
@@ -67,8 +72,8 @@ const AdminShippersPage: React.FC = () => {
         setConfirmation({
             isOpen: true,
             title: 'Phê duyệt tài xế',
-            message: `Bạn xác nhận hồ sơ của "${shipper.fullName}" đã hợp lệ và cho phép nhận đơn hàng?`,
-            onConfirm: () => handleUpdateStatus(shipper.id, 'Approved'),
+            message: `Bạn xác nhận hồ sơ của "${shipper.fullName}" đã hợp lệ và kích hoạt tài khoản để nhận đơn?`,
+            onConfirm: () => handleUpdateStatus(shipper.id, 'active'), // Duyệt -> active
             color: 'orange'
         });
     };
@@ -77,8 +82,8 @@ const AdminShippersPage: React.FC = () => {
         setConfirmation({
             isOpen: true,
             title: 'Từ chối tài xế',
-            message: `Từ chối hồ sơ của "${shipper.fullName}"? Tài xế sẽ không thể nhận đơn.`,
-            onConfirm: () => handleUpdateStatus(shipper.id, 'Rejected'),
+            message: `Từ chối hồ sơ của "${shipper.fullName}"? Tài khoản sẽ chuyển về trạng thái Inactive.`,
+            onConfirm: () => handleUpdateStatus(shipper.id, 'inactive'), // Từ chối -> inactive
             color: 'red'
         });
     };

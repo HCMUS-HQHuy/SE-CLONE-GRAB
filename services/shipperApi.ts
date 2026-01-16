@@ -85,24 +85,5 @@ export const shipperApiService = {
     }
 
     return await response.json();
-  },
-
-  async updateVerificationStatus(driverId: string, status: 'Approved' | 'Rejected') {
-    // Giả định API hỗ trợ cập nhật trạng thái verification
-    const response = await fetch(`${SHIPPER_SERVICE_URL}/api/Drivers/${driverId}/verify`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        ...apiService.getAuthHeaders('admin'),
-      },
-      body: JSON.stringify({ status }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.detail || 'Cập nhật trạng thái kiểm duyệt thất bại.');
-    }
-
-    return await response.json();
   }
 };
