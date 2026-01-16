@@ -79,16 +79,6 @@ const AdminRestaurantsPage: React.FC = () => {
         });
     };
 
-    const getStatusBadge = (status: string) => {
-        switch (status) {
-            case 'PENDING': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-            case 'ACTIVE': return 'bg-green-100 text-green-800 border-green-200';
-            case 'REJECTED': return 'bg-red-100 text-red-800 border-red-200';
-            case 'BANNED': return 'bg-gray-800 text-white';
-            default: return 'bg-gray-100 text-gray-800';
-        }
-    };
-
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -103,7 +93,7 @@ const AdminRestaurantsPage: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-4">
                      <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="border rounded-lg py-2 px-3 text-sm font-medium">
-                        <option value="All">Tất cả trạng thái</option>
+                        <option value="All">Tất cả hồ sơ</option>
                         <option value="PENDING">Chờ duyệt (New)</option>
                         <option value="ACTIVE">Đang hoạt động</option>
                         <option value="REJECTED">Đã từ chối</option>
@@ -124,7 +114,7 @@ const AdminRestaurantsPage: React.FC = () => {
                             <tr>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nhà hàng</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Địa chỉ</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ngày đăng ký</th>
                                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Hành động</th>
                             </tr>
                         </thead>
@@ -143,10 +133,8 @@ const AdminRestaurantsPage: React.FC = () => {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">{res.address}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={`px-2.5 py-1 text-xs font-bold rounded-full border ${getStatusBadge(res.status)}`}>
-                                            {res.status}
-                                        </span>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {new Date(res.created_at).toLocaleDateString('vi-VN')}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div className="flex justify-end space-x-2">
