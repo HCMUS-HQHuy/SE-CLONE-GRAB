@@ -1,8 +1,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { SearchIcon, ChevronLeftIcon, ChevronRightIcon, UserIcon, TrashIcon, LockIcon as LockClosedIcon } from '../components/Icons';
+import { SearchIcon, ChevronLeftIcon, ChevronRightIcon, UserIcon, TrashIcon, LockIcon as LockClosedIcon, LockOpenIcon } from '../components/Icons';
 import { apiService, AdminUserListItem, UserStatus } from '../services/api';
-// FIX: Correct the import path for ConfirmationModal to point to the components directory
 import ConfirmationModal from '../components/ConfirmationModal';
 
 // FIX: Export missing types required by UserDetailModal.tsx
@@ -189,13 +188,15 @@ const AdminUsersPage: React.FC = () => {
                             <tr key={user.id} className={user.is_deleted ? 'bg-gray-50' : ''}>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <div className="flex items-center">
-                                        <UserIcon className="h-5 w-5 text-gray-400 mr-2"/>
+                                        <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold mr-3">
+                                            {user.email.charAt(0).toUpperCase()}
+                                        </div>
                                         <span className="text-sm font-medium text-gray-900">{user.email}</span>
                                     </div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">{user.role}</td>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusStyle(user.status, user.is_deleted)}`}>
+                                    <span className={`px-2 py-1 text-xs font-semibold rounded-full border ${getStatusStyle(user.status, user.is_deleted)}`}>
                                         {user.is_deleted ? 'Đã xóa' : (user.status === 'active' ? 'Hoạt động' : 'Đã khóa')}
                                     </span>
                                 </td>
@@ -204,11 +205,18 @@ const AdminUsersPage: React.FC = () => {
                                         <div className="flex justify-end space-x-3">
                                             <button 
                                                 onClick={() => handleToggleLock(user)} 
-                                                className={`${user.status === 'active' ? 'text-red-600' : 'text-green-600'} hover:underline`}
+                                                className={`p-2 rounded-full transition-colors ${user.status === 'active' ? 'text-red-600 hover:bg-red-50' : 'text-green-600 hover:bg-green-50'}`}
+                                                title={user.status === 'active' ? 'Khóa tài khoản' : 'Mở khóa'}
                                             >
-                                                {user.status === 'active' ? 'Khóa tài khoản' : 'Mở khóa'}
+                                                {user.status === 'active' ? <LockClosedIcon className="h-5 w-5" /> : <LockOpenIcon className="h-5 w-5" />}
                                             </button>
-                                            <button onClick={() => handleDelete(user)} className="text-gray-400 hover:text-red-600"><TrashIcon className="h-5 w-5"/></button>
+                                            <button 
+                                                onClick={() => handleDelete(user)} 
+                                                className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                                                title="Xóa vĩnh viễn"
+                                            >
+                                                <TrashIcon className="h-5 w-5"/>
+                                            </button>
                                         </div>
                                     )}
                                 </td>

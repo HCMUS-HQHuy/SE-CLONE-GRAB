@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 type IconProps = {
@@ -13,6 +14,12 @@ export const MailIcon: React.FC<IconProps> = ({ className }) => (
 export const LockIcon: React.FC<IconProps> = ({ className }) => (
   <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+  </svg>
+);
+
+export const LockOpenIcon: React.FC<IconProps> = ({ className }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
   </svg>
 );
 
@@ -175,7 +182,7 @@ export const ClipboardListIcon: React.FC<IconProps> = ({ className }) => (
 );
 
 export const MotorcycleIcon: React.FC<IconProps> = ({ className }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+    <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M21 16.5c0 1.933-1.567 3.5-3.5 3.5s-3.5-1.567-3.5-3.5 1.567-3.5 3.5-3.5 3.5 1.567 3.5 3.5zM7.5 16.5c0 1.933-1.567 3.5-3.5 3.5S.5 18.433.5 16.5 2.067 13 4 13s3.5 1.567 3.5 3.5z" />
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 13.5h3.5m0 0L19 9l-2.5-3-3.5 3.5" />
         <path strokeLinecap="round" strokeLinejoin="round" d="M4 13L2.5 9l4-3 1.5 3L4 13z" />
@@ -410,7 +417,6 @@ export const TicketIcon: React.FC<IconProps> = ({ className }) => (
   </svg>
 );
 
-// FIX: Add DotsVerticalIcon to fix import error in AdminRestaurantsPage.tsx
 export const DotsVerticalIcon: React.FC<IconProps> = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 20 20" fill="currentColor">
         <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
