@@ -1,10 +1,12 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { SearchIcon, CheckCircleIcon, XCircleIcon } from '../components/Icons';
+import { SearchIcon, ChevronLeftIcon, ChevronRightIcon } from '../components/Icons';
 import { restaurantApiService, RestaurantListItem } from '../services/restaurantApi';
 import RestaurantDetailModal from '../components/RestaurantDetailModal';
 import ConfirmationModal from '../components/ConfirmationModal';
 import { apiService, UserStatus } from '../services/api';
+
+const ITEMS_PER_PAGE = 10;
 
 const AdminRestaurantsPage: React.FC = () => {
     const [restaurants, setRestaurants] = useState<RestaurantListItem[]>([]);
@@ -13,6 +15,7 @@ const AdminRestaurantsPage: React.FC = () => {
     
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('PENDING');
+    const [currentPage, setCurrentPage] = useState(1);
     
     const [selectedRestaurant, setSelectedRestaurant] = useState<RestaurantListItem | null>(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -47,7 +50,6 @@ const AdminRestaurantsPage: React.FC = () => {
     }, [restaurants, searchTerm]);
 
     const handleUpdateAuthStatus = async (ownerId: number, status: UserStatus) => {
-        setIsLoading(true);
         try {
             await apiService.adminUpdateUserStatus(ownerId, status);
             fetchRestaurants();
@@ -55,8 +57,6 @@ const AdminRestaurantsPage: React.FC = () => {
             setIsDetailModalOpen(false);
         } catch (err: any) {
             alert(err.message || 'Lỗi cập nhật trạng thái Auth.');
-        } finally {
-            setIsLoading(false);
         }
     };
     
@@ -64,7 +64,7 @@ const AdminRestaurantsPage: React.FC = () => {
         setConfirmation({
             isOpen: true,
             title: 'Phê duyệt đối tác',
-            message: `Hệ thống sẽ kích hoạt tài khoản kinh doanh cho "${res.name}".`,
+            message: `Kích hoạt tài khoản của "${res.name}"? Sau khi duyệt, chủ quán có thể bắt đầu bán hàng.`,
             onConfirm: () => handleUpdateAuthStatus(res.owner_id, 'active'),
             color: 'orange'
         });
@@ -74,7 +74,7 @@ const AdminRestaurantsPage: React.FC = () => {
         setConfirmation({
             isOpen: true,
             title: 'Từ chối hồ sơ',
-            message: `Bạn muốn từ chối hồ sơ của "${res.name}"?`,
+            message: `Bạn muốn từ chối hồ sơ của "${res.name}"? Trạng thái tài khoản sẽ chuyển về Inactive.`,
             onConfirm: () => handleUpdateAuthStatus(res.owner_id, 'inactive'),
             color: 'red'
         });
@@ -101,7 +101,7 @@ const AdminRestaurantsPage: React.FC = () => {
                 </div>
             </div>
 
-            {isLoading && !restaurants.length ? (
+            {isLoading ? (
                 <div className="py-20 text-center">
                     <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500 mx-auto"></div>
                 </div>
@@ -111,8 +111,9 @@ const AdminRestaurantsPage: React.FC = () => {
                         <thead className="bg-gray-50">
                             <tr>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nhà hàng</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hành động nhanh</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Chi tiết</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Địa chỉ</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày đăng ký</th>
+                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Hành động</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
@@ -129,39 +130,19 @@ const AdminRestaurantsPage: React.FC = () => {
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        {res.status === 'PENDING' ? (
-                                            <div className="flex space-x-2">
-                                                <button 
-                                                    onClick={() => handleApprove(res)}
-                                                    className="flex items-center bg-green-50 text-green-700 border border-green-200 px-3 py-1 rounded-md text-xs font-bold hover:bg-green-100 transition-colors"
-                                                >
-                                                    <CheckCircleIcon className="h-3.5 w-3.5 mr-1" /> Duyệt
-                                                </button>
-                                                <button 
-                                                    onClick={() => handleReject(res)}
-                                                    className="flex items-center bg-red-50 text-red-700 border border-red-200 px-3 py-1 rounded-md text-xs font-bold hover:bg-red-100 transition-colors"
-                                                >
-                                                    <XCircleIcon className="h-3.5 w-3.5 mr-1" /> Từ chối
-                                                </button>
-                                            </div>
-                                        ) : (
-                                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold border uppercase ${
-                                                res.status === 'ACTIVE' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-100 text-red-700 border-red-200'
-                                            }`}>
-                                                {res.status}
-                                            </span>
-                                        )}
+                                    <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">{res.address}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {new Date(res.created_at).toLocaleDateString('vi-VN')}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <button 
                                             onClick={() => { setSelectedRestaurant(res); setIsDetailModalOpen(true); }} 
-                                            className="text-orange-600 hover:text-orange-700 font-bold hover:underline"
-                                        >Xem hồ sơ</button>
+                                            className="text-orange-600 hover:text-orange-700 bg-orange-50 px-4 py-1.5 rounded-lg transition-all font-bold border border-orange-100"
+                                        >Xem chi tiết</button>
                                     </td>
                                 </tr>
                             )) : (
-                                <tr><td colSpan={3} className="p-10 text-center text-gray-500">Không tìm thấy nhà hàng nào.</td></tr>
+                                <tr><td colSpan={4} className="p-10 text-center text-gray-500">Không tìm thấy nhà hàng nào.</td></tr>
                             )}
                         </tbody>
                     </table>
