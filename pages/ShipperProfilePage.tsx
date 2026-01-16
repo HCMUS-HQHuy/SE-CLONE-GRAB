@@ -228,15 +228,6 @@ const ShipperProfilePage: React.FC = () => {
                             )}
                         </div>
                         <h3 className="text-lg font-bold text-gray-900 mt-3">{shipper.fullName}</h3>
-                        <div className="flex items-center mt-1">
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
-                                shipper.verificationStatus === 'Approved' ? 'bg-green-100 text-green-700 border-green-200' :
-                                shipper.verificationStatus === 'Pending' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' :
-                                'bg-red-100 text-red-700 border-red-200'
-                            }`}>
-                                {shipper.verificationStatus}
-                            </span>
-                        </div>
                     </div>
 
                     <div className="flex-grow grid grid-cols-2 md:grid-cols-4 gap-4 w-full border-t sm:border-t-0 sm:border-l pt-6 sm:pt-0 sm:pl-8 border-gray-200">
