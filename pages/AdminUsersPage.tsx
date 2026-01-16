@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { SearchIcon, ChevronLeftIcon, ChevronRightIcon, UserIcon, TrashIcon, LockIcon as LockClosedIcon, LockOpenIcon } from '../components/Icons';
+import { SearchIcon, ChevronLeftIcon, ChevronRightIcon, UserIcon, TrashIcon, LockIcon as LockClosedIcon } from '../components/Icons';
 import { apiService, AdminUserListItem, UserStatus } from '../services/api';
 // FIX: Correct the import path for ConfirmationModal to point to the components directory
 import ConfirmationModal from '../components/ConfirmationModal';
@@ -189,45 +189,26 @@ const AdminUsersPage: React.FC = () => {
                             <tr key={user.id} className={user.is_deleted ? 'bg-gray-50' : ''}>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <div className="flex items-center">
-                                        <div className="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center mr-3 text-orange-600 font-bold">
-                                            {user.email.charAt(0).toUpperCase()}
-                                        </div>
+                                        <UserIcon className="h-5 w-5 text-gray-400 mr-2"/>
                                         <span className="text-sm font-medium text-gray-900">{user.email}</span>
                                     </div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">{user.role}</td>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                    <span className={`px-2 py-1 text-xs font-semibold rounded-full border ${getStatusStyle(user.status, user.is_deleted)}`}>
+                                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusStyle(user.status, user.is_deleted)}`}>
                                         {user.is_deleted ? 'Đã xóa' : (user.status === 'active' ? 'Hoạt động' : 'Đã khóa')}
                                     </span>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     {!user.is_deleted && (
                                         <div className="flex justify-end space-x-3">
-                                            {user.status === 'active' ? (
-                                                <button 
-                                                    onClick={() => handleToggleLock(user)} 
-                                                    className="p-1.5 text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                                                    title="Khóa tài khoản"
-                                                >
-                                                    <LockClosedIcon className="h-5 w-5"/>
-                                                </button>
-                                            ) : (
-                                                <button 
-                                                    onClick={() => handleToggleLock(user)} 
-                                                    className="p-1.5 text-green-600 hover:bg-green-50 rounded-full transition-colors"
-                                                    title="Mở khóa tài khoản"
-                                                >
-                                                    <LockOpenIcon className="h-5 w-5"/>
-                                                </button>
-                                            )}
                                             <button 
-                                                onClick={() => handleDelete(user)} 
-                                                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                                                title="Xóa người dùng"
+                                                onClick={() => handleToggleLock(user)} 
+                                                className={`${user.status === 'active' ? 'text-red-600' : 'text-green-600'} hover:underline`}
                                             >
-                                                <TrashIcon className="h-5 w-5"/>
+                                                {user.status === 'active' ? 'Khóa tài khoản' : 'Mở khóa'}
                                             </button>
+                                            <button onClick={() => handleDelete(user)} className="text-gray-400 hover:text-red-600"><TrashIcon className="h-5 w-5"/></button>
                                         </div>
                                     )}
                                 </td>
