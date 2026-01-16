@@ -56,17 +56,22 @@ const AdminShippersPage: React.FC = () => {
     const handleUpdateAuthStatus = async (driverId: string, status: UserStatus) => {
         setIsLoading(true);
         try {
-            // 1. Cập nhật Auth status
+            // Bước 1: Cập nhật trạng thái trên Auth Service (Port 8003)
             await apiService.adminUpdateUserStatus(parseInt(driverId, 10), status);
             
-            // 2. Nếu là duyệt hồ sơ, gọi verify bên Shipper Service
+            // Bước 2: Nếu là phê duyệt (active), gọi tiếp API verify trên Shipper Service (Port 8001)
             if (status === 'active') {
-                await shipperApiService.verifyDriver(driverId);
+                try {
+                    await shipperApiService.verifyDriver(driverId);
+                } catch (verifyErr: any) {
+                    throw new Error(`Auth OK nhưng Shipper Verify lỗi: ${verifyErr.message}`);
+                }
             }
 
             fetchShippers();
             setConfirmation(null);
             setIsDetailModalOpen(false);
+            // Thông báo ngắn gọn
         } catch (err: any) {
             alert(`Lỗi: ${err.message}`);
         } finally {
@@ -78,7 +83,7 @@ const AdminShippersPage: React.FC = () => {
         setConfirmation({
             isOpen: true,
             title: 'Phê duyệt tài xế',
-            message: `Hệ thống sẽ kích hoạt tài khoản cho tài xế "${shipper.fullName}" trên cả 2 dịch vụ.`,
+            message: `Hệ thống sẽ kích hoạt tài khoản và xác thực hồ sơ cho tài xế "${shipper.fullName}".`,
             onConfirm: () => handleUpdateAuthStatus(shipper.id, 'active'),
             color: 'orange'
         });
@@ -88,7 +93,7 @@ const AdminShippersPage: React.FC = () => {
         setConfirmation({
             isOpen: true,
             title: 'Từ chối tài xế',
-            message: `Bạn chắc chắn muốn từ chối hồ sơ của "${shipper.fullName}"?`,
+            message: `Từ chối hồ sơ của "${shipper.fullName}"?`,
             onConfirm: () => handleUpdateAuthStatus(shipper.id, 'inactive'),
             color: 'red'
         });
@@ -132,8 +137,8 @@ const AdminShippersPage: React.FC = () => {
                             <tr>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tài xế</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Số điện thoại</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái hồ sơ</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Hành động</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hành động nhanh</th>
+                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Chi tiết</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
@@ -144,36 +149,46 @@ const AdminShippersPage: React.FC = () => {
                                             <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-3 font-bold text-blue-600 overflow-hidden">
                                                 {shipper.profileImageUrl ? <img src={`http://localhost:8001${shipper.profileImageUrl}`} className="w-full h-full object-cover"/> : shipper.fullName.charAt(0)}
                                             </div>
-                                            <div className="font-semibold text-gray-900">{shipper.fullName}</div>
+                                            <div>
+                                                <div className="font-semibold text-gray-900">{shipper.fullName}</div>
+                                                <div className="text-[10px] text-gray-400">DRIVER_{shipper.id.padStart(5, '0')}</div>
+                                            </div>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 text-sm text-gray-600">{shipper.phoneNumber}</td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
-                                            shipper.verificationStatus === 'Approved' ? 'bg-green-100 text-green-700 border-green-200' :
-                                            shipper.verificationStatus === 'Pending' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' :
-                                            'bg-red-100 text-red-700 border-red-200'
-                                        }`}>
-                                            {shipper.verificationStatus}
-                                        </span>
+                                        {shipper.verificationStatus === 'Pending' ? (
+                                            <div className="flex space-x-2">
+                                                <button 
+                                                    onClick={() => handleApprove(shipper)}
+                                                    className="flex items-center bg-green-50 text-green-700 border border-green-200 px-3 py-1 rounded-md text-xs font-bold hover:bg-green-100 transition-colors"
+                                                >
+                                                    <CheckCircleIcon className="h-3.5 w-3.5 mr-1" /> Duyệt
+                                                </button>
+                                                <button 
+                                                    onClick={() => handleReject(shipper)}
+                                                    className="flex items-center bg-red-50 text-red-700 border border-red-200 px-3 py-1 rounded-md text-xs font-bold hover:bg-red-100 transition-colors"
+                                                >
+                                                    <XCircleIcon className="h-3.5 w-3.5 mr-1" /> Từ chối
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
+                                                shipper.verificationStatus === 'Approved' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-100 text-red-700 border-red-200'
+                                            }`}>
+                                                {shipper.verificationStatus}
+                                            </span>
+                                        )}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <div className="flex justify-end items-center space-x-2">
-                                            {shipper.verificationStatus === 'Pending' && (
-                                                <>
-                                                    <button onClick={() => handleApprove(shipper)} className="p-1.5 bg-green-50 text-green-600 rounded-md hover:bg-green-100" title="Duyệt nhanh"><CheckCircleIcon className="h-5 w-5" /></button>
-                                                    <button onClick={() => handleReject(shipper)} className="p-1.5 bg-red-50 text-red-600 rounded-md hover:bg-red-100" title="Từ chối nhanh"><XCircleIcon className="h-5 w-5" /></button>
-                                                </>
-                                            )}
-                                            <button 
-                                                onClick={() => { setSelectedShipper(shipper); setIsDetailModalOpen(true); }} 
-                                                className="text-blue-600 hover:text-blue-700 bg-blue-50 px-4 py-1.5 rounded-lg transition-all font-bold border border-blue-100"
-                                            >Chi tiết</button>
-                                        </div>
+                                        <button 
+                                            onClick={() => { setSelectedShipper(shipper); setIsDetailModalOpen(true); }} 
+                                            className="text-blue-600 hover:text-blue-700 font-bold hover:underline"
+                                        >Xem hồ sơ</button>
                                     </td>
                                 </tr>
                             )) : (
-                                <tr><td colSpan={4} className="p-10 text-center text-gray-500">Không tìm thấy tài xế nào.</td></tr>
+                                <tr><td colSpan={4} className="p-10 text-center text-gray-500 font-medium italic">Không tìm thấy tài xế nào.</td></tr>
                             )}
                         </tbody>
                     </table>

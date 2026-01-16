@@ -46,24 +46,15 @@ const AdminRestaurantsPage: React.FC = () => {
         return restaurants.filter(r => r.name.toLowerCase().includes(searchTerm.toLowerCase()));
     }, [restaurants, searchTerm]);
 
-    const handleUpdateAuthStatus = async (restaurant: RestaurantListItem, status: UserStatus) => {
+    const handleUpdateAuthStatus = async (ownerId: number, status: UserStatus) => {
         setIsLoading(true);
         try {
-            // 1. Cập nhật Auth status (8003)
-            await apiService.adminUpdateUserStatus(restaurant.owner_id, status);
-            
-            // 2. Cập nhật Restaurant status (8004)
-            if (status === 'active') {
-                await restaurantApiService.updateStatus(restaurant.id, 'ACTIVE');
-            } else if (status === 'inactive') {
-                await restaurantApiService.updateStatus(restaurant.id, 'REJECTED');
-            }
-
+            await apiService.adminUpdateUserStatus(ownerId, status);
             fetchRestaurants();
             setConfirmation(null);
             setIsDetailModalOpen(false);
         } catch (err: any) {
-            alert(err.message || 'Lỗi cập nhật trạng thái.');
+            alert(err.message || 'Lỗi cập nhật trạng thái Auth.');
         } finally {
             setIsLoading(false);
         }
@@ -73,8 +64,8 @@ const AdminRestaurantsPage: React.FC = () => {
         setConfirmation({
             isOpen: true,
             title: 'Phê duyệt đối tác',
-            message: `Kích hoạt tài khoản kinh doanh cho "${res.name}" trên toàn hệ thống?`,
-            onConfirm: () => handleUpdateAuthStatus(res, 'active'),
+            message: `Hệ thống sẽ kích hoạt tài khoản kinh doanh cho "${res.name}".`,
+            onConfirm: () => handleUpdateAuthStatus(res.owner_id, 'active'),
             color: 'orange'
         });
     };
@@ -84,7 +75,7 @@ const AdminRestaurantsPage: React.FC = () => {
             isOpen: true,
             title: 'Từ chối hồ sơ',
             message: `Bạn muốn từ chối hồ sơ của "${res.name}"?`,
-            onConfirm: () => handleUpdateAuthStatus(res, 'inactive'),
+            onConfirm: () => handleUpdateAuthStatus(res.owner_id, 'inactive'),
             color: 'red'
         });
     };
@@ -120,8 +111,8 @@ const AdminRestaurantsPage: React.FC = () => {
                         <thead className="bg-gray-50">
                             <tr>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nhà hàng</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Hành động</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hành động nhanh</th>
+                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Chi tiết</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
@@ -139,27 +130,34 @@ const AdminRestaurantsPage: React.FC = () => {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold border uppercase ${
-                                            res.status === 'ACTIVE' ? 'bg-green-100 text-green-700 border-green-200' :
-                                            res.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' :
-                                            'bg-red-100 text-red-700 border-red-200'
-                                        }`}>
-                                            {res.status}
-                                        </span>
+                                        {res.status === 'PENDING' ? (
+                                            <div className="flex space-x-2">
+                                                <button 
+                                                    onClick={() => handleApprove(res)}
+                                                    className="flex items-center bg-green-50 text-green-700 border border-green-200 px-3 py-1 rounded-md text-xs font-bold hover:bg-green-100 transition-colors"
+                                                >
+                                                    <CheckCircleIcon className="h-3.5 w-3.5 mr-1" /> Duyệt
+                                                </button>
+                                                <button 
+                                                    onClick={() => handleReject(res)}
+                                                    className="flex items-center bg-red-50 text-red-700 border border-red-200 px-3 py-1 rounded-md text-xs font-bold hover:bg-red-100 transition-colors"
+                                                >
+                                                    <XCircleIcon className="h-3.5 w-3.5 mr-1" /> Từ chối
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold border uppercase ${
+                                                res.status === 'ACTIVE' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-100 text-red-700 border-red-200'
+                                            }`}>
+                                                {res.status}
+                                            </span>
+                                        )}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <div className="flex justify-end items-center space-x-2">
-                                            {res.status === 'PENDING' && (
-                                                <>
-                                                    <button onClick={() => handleApprove(res)} className="p-1.5 bg-green-50 text-green-600 rounded-md hover:bg-green-100" title="Duyệt hồ sơ"><CheckCircleIcon className="h-5 w-5" /></button>
-                                                    <button onClick={() => handleReject(res)} className="p-1.5 bg-red-50 text-red-600 rounded-md hover:bg-red-100" title="Từ chối hồ sơ"><XCircleIcon className="h-5 w-5" /></button>
-                                                </>
-                                            )}
-                                            <button 
-                                                onClick={() => { setSelectedRestaurant(res); setIsDetailModalOpen(true); }} 
-                                                className="text-orange-600 hover:text-orange-700 bg-orange-50 px-4 py-1.5 rounded-lg transition-all font-bold border border-orange-100"
-                                            >Xem hồ sơ</button>
-                                        </div>
+                                        <button 
+                                            onClick={() => { setSelectedRestaurant(res); setIsDetailModalOpen(true); }} 
+                                            className="text-orange-600 hover:text-orange-700 font-bold hover:underline"
+                                        >Xem hồ sơ</button>
                                     </td>
                                 </tr>
                             )) : (
