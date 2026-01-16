@@ -14,6 +14,22 @@ export interface CreateRestaurantRequest {
   food_safety_certificate_image: File;
 }
 
+export interface RestaurantListItem {
+  id: number;
+  owner_id: number;
+  name: string;
+  description: string;
+  address: string;
+  phone: string;
+  opening_hours: string;
+  business_license_image: string;
+  food_safety_certificate_image: string;
+  rating: number;
+  is_open: boolean;
+  status: 'PENDING' | 'ACTIVE' | 'BANNED' | 'REJECTED';
+  created_at: string;
+}
+
 export const restaurantApiService = {
   async createRestaurant(data: CreateRestaurantRequest) {
     const formData = new FormData();
@@ -32,7 +48,6 @@ export const restaurantApiService = {
       method: 'POST',
       headers: {
         ...headers,
-        // Lưu ý: Không set 'Content-Type' khi dùng FormData, browser sẽ tự set kèm boundary
       },
       body: formData,
     });
@@ -40,6 +55,47 @@ export const restaurantApiService = {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.detail?.[0]?.msg || errorData.detail || 'Không thể tạo hồ sơ nhà hàng.');
+    }
+
+    return await response.json();
+  },
+
+  async getRestaurants(skip = 0, limit = 100, status?: string): Promise<RestaurantListItem[]> {
+    const params = new URLSearchParams({
+      skip: skip.toString(),
+      limit: limit.toString(),
+    });
+    if (status && status !== 'All') params.append('status', status);
+
+    const response = await fetch(`${RESTAURANT_SERVICE_URL}/api/v1/restaurants/?${params.toString()}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        ...apiService.getAuthHeaders('admin'),
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || 'Không thể lấy danh sách nhà hàng.');
+    }
+
+    return await response.json();
+  },
+
+  async updateStatus(restaurantId: number, status: string) {
+     const response = await fetch(`${RESTAURANT_SERVICE_URL}/api/v1/restaurants/${restaurantId}/status`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        ...apiService.getAuthHeaders('admin'),
+      },
+      body: JSON.stringify({ status }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || 'Cập nhật trạng thái nhà hàng thất bại.');
     }
 
     return await response.json();

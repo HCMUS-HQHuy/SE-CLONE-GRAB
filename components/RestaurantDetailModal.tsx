@@ -1,213 +1,123 @@
-import React, { useState, useEffect } from 'react';
-// FIX: Import LockIcon and alias it as LockClosedIcon to resolve missing export error.
-import { XIcon, PencilIcon, LockIcon as LockClosedIcon, CheckCircleIcon, ClockIcon, TicketIcon, ShieldExclamationIcon } from './Icons';
 
-// Types
-export type RestaurantStatus = 'pending' | 'approved' | 'suspended';
+import React from 'react';
+import { XIcon, ClockIcon, PhoneIcon, HomeIcon, UserIcon, DocumentTextIcon, CheckBadgeIcon } from './Icons';
+import { RestaurantListItem } from '../services/restaurantApi';
 
-export type MenuItem = {
-  id: string;
-  name: string;
-  price: number;
-  category: string;
-  image: string;
-  isAvailable: boolean;
-};
-
-export type RestaurantOrder = {
-  id: string;
-  customerName: string;
-  total: number;
-  status: string;
-  date: string;
-};
-
-export type SupportTicket = {
-  id: string;
-  subject: string;
-  status: 'open' | 'in-progress' | 'resolved';
-  lastUpdate: string;
-};
-
-export type SecurityLog = {
-  ip: string;
-  device: string;
-  timestamp: string;
-  action: string;
-};
-
-export type FullRestaurant = {
-    id: string;
-    name: string;
-    ownerName: string;
-    ownerEmail: string;
-    phone: string;
-    address: string;
-    cuisine: string;
-    status: RestaurantStatus;
-    createdAt: string;
-    bannerUrl: string;
-    logoUrl: string;
-    menu: MenuItem[];
-    orders: RestaurantOrder[];
-    tickets: SupportTicket[];
-    security: {
-        alerts: string[];
-        logs: SecurityLog[];
-    };
-};
-
-// Modal Props
-type RestaurantDetailModalProps = {
+type Props = {
     isOpen: boolean;
     onClose: () => void;
-    restaurant: FullRestaurant;
-    onUpdate: (updatedRestaurant: FullRestaurant) => void;
+    restaurant: RestaurantListItem;
 };
 
-type ActiveTab = 'info' | 'menu' | 'orders' | 'support' | 'security';
+const BASE_IMG_URL = 'http://localhost:8004/';
 
-// Main Component
-const RestaurantDetailModal: React.FC<RestaurantDetailModalProps> = ({ isOpen, onClose, restaurant, onUpdate }) => {
-    const [activeTab, setActiveTab] = useState<ActiveTab>('info');
-    const [editedRestaurant, setEditedRestaurant] = useState<FullRestaurant>(restaurant);
-    const [isEditingInfo, setIsEditingInfo] = useState(false);
-
-    useEffect(() => {
-        setEditedRestaurant(restaurant);
-    }, [restaurant]);
-
+const RestaurantDetailModal: React.FC<Props> = ({ isOpen, onClose, restaurant }) => {
     if (!isOpen) return null;
 
-    const handleSaveInfo = () => {
-        onUpdate(editedRestaurant);
-        setIsEditingInfo(false);
-    };
-
-    const InfoTab = () => (
-        <div className="space-y-4">
-             <div className="grid grid-cols-2 gap-4">
-                <div><label className="label">Tên nhà hàng</label><input type="text" value={editedRestaurant.name} onChange={e => setEditedRestaurant({...editedRestaurant, name: e.target.value})} readOnly={!isEditingInfo} className="input-field" /></div>
-                <div><label className="label">Loại hình</label><input type="text" value={editedRestaurant.cuisine} onChange={e => setEditedRestaurant({...editedRestaurant, cuisine: e.target.value})} readOnly={!isEditingInfo} className="input-field" /></div>
-            </div>
-            <div><label className="label">Địa chỉ</label><input type="text" value={editedRestaurant.address} onChange={e => setEditedRestaurant({...editedRestaurant, address: e.target.value})} readOnly={!isEditingInfo} className="input-field" /></div>
-            <div className="grid grid-cols-2 gap-4">
-                <div><label className="label">Chủ sở hữu</label><input type="text" value={editedRestaurant.ownerName} onChange={e => setEditedRestaurant({...editedRestaurant, ownerName: e.target.value})} readOnly={!isEditingInfo} className="input-field" /></div>
-                <div><label className="label">Email</label><input type="email" value={editedRestaurant.ownerEmail} onChange={e => setEditedRestaurant({...editedRestaurant, ownerEmail: e.target.value})} readOnly={!isEditingInfo} className="input-field" /></div>
-            </div>
-             {isEditingInfo && <button onClick={handleSaveInfo} className="px-4 py-2 text-sm font-medium text-white bg-orange-600 rounded-md">Lưu thông tin</button>}
-        </div>
-    );
-    
-    const MenuTab = () => (
-        <div className="space-y-4">
-            {editedRestaurant.menu.map(item => (
-                <div key={item.id} className="flex items-center justify-between p-2 border rounded-md">
-                    <div className="flex items-center">
-                        <img src={item.image} alt={item.name} className="h-12 w-12 rounded object-cover mr-3"/>
-                        <div>
-                            <p className="font-semibold">{item.name}</p>
-                            <p className="text-sm text-gray-500">{new Intl.NumberFormat('vi-VN').format(item.price)}đ</p>
-                        </div>
-                    </div>
-                    <div className="flex items-center space-x-3">
-                        <span className={`px-2 py-0.5 text-xs rounded-full ${item.isAvailable ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                            {item.isAvailable ? 'Còn hàng' : 'Hết hàng'}
-                        </span>
-                        <button className="text-gray-400 hover:text-blue-600"><PencilIcon className="h-5 w-5"/></button>
-                    </div>
-                </div>
-            ))}
-        </div>
-    );
-
-    const OrdersTab = () => (
-        <div>
-            {editedRestaurant.orders.map(order => (
-                <div key={order.id} className="p-2 border-b flex justify-between items-center">
-                    <div>
-                        <p className="font-semibold">{order.id} - {order.customerName}</p>
-                        <p className="text-sm text-gray-500">{new Date(order.date).toLocaleString('vi-VN')}</p>
-                    </div>
-                    <div>
-                        <p className="font-bold">{new Intl.NumberFormat('vi-VN').format(order.total)}đ</p>
-                        <p className="text-sm text-right">{order.status}</p>
-                    </div>
-                </div>
-            ))}
-        </div>
-    );
-
-    const SupportTab = () => (
-         <div>
-            {editedRestaurant.tickets.map(ticket => (
-                <div key={ticket.id} className="p-2 border-b flex justify-between items-center">
-                    <div>
-                        <p className="font-semibold">{ticket.id} - <span className="font-normal">{ticket.subject}</span></p>
-                        <p className="text-sm text-gray-500">Cập nhật: {ticket.lastUpdate}</p>
-                    </div>
-                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${ticket.status === 'open' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'}`}>{ticket.status}</span>
-                </div>
-            ))}
-        </div>
-    );
-
-    const SecurityTab = () => (
-         <div className="space-y-4">
-            <div>
-                <h4 className="font-semibold text-red-600 mb-2">Cảnh báo gian lận</h4>
-                {editedRestaurant.security.alerts.length > 0 ? (
-                    <ul className="list-disc list-inside text-sm text-red-700 bg-red-50 p-3 rounded-md">
-                        {editedRestaurant.security.alerts.map((alert, i) => <li key={i}>{alert}</li>)}
-                    </ul>
-                ) : <p className="text-sm text-gray-500">Không có cảnh báo nào.</p>}
-            </div>
-             <div>
-                <h4 className="font-semibold text-gray-800 mb-2">Nhật ký truy cập gần đây</h4>
-                 <ul className="text-sm text-gray-600">
-                    {editedRestaurant.security.logs.map((log, i) => <li key={i} className="p-1">{log.timestamp} - {log.action} từ {log.ip} ({log.device})</li>)}
-                </ul>
+    const ImagePreview: React.FC<{ label: string, path: string }> = ({ label, path }) => (
+        <div className="space-y-2">
+            <p className="text-sm font-medium text-gray-700">{label}</p>
+            <div className="border rounded-lg overflow-hidden bg-gray-100 aspect-video flex items-center justify-center">
+                {path ? (
+                    <img 
+                        src={`${BASE_IMG_URL}${path}`} 
+                        alt={label} 
+                        className="w-full h-full object-contain cursor-zoom-in hover:scale-105 transition-transform" 
+                        onClick={() => window.open(`${BASE_IMG_URL}${path}`, '_blank')}
+                    />
+                ) : (
+                    <span className="text-gray-400 italic text-sm">Không có ảnh</span>
+                )}
             </div>
         </div>
     );
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4" onClick={onClose}>
-            <div className="relative bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
-                <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><XIcon className="h-6 w-6" /></button>
-                <div className="p-6 border-b">
-                    <h2 className="text-2xl font-bold text-gray-900">{restaurant.name}</h2>
-                    <p className="text-gray-500">{restaurant.address}</p>
-                </div>
-                <div className="p-6 flex-grow overflow-y-auto">
-                    <div className="flex space-x-2 border-b mb-6">
-                        <button onClick={() => setActiveTab('info')} className={`tab-btn ${activeTab==='info' && 'active'}`}>Thông tin chung</button>
-                        <button onClick={() => setActiveTab('menu')} className={`tab-btn ${activeTab==='menu' && 'active'}`}>Thực đơn</button>
-                        <button onClick={() => setActiveTab('orders')} className={`tab-btn ${activeTab==='orders' && 'active'}`}>Đơn hàng</button>
-                        <button onClick={() => setActiveTab('support')} className={`tab-btn ${activeTab==='support' && 'active'}`}><TicketIcon className="h-4 w-4 mr-2"/>Hỗ trợ</button>
-                        <button onClick={() => setActiveTab('security')} className={`tab-btn ${activeTab==='security' && 'active'}`}><ShieldExclamationIcon className="h-4 w-4 mr-2"/>Bảo mật</button>
+            <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                {/* Header */}
+                <div className="p-6 border-b flex justify-between items-center bg-gray-50 rounded-t-xl">
+                    <div>
+                        <h2 className="text-2xl font-bold text-gray-900">{restaurant.name}</h2>
+                        <div className="flex items-center text-sm text-gray-500 mt-1">
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-bold mr-3 border ${
+                                restaurant.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' : 'bg-green-100 text-green-800 border-green-200'
+                            }`}>
+                                {restaurant.status}
+                            </span>
+                            <span>Ngày đăng ký: {new Date(restaurant.created_at).toLocaleDateString('vi-VN')}</span>
+                        </div>
                     </div>
-                    {activeTab === 'info' && <InfoTab />}
-                    {activeTab === 'menu' && <MenuTab />}
-                    {activeTab === 'orders' && <OrdersTab />}
-                    {activeTab === 'support' && <SupportTab />}
-                    {activeTab === 'security' && <SecurityTab />}
+                    <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition-colors">
+                        <XIcon className="h-6 w-6 text-gray-500" />
+                    </button>
                 </div>
-                <div className="p-4 border-t bg-gray-50 flex justify-end space-x-3">
-                    {activeTab === 'info' && !isEditingInfo && <button onClick={() => setIsEditingInfo(true)} className="btn-secondary"><PencilIcon className="h-4 w-4 mr-2"/>Chỉnh sửa</button>}
-                    <button onClick={onClose} className="btn-primary">Đóng</button>
+
+                {/* Content */}
+                <div className="p-8 overflow-y-auto flex-grow space-y-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {/* Section 1: Basic Info */}
+                        <div className="space-y-4">
+                            <h3 className="text-lg font-bold text-orange-600 flex items-center">
+                                <DocumentTextIcon className="h-5 w-5 mr-2"/> Thông tin cơ bản
+                            </h3>
+                            <div className="space-y-3 bg-gray-50 p-4 rounded-lg">
+                                <div className="flex items-start">
+                                    <UserIcon className="h-5 w-5 text-gray-400 mr-3 mt-0.5" />
+                                    <div>
+                                        <p className="text-xs text-gray-500">Mã chủ sở hữu (Owner ID)</p>
+                                        <p className="font-medium">{restaurant.owner_id}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-start">
+                                    <PhoneIcon className="h-5 w-5 text-gray-400 mr-3 mt-0.5" />
+                                    <div>
+                                        <p className="text-xs text-gray-500">Số điện thoại</p>
+                                        <p className="font-medium">{restaurant.phone}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-start">
+                                    <HomeIcon className="h-5 w-5 text-gray-400 mr-3 mt-0.5" />
+                                    <div>
+                                        <p className="text-xs text-gray-500">Địa chỉ kinh doanh</p>
+                                        <p className="font-medium">{restaurant.address}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-start">
+                                    <ClockIcon className="h-5 w-5 text-gray-400 mr-3 mt-0.5" />
+                                    <div>
+                                        <p className="text-xs text-gray-500">Giờ hoạt động</p>
+                                        <p className="font-medium">{restaurant.opening_hours}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="p-4 border rounded-lg">
+                                <p className="text-sm font-medium text-gray-700 mb-1">Mô tả quán:</p>
+                                <p className="text-gray-600 text-sm leading-relaxed">{restaurant.description || 'Chưa có mô tả.'}</p>
+                            </div>
+                        </div>
+
+                        {/* Section 2: Legal Documents */}
+                        <div className="space-y-6">
+                            <h3 className="text-lg font-bold text-orange-600 flex items-center">
+                                <CheckBadgeIcon className="h-5 w-5 mr-2"/> Hồ sơ pháp lý
+                            </h3>
+                            <ImagePreview label="Giấy phép kinh doanh" path={restaurant.business_license_image} />
+                            <ImagePreview label="Giấy chứng nhận ATVSTP" path={restaurant.food_safety_certificate_image} />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Footer */}
+                <div className="p-4 border-t bg-gray-50 flex justify-end">
+                    <button 
+                        onClick={onClose}
+                        className="px-8 py-2.5 bg-gray-800 text-white font-bold rounded-lg hover:bg-gray-900 transition-colors"
+                    >
+                        Đóng cửa sổ
+                    </button>
                 </div>
             </div>
-            <style>{`
-                .label { display: block; font-size: 0.875rem; font-weight: 500; color: #6B7281; }
-                .input-field { display: block; width: 100%; margin-top: 0.25rem; padding: 0.5rem 0.75rem; border: 1px solid #D1D5DB; border-radius: 0.375rem; }
-                .input-field[readOnly] { background-color: #F9FAFB; cursor: not-allowed; }
-                .tab-btn { padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 500; border-bottom: 2px solid transparent; color: #4B5563; display:inline-flex; align-items:center; }
-                .tab-btn:hover { background-color: #F3F4F6; }
-                .tab-btn.active { border-color: #F97316; color: #F97316; }
-                .btn-primary { padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 500; background-color: #4B5563; color: white; border-radius: 0.375rem; }
-                .btn-secondary { display:inline-flex; align-items:center; padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 500; background-color: white; color: #374151; border: 1px solid #D1D5DB; border-radius: 0.375rem; }
-            `}</style>
         </div>
     );
 };
