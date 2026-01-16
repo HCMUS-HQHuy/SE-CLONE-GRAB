@@ -122,5 +122,21 @@ export const shipperApiService = {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.detail || 'Cập nhật hồ sơ tài xế thất bại.');
     }
+  },
+
+  async verifyDriver(id: string): Promise<void> {
+    const response = await fetch(`${SHIPPER_SERVICE_URL}/api/Drivers/${id}/verify`, {
+      method: 'POST',
+      headers: {
+        'Accept': '*/*',
+        ...apiService.getAuthHeaders('admin'),
+      },
+      body: '',
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || 'Xác thực tài xế trên Shipper Service thất bại.');
+    }
   }
 };

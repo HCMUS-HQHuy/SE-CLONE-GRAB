@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { SearchIcon } from '../components/Icons';
+import { SearchIcon, CheckCircleIcon, XCircleIcon } from '../components/Icons';
 import ShipperDetailModal from '../components/ShipperDetailModal';
 import ConfirmationModal from '../components/ConfirmationModal';
 import { shipperApiService, Driver } from '../services/shipperApi';
@@ -54,13 +54,23 @@ const AdminShippersPage: React.FC = () => {
     };
 
     const handleUpdateAuthStatus = async (driverId: string, status: UserStatus) => {
+        setIsLoading(true);
         try {
+            // 1. Cập nhật Auth status
             await apiService.adminUpdateUserStatus(parseInt(driverId, 10), status);
+            
+            // 2. Nếu là duyệt hồ sơ, gọi verify bên Shipper Service
+            if (status === 'active') {
+                await shipperApiService.verifyDriver(driverId);
+            }
+
             fetchShippers();
             setConfirmation(null);
             setIsDetailModalOpen(false);
         } catch (err: any) {
-            alert(err.message || 'Lỗi kết nối Auth Service.');
+            alert(`Lỗi: ${err.message}`);
+        } finally {
+            setIsLoading(false);
         }
     };
     
@@ -68,7 +78,7 @@ const AdminShippersPage: React.FC = () => {
         setConfirmation({
             isOpen: true,
             title: 'Phê duyệt tài xế',
-            message: `Kích hoạt tài khoản cho tài xế "${shipper.fullName}" để có thể nhận đơn hàng ngay lập tức?`,
+            message: `Hệ thống sẽ kích hoạt tài khoản cho tài xế "${shipper.fullName}" trên cả 2 dịch vụ.`,
             onConfirm: () => handleUpdateAuthStatus(shipper.id, 'active'),
             color: 'orange'
         });
@@ -78,7 +88,7 @@ const AdminShippersPage: React.FC = () => {
         setConfirmation({
             isOpen: true,
             title: 'Từ chối tài xế',
-            message: `Từ chối hồ sơ của "${shipper.fullName}"? Tài khoản sẽ không thể đăng nhập hoặc nhận đơn.`,
+            message: `Bạn chắc chắn muốn từ chối hồ sơ của "${shipper.fullName}"?`,
             onConfirm: () => handleUpdateAuthStatus(shipper.id, 'inactive'),
             color: 'red'
         });
@@ -111,7 +121,7 @@ const AdminShippersPage: React.FC = () => {
                 </div>
             </div>
 
-            {isLoading ? (
+            {isLoading && !shippers.length ? (
                 <div className="py-20 text-center">
                     <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500 mx-auto"></div>
                 </div>
@@ -122,7 +132,7 @@ const AdminShippersPage: React.FC = () => {
                             <tr>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tài xế</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Số điện thoại</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mã số định danh</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái hồ sơ</th>
                                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Hành động</th>
                             </tr>
                         </thead>
@@ -138,18 +148,32 @@ const AdminShippersPage: React.FC = () => {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 text-sm text-gray-600">{shipper.phoneNumber}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500">
-                                        DRIVER_{shipper.id.padStart(5, '0')}
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
+                                            shipper.verificationStatus === 'Approved' ? 'bg-green-100 text-green-700 border-green-200' :
+                                            shipper.verificationStatus === 'Pending' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' :
+                                            'bg-red-100 text-red-700 border-red-200'
+                                        }`}>
+                                            {shipper.verificationStatus}
+                                        </span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <button 
-                                            onClick={() => { setSelectedShipper(shipper); setIsDetailModalOpen(true); }} 
-                                            className="text-blue-600 hover:text-blue-700 bg-blue-50 px-4 py-1.5 rounded-lg transition-all font-bold border border-blue-100"
-                                        >Chi tiết</button>
+                                        <div className="flex justify-end items-center space-x-2">
+                                            {shipper.verificationStatus === 'Pending' && (
+                                                <>
+                                                    <button onClick={() => handleApprove(shipper)} className="p-1.5 bg-green-50 text-green-600 rounded-md hover:bg-green-100" title="Duyệt nhanh"><CheckCircleIcon className="h-5 w-5" /></button>
+                                                    <button onClick={() => handleReject(shipper)} className="p-1.5 bg-red-50 text-red-600 rounded-md hover:bg-red-100" title="Từ chối nhanh"><XCircleIcon className="h-5 w-5" /></button>
+                                                </>
+                                            )}
+                                            <button 
+                                                onClick={() => { setSelectedShipper(shipper); setIsDetailModalOpen(true); }} 
+                                                className="text-blue-600 hover:text-blue-700 bg-blue-50 px-4 py-1.5 rounded-lg transition-all font-bold border border-blue-100"
+                                            >Chi tiết</button>
+                                        </div>
                                     </td>
                                 </tr>
                             )) : (
-                                <tr><td colSpan={4} className="p-10 text-center text-gray-500 font-medium italic">Không tìm thấy tài xế nào.</td></tr>
+                                <tr><td colSpan={4} className="p-10 text-center text-gray-500">Không tìm thấy tài xế nào.</td></tr>
                             )}
                         </tbody>
                     </table>
