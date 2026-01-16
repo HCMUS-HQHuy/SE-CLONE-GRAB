@@ -1,17 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { UserIcon, PhoneIcon, PencilIcon, UploadIcon, StarIcon, ShieldCheckIcon, IdentificationIcon, CheckCircleIcon, XCircleIcon, LightningBoltIcon, CalendarIcon, ThumbUpIcon } from '../components/Icons';
 
-// Mock data for the shipper
-const mockShipper = {
-    name: 'Trần Văn An',
-    phone: '0912 345 678',
-    licensePlate: '59-T1 123.45',
-    vehicleImageUrl: 'https://s3.cloud.cmctelecom.vn/tinhte2/2019/07/4710186_cover_honda-wave-alpha-110cc-phien-ban-2019.jpg',
-    reputationScore: 98,
-    rating: 4.9,
-    successfulDeliveries: 1250,
-    cancellationRate: 2.5,
-};
+import React, { useState, useEffect } from 'react';
+import { 
+    UserIcon, PhoneIcon, PencilIcon, UploadIcon, StarIcon, 
+    ShieldCheckIcon, IdentificationIcon, CheckCircleIcon, XCircleIcon, 
+    LightningBoltIcon, CalendarIcon, ThumbUpIcon, DocumentTextIcon 
+} from '../components/Icons';
+import { apiService } from '../services/api';
+import { shipperApiService, Driver } from '../services/shipperApi';
+
+const SHIPPER_BASE_URL = 'http://localhost:8001';
 
 const ratingData = {
     average: 4.85,
@@ -48,10 +45,8 @@ const HeaderStat: React.FC<{ icon: React.ReactNode; title: string; value: string
     </div>
 );
 
-
 const PerformanceAnalysisCard: React.FC<{ comments: typeof mockRecentComments }> = ({ comments }) => (
     <div className="bg-white p-6 rounded-lg shadow-md border h-full">
-        {/* Rating Breakdown Section */}
         <div>
             <h3 className="text-xl font-semibold text-gray-800 mb-4">Phân tích đánh giá</h3>
             <div className="flex justify-between items-baseline text-xs text-gray-500 mb-4">
@@ -80,7 +75,6 @@ const PerformanceAnalysisCard: React.FC<{ comments: typeof mockRecentComments }>
             </div>
         </div>
 
-        {/* Badges Section */}
         <div className="border-t pt-6 mt-6">
             <h3 className="text-xl font-semibold text-gray-800 mb-4">Huy hiệu & Thành tích</h3>
             <div className="grid grid-cols-2 gap-4">
@@ -93,7 +87,6 @@ const PerformanceAnalysisCard: React.FC<{ comments: typeof mockRecentComments }>
             </div>
         </div>
         
-        {/* Recent Comments Section */}
         <div className="border-t pt-6 mt-6">
             <h3 className="text-xl font-semibold text-gray-800 mb-4">Khách hàng nói gì</h3>
             <div className="space-y-4">
@@ -115,13 +108,16 @@ const PerformanceAnalysisCard: React.FC<{ comments: typeof mockRecentComments }>
     </div>
 );
 
-
 const ShipperProfilePage: React.FC = () => {
-    const [shipper, setShipper] = useState(mockShipper);
+    const [shipper, setShipper] = useState<Driver | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [recentComments, setRecentComments] = useState(mockRecentComments);
     
     useEffect(() => {
+        fetchProfile();
+        
         const newReviewJSON = localStorage.getItem('newDriverReview');
         if (newReviewJSON) {
             const newReviewData = JSON.parse(newReviewJSON);
@@ -141,50 +137,119 @@ const ShipperProfilePage: React.FC = () => {
         }
     }, []);
 
-    // In a real app, you'd handle form state changes
+    const fetchProfile = async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const userMe = await apiService.getMe('shipper');
+            const driverData = await shipperApiService.getDriverById(userMe.id.toString());
+            setShipper(driverData);
+        } catch (err: any) {
+            setError(err.message || 'Không thể tải thông tin hồ sơ tài xế.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!shipper) return;
         const { name, value } = e.target;
-        setShipper(prev => ({...prev, [name]: value}));
+        setShipper({ ...shipper, [name]: value });
     }
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mb-4"></div>
+                <p className="text-gray-500 font-medium">Đang tải hồ sơ tài xế...</p>
+            </div>
+        );
+    }
+
+    if (error || !shipper) {
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center p-4">
+                <div className="bg-red-50 p-8 rounded-xl border border-red-200 text-center max-w-md">
+                    <XCircleIcon className="h-16 w-16 text-red-500 mx-auto mb-4" />
+                    <h2 className="text-xl font-bold text-red-800">Lỗi tải dữ liệu</h2>
+                    <p className="text-red-600 mt-2">{error || 'Không tìm thấy hồ sơ của bạn trong hệ thống.'}</p>
+                    <button onClick={fetchProfile} className="mt-6 bg-red-600 text-white px-6 py-2 rounded-lg font-bold">Thử lại</button>
+                </div>
+            </div>
+        );
+    }
+
+    const DocumentPreview: React.FC<{ label: string, path: string }> = ({ label, path }) => (
+        <div className="space-y-2">
+            <div className="flex items-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                <DocumentTextIcon className="h-4 w-4 mr-1.5 text-orange-500" />
+                {label}
+            </div>
+            <div className="border rounded-xl overflow-hidden bg-gray-50 aspect-video flex items-center justify-center group relative shadow-inner border-gray-200">
+                {path ? (
+                    <>
+                        <img 
+                            src={`${SHIPPER_BASE_URL}${path}`} 
+                            alt={label} 
+                            className="w-full h-full object-cover cursor-zoom-in group-hover:scale-105 transition-transform" 
+                            onClick={() => window.open(`${SHIPPER_BASE_URL}${path}`, '_blank')}
+                        />
+                        <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-10 transition-opacity pointer-events-none"></div>
+                    </>
+                ) : (
+                    <span className="text-gray-400 italic text-xs">Chưa có ảnh</span>
+                )}
+            </div>
+        </div>
+    );
 
     return (
         <div className="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8">
             <div className="mb-8">
                 <h1 className="text-3xl font-bold text-gray-900">Hồ sơ tài xế</h1>
-                <p className="mt-1 text-sm text-gray-500">Quản lý thông tin cá nhân và xem hiệu suất của bạn.</p>
+                <p className="mt-1 text-sm text-gray-500">Thông tin cá nhân và dữ liệu hiệu suất làm việc.</p>
             </div>
             
-            {/* Summary Header Card */}
             <div className="bg-white p-6 rounded-lg shadow-md border mb-8">
                 <div className="flex flex-col sm:flex-row items-center sm:space-x-8">
                     <div className="flex-shrink-0 flex flex-col items-center text-center mb-6 sm:mb-0">
                         <div className="relative">
-                            <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center ring-4 ring-orange-100">
-                                <UserIcon className="h-16 w-16 text-gray-400" />
+                            <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center ring-4 ring-orange-100 overflow-hidden">
+                                {shipper.profileImageUrl ? (
+                                    <img src={`${SHIPPER_BASE_URL}${shipper.profileImageUrl}`} className="w-full h-full object-cover" alt="Avatar"/>
+                                ) : (
+                                    <UserIcon className="h-16 w-16 text-gray-400" />
+                                )}
                             </div>
                             {isEditing && (
-                                <button className="absolute bottom-0 right-0 bg-orange-500 p-2 rounded-full text-white hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500" aria-label="Change profile picture">
+                                <button className="absolute bottom-0 right-0 bg-orange-500 p-2 rounded-full text-white hover:bg-orange-600 focus:outline-none focus:ring-2" aria-label="Change profile picture">
                                     <PencilIcon className="h-4 w-4" />
                                 </button>
                             )}
                         </div>
-                        <h3 className="text-lg font-bold text-gray-900 mt-3">{shipper.name}</h3>
-                        <p className="text-sm text-gray-500">Tài xế công nghệ</p>
+                        <h3 className="text-lg font-bold text-gray-900 mt-3">{shipper.fullName}</h3>
+                        <div className="flex items-center mt-1">
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
+                                shipper.verificationStatus === 'Approved' ? 'bg-green-100 text-green-700 border-green-200' :
+                                shipper.verificationStatus === 'Pending' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' :
+                                'bg-red-100 text-red-700 border-red-200'
+                            }`}>
+                                {shipper.verificationStatus}
+                            </span>
+                        </div>
                     </div>
 
                     <div className="flex-grow grid grid-cols-2 md:grid-cols-4 gap-4 w-full border-t sm:border-t-0 sm:border-l pt-6 sm:pt-0 sm:pl-8 border-gray-200">
-                        <HeaderStat icon={<ShieldCheckIcon className="h-6 w-6"/>} title="Điểm uy tín" value={shipper.reputationScore} />
-                        <HeaderStat icon={<StarIcon className="h-6 w-6"/>} title="Đánh giá" value={`${shipper.rating}/5.0`} />
-                        <HeaderStat icon={<CheckCircleIcon className="h-6 w-6"/>} title="Đơn thành công" value={shipper.successfulDeliveries.toLocaleString()} />
-                        <HeaderStat icon={<XCircleIcon className="h-6 w-6"/>} title="Tỉ lệ hủy" value={`${shipper.cancellationRate}%`} />
+                        <HeaderStat icon={<ShieldCheckIcon className="h-6 w-6"/>} title="Điểm uy tín" value={98} />
+                        <HeaderStat icon={<StarIcon className="h-6 w-6"/>} title="Đánh giá" value={`4.9/5.0`} />
+                        <HeaderStat icon={<CheckCircleIcon className="h-6 w-6"/>} title="Đơn thành công" value={"1,250"} />
+                        <HeaderStat icon={<XCircleIcon className="h-6 w-6"/>} title="Tỉ lệ hủy" value={`2.5%`} />
                     </div>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Left side - Forms */}
                 <div className="lg:col-span-2 space-y-8">
-                    {/* Personal Info */}
                     <div className="bg-white p-6 rounded-lg shadow-md border">
                         <div className="flex justify-between items-center border-b pb-4 mb-6">
                             <h2 className="text-xl font-semibold text-gray-800">Thông tin cá nhân</h2>
@@ -198,57 +263,51 @@ const ShipperProfilePage: React.FC = () => {
                         </div>
                         <form className="space-y-4">
                             <div>
-                                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Họ và tên</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Họ và tên</label>
                                 <div className="relative">
                                     <span className="absolute inset-y-0 left-0 flex items-center pl-3"><UserIcon className="h-5 w-5 text-gray-400" /></span>
-                                    <input type="text" id="name" name="name" value={shipper.name} onChange={handleInputChange} readOnly={!isEditing} className={`w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500 ${!isEditing ? 'bg-gray-100 cursor-not-allowed' : ''}`} />
+                                    <input type="text" name="fullName" value={shipper.fullName} onChange={handleInputChange} readOnly={!isEditing} className={`w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`} />
                                 </div>
                             </div>
-                            <div>
-                                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">Số điện thoại</label>
-                                <div className="relative">
-                                    <span className="absolute inset-y-0 left-0 flex items-center pl-3"><PhoneIcon className="h-5 w-5 text-gray-400" /></span>
-                                    <input type="tel" id="phone" name="phone" value={shipper.phone} onChange={handleInputChange} readOnly={!isEditing} className={`w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500 ${!isEditing ? 'bg-gray-100 cursor-not-allowed' : ''}`} />
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Số điện thoại</label>
+                                    <div className="relative">
+                                        <span className="absolute inset-y-0 left-0 flex items-center pl-3"><PhoneIcon className="h-5 w-5 text-gray-400" /></span>
+                                        <input type="tel" name="phoneNumber" value={shipper.phoneNumber} onChange={handleInputChange} readOnly={!isEditing} className={`w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`} />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Số GPLX</label>
+                                    <div className="relative">
+                                        <span className="absolute inset-y-0 left-0 flex items-center pl-3"><IdentificationIcon className="h-5 w-5 text-gray-400" /></span>
+                                        <input type="text" name="licenseNumber" value={shipper.licenseNumber || ''} onChange={handleInputChange} readOnly={!isEditing} className={`w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`} />
+                                    </div>
                                 </div>
                             </div>
                         </form>
                     </div>
 
-                    {/* Vehicle Info */}
-                     <div className="bg-white p-6 rounded-lg shadow-md border">
-                        <h2 className="text-xl font-semibold text-gray-800 border-b pb-4 mb-6">Thông tin phương tiện</h2>
-                        <form className="space-y-4">
-                           <div>
-                                <label htmlFor="licensePlate" className="block text-sm font-medium text-gray-700 mb-1">Biển số xe</label>
-                                <div className="relative">
-                                    <span className="absolute inset-y-0 left-0 flex items-center pl-3"><IdentificationIcon className="h-5 w-5 text-gray-400" /></span>
-                                    <input type="text" id="licensePlate" name="licensePlate" value={shipper.licensePlate} onChange={handleInputChange} readOnly={!isEditing} className={`w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500 ${!isEditing ? 'bg-gray-100 cursor-not-allowed' : ''}`} />
-                                </div>
+                    <div className="bg-white p-6 rounded-lg shadow-md border">
+                        <h2 className="text-xl font-semibold text-gray-800 border-b pb-4 mb-6">Hồ sơ định danh</h2>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <DocumentPreview label="Ảnh CCCD / CMND" path={shipper.citizenIdImageUrl} />
+                            <DocumentPreview label="Ảnh Bằng lái xe" path={shipper.driverLicenseImageUrl} />
+                            <div className="sm:col-span-2">
+                                <DocumentPreview label="Ảnh Đăng ký xe (Cà vẹt)" path={shipper.driverRegistrationImageUrl} />
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Hình ảnh xe</label>
-                                <div className="mt-1 flex items-center space-x-4 p-2 border-2 border-dashed rounded-md">
-                                    <img src={shipper.vehicleImageUrl} alt="Vehicle" className="h-20 w-32 object-cover rounded-md"/>
-                                    {isEditing && (
-                                        <button type="button" className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                                            <UploadIcon className="h-4 w-4 mr-2" /> Tải ảnh lên
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-                        </form>
+                        </div>
                     </div>
 
                     {isEditing && (
                         <div className="text-right">
-                             <button onClick={() => setIsEditing(false)} type="submit" className="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-orange-500 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
-                                Lưu thay đổi
+                             <button onClick={() => setIsEditing(false)} type="button" className="inline-flex justify-center py-2 px-8 border border-transparent shadow-sm text-sm font-bold rounded-md text-white bg-orange-500 hover:bg-orange-600 transition-all">
+                                Lưu thông tin
                             </button>
                         </div>
                     )}
                 </div>
 
-                {/* Right side - Stats & Info */}
                 <div className="lg:col-span-1">
                     <PerformanceAnalysisCard comments={recentComments} />
                 </div>

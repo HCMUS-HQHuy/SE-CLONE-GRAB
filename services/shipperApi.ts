@@ -24,6 +24,7 @@ export interface Driver {
   citizenIdImageUrl: string;
   driverLicenseImageUrl: string;
   driverRegistrationImageUrl: string;
+  licenseNumber?: string; // Số bằng lái
 }
 
 export interface DriversResponse {
@@ -82,6 +83,24 @@ export const shipperApiService = {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.detail || 'Không thể lấy danh sách tài xế.');
+    }
+
+    return await response.json();
+  },
+
+  async getDriverById(id: string): Promise<Driver> {
+    const headers = apiService.getAuthHeaders('shipper');
+    const response = await fetch(`${SHIPPER_SERVICE_URL}/api/Drivers/${id}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        ...headers,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || 'Không tìm thấy thông tin tài xế.');
     }
 
     return await response.json();
