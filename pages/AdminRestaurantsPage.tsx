@@ -53,6 +53,7 @@ const AdminRestaurantsPage: React.FC = () => {
             await restaurantApiService.updateStatus(restaurantId, status);
             fetchRestaurants();
             setConfirmation(null);
+            setIsDetailModalOpen(false); // Đóng modal nếu đang mở
         } catch (err: any) {
             alert(err.message);
         }
@@ -151,11 +152,11 @@ const AdminRestaurantsPage: React.FC = () => {
                                         <div className="flex justify-end space-x-2">
                                             {res.status === 'PENDING' && (
                                                 <>
-                                                    <button onClick={() => handleApprove(res)} className="text-green-600 hover:bg-green-50 p-1 rounded" title="Duyệt hồ sơ"><CheckBadgeIcon className="h-6 w-6"/></button>
-                                                    <button onClick={() => handleReject(res)} className="text-red-600 hover:bg-red-50 p-1 rounded" title="Từ chối"><XCircleIcon className="h-6 w-6"/></button>
+                                                    <button onClick={() => handleApprove(res)} className="text-green-600 hover:bg-green-50 p-2 rounded-full" title="Duyệt hồ sơ"><CheckBadgeIcon className="h-6 w-6"/></button>
+                                                    <button onClick={() => handleReject(res)} className="text-red-600 hover:bg-red-50 p-2 rounded-full" title="Từ chối"><XCircleIcon className="h-6 w-6"/></button>
                                                 </>
                                             )}
-                                            <button onClick={() => { setSelectedRestaurant(res); setIsDetailModalOpen(true); }} className="text-orange-600 hover:underline px-2">Xem chi tiết</button>
+                                            <button onClick={() => { setSelectedRestaurant(res); setIsDetailModalOpen(true); }} className="text-orange-600 hover:bg-orange-50 px-3 py-1 rounded-md transition-colors font-bold">Chi tiết</button>
                                         </div>
                                     </td>
                                 </tr>
@@ -171,7 +172,9 @@ const AdminRestaurantsPage: React.FC = () => {
                 <RestaurantDetailModal 
                     isOpen={isDetailModalOpen} 
                     onClose={() => setIsDetailModalOpen(false)} 
-                    restaurant={selectedRestaurant} 
+                    restaurant={selectedRestaurant}
+                    onApprove={() => handleApprove(selectedRestaurant)}
+                    onReject={() => handleReject(selectedRestaurant)}
                 />
             )}
 
