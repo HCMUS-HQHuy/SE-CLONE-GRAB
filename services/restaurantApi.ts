@@ -94,6 +94,28 @@ export const restaurantApiService = {
     return await response.json();
   },
 
+  async getRestaurantByOwner(ownerId: number): Promise<RestaurantListItem> {
+    const headers = apiService.getAuthHeaders('seller');
+    const response = await fetch(`${RESTAURANT_SERVICE_URL}/api/v1/restaurants/owner/${ownerId}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        ...headers,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || 'Không thể lấy thông tin nhà hàng của bạn.');
+    }
+
+    const data = await response.json();
+    if (Array.isArray(data) && data.length > 0) {
+      return data[0];
+    }
+    throw new Error('Bạn chưa đăng ký nhà hàng.');
+  },
+
   async updateStatus(restaurantId: number, status: string) {
      const response = await fetch(`${RESTAURANT_SERVICE_URL}/api/v1/restaurants/${restaurantId}/status`, {
       method: 'PATCH',

@@ -1,18 +1,18 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { restaurants, foodCategories, FoodItem as BaseFoodItem, Restaurant } from './HomePage';
-import { PencilIcon, LocationMarkerIcon, PhoneIcon, ClockIcon, StarIcon, ImageIcon, PlusIcon, ChatAltIcon, ClipboardListIcon, TrashIcon } from '../components/Icons';
+// FIX: Added DocumentTextIcon to the import list to resolve the "Cannot find name" error.
+import { PencilIcon, LocationMarkerIcon, PhoneIcon, ClockIcon, StarIcon, ImageIcon, PlusIcon, ChatAltIcon, ClipboardListIcon, TrashIcon, ExclamationIcon, DocumentTextIcon } from '../components/Icons';
 import AddMenuItemModal from '../components/AddMenuItemModal';
 import EditRestaurantProfileModal from '../components/EditRestaurantProfileModal';
-import { restaurantApiService } from '../services/restaurantApi';
+import { restaurantApiService, RestaurantListItem } from '../services/restaurantApi';
 import { apiService } from '../services/api';
 
 // Extend FoodItem type to ensure isAvailable is always present for management
 type FoodItem = BaseFoodItem & { isAvailable: boolean; category: string };
 type MenuData = { [category: string]: FoodItem[] };
 
-// Mock Data for a specific restaurant - let's assume the logged-in restaurant is "Quán Ăn Gỗ"
-const restaurantData: Restaurant = restaurants.find(r => r.id === '1001')!;
+const BASE_IMG_URL = 'http://localhost:8004/';
 
 // Custom toggle switch component
 const ToggleSwitch: React.FC<{ checked: boolean; onChange: () => void; }> = ({ checked, onChange }) => (
@@ -31,7 +31,7 @@ const MenuItemCard: React.FC<{ item: FoodItem; onEdit: () => void; onDelete: () 
     <div className="bg-white rounded-lg shadow-md border overflow-hidden flex flex-col h-full transition-all duration-300 hover:shadow-xl hover:border-orange-300">
         <div className="relative w-full h-32 bg-gray-100">
             {item.image ? (
-                <img className={`h-full w-full object-cover ${!item.isAvailable ? 'filter grayscale' : ''}`} src={item.image} alt={item.name} />
+                <img className={`h-full w-full object-cover ${!item.isAvailable ? 'filter grayscale' : ''}`} src={item.image.startsWith('http') ? item.image : `${BASE_IMG_URL}${item.image}`} alt={item.name} />
             ) : (
                 <div className={`h-full w-full flex items-center justify-center ${!item.isAvailable ? 'filter grayscale' : ''}`}>
                     <ImageIcon className="h-12 w-12 text-gray-400" />
@@ -76,26 +76,57 @@ const MenuItemCard: React.FC<{ item: FoodItem; onEdit: () => void; onDelete: () 
 
 
 const StorePage: React.FC = () => {
+    const [restaurantData, setRestaurantData] = useState<RestaurantListItem | null>(null);
     const [isMenuModalOpen, setIsMenuModalOpen] = useState(false);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const [currentItem, setCurrentItem] = useState<FoodItem | null>(null);
     const [activeTab, setActiveTab] = useState('Tất cả');
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
+    // Menu logic
     const initialMenu = useMemo((): MenuData => {
         const menu: MenuData = {};
+        if (!restaurantData) return menu;
+
         foodCategories.forEach(category => {
             const items = category.items
-                .filter(item => item.restaurantId === restaurantData.id)
+                .filter(item => item.restaurantId === restaurantData.id.toString())
                 .map(item => ({ ...item, isAvailable: item.isAvailable ?? true, category: category.name }));
             if (items.length > 0) {
                 menu[category.name] = items;
             }
         });
         return menu;
-    }, []);
+    }, [restaurantData]);
     
     const [menuByCategories, setMenuByCategories] = useState<MenuData>(initialMenu);
+
+    useEffect(() => {
+        fetchProfile();
+    }, []);
+
+    const fetchProfile = async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            // 1. Lấy thông tin user hiện tại (Auth Service 8003)
+            const me = await apiService.getMe('seller');
+            // 2. Lấy nhà hàng theo owner_id (Restaurant Service 8004)
+            const res = await restaurantApiService.getRestaurantByOwner(me.id);
+            setRestaurantData(res);
+        } catch (err: any) {
+            setError(err.message || 'Không thể tải thông tin nhà hàng.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (restaurantData) {
+            setMenuByCategories(initialMenu);
+        }
+    }, [restaurantData, initialMenu]);
     
     const categoryTabs = useMemo(() => ['Tất cả', 'Đại hạ giá', 'Ăn vặt', 'Ăn trưa', 'Đồ uống'], []);
 
@@ -150,35 +181,26 @@ const StorePage: React.FC = () => {
     };
 
     const handleSaveItem = async (itemData: any) => {
+        if (!restaurantData) return;
         setIsLoading(true);
         try {
-            // 1. Lấy thông tin nhà hàng hiện tại từ Auth Service
-            const userProfile = await apiService.getMe('seller');
-            // Trong thực tế sẽ fetch restaurant bằng owner_id, ở đây dùng tạm restaurantData.id (cần parse sang int)
-            const restaurantId = parseInt(restaurantData.id, 10);
-
-            // 2. Chuẩn bị dữ liệu cho API
             const dishPayload = {
                 name: itemData.name,
                 price: itemData.price.toString(),
                 discounted_price: itemData.discountPrice ? itemData.discountPrice.toString() : undefined,
                 description: itemData.description,
-                category_id: itemData.categoryId, // ID từ 1-4
-                image: itemData.imageFile, // File blob từ input
+                category_id: itemData.categoryId,
+                image: itemData.imageFile,
                 is_available: true,
                 stock_quantity: itemData.stock ? parseInt(itemData.stock, 10) : undefined
             };
 
-            // 3. Gọi API thực tế
-            const response = await restaurantApiService.createDish(restaurantId, dishPayload);
-            console.log('Dish created successfully:', response);
-
-            // 4. Cập nhật UI (Logic mock cũ được giữ lại để hiển thị ngay lập tức)
+            const response = await restaurantApiService.createDish(restaurantData.id, dishPayload);
+            
+            // Cập nhật UI ngay lập tức
             const { id, category: newCategory, ...rest } = itemData;
             setMenuByCategories(prevMenu => {
                 let newMenu = JSON.parse(JSON.stringify(prevMenu));
-                
-                // Chuẩn bị price hiển thị
                 const priceData: { price?: string; oldPrice?: string; newPrice?:string; } = {};
                 if (rest.discountPrice && parseFloat(rest.discountPrice) > 0) {
                     priceData.oldPrice = formatCurrency(rest.price);
@@ -191,10 +213,10 @@ const StorePage: React.FC = () => {
                     ...rest,
                     ...priceData,
                     id: response.id || Date.now(),
-                    restaurantId: restaurantData.id,
-                    isAvailable: itemData.isAvailable ?? true,
+                    restaurantId: restaurantData.id.toString(),
+                    isAvailable: true,
                     category: newCategory,
-                    image: itemData.image // Giữ base64 preview cho UI demo
+                    image: itemData.image
                 };
 
                 if (!newMenu[newCategory]) newMenu[newCategory] = [];
@@ -202,10 +224,8 @@ const StorePage: React.FC = () => {
                 return newMenu;
             });
 
-            alert('Món ăn đã được tạo thành công trên hệ thống!');
+            alert('Món ăn đã được tạo thành công!');
             setIsMenuModalOpen(false);
-            setCurrentItem(null);
-
         } catch (err: any) {
             alert('Lỗi: ' + err.message);
         } finally {
@@ -213,17 +233,60 @@ const StorePage: React.FC = () => {
         }
     };
 
-
     const handleSaveProfile = (updatedData: Partial<Restaurant>) => {
         console.log('Saving profile:', updatedData);
         setIsProfileModalOpen(false);
+    };
+
+    if (isLoading) {
+        return (
+            <div className="min-h-[80vh] flex flex-col items-center justify-center bg-gray-50">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mb-4"></div>
+                <p className="text-gray-500 font-medium">Đang tải hồ sơ nhà hàng...</p>
+            </div>
+        );
+    }
+
+    if (error || !restaurantData) {
+        return (
+            <div className="min-h-[80vh] flex flex-col items-center justify-center p-4 bg-gray-50 text-center">
+                <div className="bg-white p-10 rounded-2xl shadow-lg border max-w-md">
+                    <ExclamationIcon className="h-20 w-20 text-orange-400 mx-auto mb-4" />
+                    <h2 className="text-2xl font-bold text-gray-800">Rất tiếc!</h2>
+                    <p className="text-gray-600 mt-2">{error || 'Không tìm thấy thông tin nhà hàng của bạn.'}</p>
+                    <button onClick={fetchProfile} className="mt-8 bg-orange-500 text-white font-bold py-2 px-8 rounded-lg hover:bg-orange-600 transition-colors">
+                        Thử lại
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    // Mapping RestaurantListItem to the expected Restaurant interface for display components
+    const displayRestaurant: Restaurant = {
+        id: restaurantData.id.toString(),
+        name: restaurantData.name,
+        address: restaurantData.address,
+        lat: 0, // Not provided in API
+        lon: 0, // Not provided in API
+        cuisine: 'Ẩm thực Việt', // Mock as API doesn't have this
+        phone: restaurantData.phone,
+        openingHours: restaurantData.opening_hours,
+        description: restaurantData.description,
+        bannerUrl: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=1200&q=80', // Placeholder
+        logoUrl: 'https://cdn-icons-png.flaticon.com/512/3448/3448609.png', // Placeholder
+        rating: restaurantData.rating || 0,
+        reviewCount: 0,
+        commentCount: 0,
+        orderCount: 0,
+        reviews: []
     };
 
     return (
         <div className="bg-gray-50 pb-12">
             {/* Banner and Header */}
             <div className="relative">
-                <div className="h-48 bg-cover bg-center" style={{ backgroundImage: `url(${restaurantData.bannerUrl})` }}></div>
+                <div className="h-48 bg-cover bg-center bg-gray-300" style={{ backgroundImage: `url(${displayRestaurant.bannerUrl})` }}></div>
                 <div className="absolute inset-0 bg-black bg-opacity-30"></div>
             </div>
 
@@ -231,22 +294,29 @@ const StorePage: React.FC = () => {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Store Profile Header */}
                 <div className="relative -mt-20">
-                    <div className="bg-white rounded-xl shadow-lg p-5 flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-6">
+                    <div className="bg-white rounded-xl shadow-lg p-5 flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-6 border border-gray-100">
                         <div className="relative flex-shrink-0">
-                            <img className="h-24 w-24 rounded-full object-cover ring-4 ring-white" src={restaurantData.logoUrl} alt="Restaurant Logo" />
+                            <img className="h-24 w-24 rounded-full object-cover ring-4 ring-white shadow-md" src={displayRestaurant.logoUrl} alt="Logo" />
                         </div>
                         <div className="flex-grow text-center sm:text-left">
-                            <h1 className="text-2xl font-bold text-gray-900">{restaurantData.name}</h1>
-                            <p className="text-sm text-gray-500 mt-1">{restaurantData.cuisine}</p>
+                            <h1 className="text-2xl font-bold text-gray-900">{displayRestaurant.name}</h1>
+                            <div className="flex items-center justify-center sm:justify-start mt-1 text-sm text-gray-500">
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase mr-2 border ${
+                                    restaurantData.status === 'ACTIVE' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-yellow-100 text-yellow-700 border-yellow-200'
+                                }`}>
+                                    {restaurantData.status}
+                                </span>
+                                <span>{displayRestaurant.cuisine}</span>
+                            </div>
                             <div className="flex items-center justify-center sm:justify-start flex-wrap gap-x-4 gap-y-1 mt-3 text-xs text-gray-600">
-                                <div className="flex items-center"><StarIcon className="w-4 h-4 text-yellow-400 mr-1" /><span className="font-semibold text-gray-800">{restaurantData.rating.toFixed(1)}</span><span className="ml-1">({restaurantData.reviewCount.toLocaleString()} đánh giá)</span></div>
-                                <div className="flex items-center"><ChatAltIcon className="w-4 h-4 text-gray-400 mr-1" /><span>{restaurantData.commentCount.toLocaleString()} bình luận</span></div>
-                                <div className="flex items-center"><ClipboardListIcon className="w-4 h-4 text-gray-400 mr-1" /><span>{restaurantData.orderCount.toLocaleString()}+ đơn hàng</span></div>
+                                <div className="flex items-center"><StarIcon className="w-4 h-4 text-yellow-400 mr-1" /><span className="font-semibold text-gray-800">{displayRestaurant.rating.toFixed(1)}</span></div>
+                                <div className="flex items-center"><ChatAltIcon className="w-4 h-4 text-gray-400 mr-1" /><span>{displayRestaurant.commentCount} bình luận</span></div>
+                                <div className="flex items-center"><ClipboardListIcon className="w-4 h-4 text-gray-400 mr-1" /><span>{displayRestaurant.orderCount}+ đơn hàng</span></div>
                             </div>
                         </div>
                         <button
                             onClick={() => setIsProfileModalOpen(true)}
-                            className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 flex-shrink-0"
+                            className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 shadow-sm flex-shrink-0"
                         ><PencilIcon className="h-4 w-4 mr-2 text-gray-400" />Chỉnh sửa</button>
                     </div>
                 </div>
@@ -276,15 +346,11 @@ const StorePage: React.FC = () => {
                             <div
                                 onClick={handleOpenAddModal}
                                 className="bg-white rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center h-full min-h-[210px] cursor-pointer group transition-all duration-300 hover:shadow-inner hover:border-orange-400 hover:bg-orange-50"
-                                role="button" aria-label="Thêm món ăn mới"
+                                role="button" aria-label="Thêm món"
                             >
                                 <div className="text-center text-gray-400 group-hover:text-orange-500 transition-colors">
-                                    {isLoading ? (
-                                        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500 mx-auto"></div>
-                                    ) : (
-                                        <PlusIcon className="h-10 w-10 mx-auto" />
-                                    )}
-                                    <p className="mt-2 text-sm font-semibold">{isLoading ? 'Đang xử lý...' : 'Thêm món'}</p>
+                                    <PlusIcon className="h-10 w-10 mx-auto" />
+                                    <p className="mt-2 text-sm font-semibold">Thêm món</p>
                                 </div>
                             </div>
                             {itemsToShow.map(item => (
@@ -302,23 +368,25 @@ const StorePage: React.FC = () => {
                     {/* Right Column: Sidebar */}
                     <div className="lg:col-span-1 space-y-8">
                         <div className="bg-white p-6 rounded-lg shadow-md border">
-                            <h3 className="text-lg font-semibold text-gray-800 border-b pb-3 mb-4">Về chúng tôi</h3>
-                            <p className="text-gray-600 text-sm">{restaurantData.description}</p>
+                            <h3 className="text-lg font-semibold text-gray-800 border-b pb-3 mb-4 flex items-center">
+                                <DocumentTextIcon className="h-5 w-5 mr-2 text-orange-500"/> Về chúng tôi
+                            </h3>
+                            <p className="text-gray-600 text-sm leading-relaxed">{displayRestaurant.description || 'Chưa có giới thiệu.'}</p>
                         </div>
                         <div className="bg-white p-6 rounded-lg shadow-md border">
                             <h3 className="text-lg font-semibold text-gray-800 border-b pb-3 mb-4">Thông tin chi tiết</h3>
                             <ul className="space-y-4 text-sm">
                                 <li className="flex items-start">
-                                    <LocationMarkerIcon className="h-5 w-5 text-gray-400 mr-3 flex-shrink-0 mt-0.5" />
-                                    <span className="text-gray-700">{restaurantData.address}</span>
+                                    <LocationMarkerIcon className="h-5 w-5 text-orange-400 mr-3 flex-shrink-0 mt-0.5" />
+                                    <span className="text-gray-700 font-medium">{displayRestaurant.address}</span>
                                 </li>
                                 <li className="flex items-center">
-                                    <PhoneIcon className="h-5 w-5 text-gray-400 mr-3 flex-shrink-0" />
-                                    <span className="text-gray-700">{restaurantData.phone}</span>
+                                    <PhoneIcon className="h-5 w-5 text-orange-400 mr-3 flex-shrink-0" />
+                                    <span className="text-gray-700 font-medium">{displayRestaurant.phone}</span>
                                 </li>
                                 <li className="flex items-center">
-                                    <ClockIcon className="h-5 w-5 text-gray-400 mr-3 flex-shrink-0" />
-                                    <span className="text-gray-700">{restaurantData.openingHours}</span>
+                                    <ClockIcon className="h-5 w-5 text-orange-400 mr-3 flex-shrink-0" />
+                                    <span className="text-gray-700 font-medium">{displayRestaurant.openingHours}</span>
                                 </li>
                             </ul>
                         </div>
@@ -337,7 +405,7 @@ const StorePage: React.FC = () => {
                 isOpen={isProfileModalOpen}
                 onClose={() => setIsProfileModalOpen(false)}
                 onSave={handleSaveProfile}
-                restaurant={restaurantData}
+                restaurant={displayRestaurant}
             />
         </div>
     );
