@@ -4,7 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
 import { HomeIcon, PencilIcon, CashIcon, CreditCardIcon, UserIcon, PhoneIcon, CheckCircleIcon } from '../components/Icons';
 import { apiService } from '../services/api';
-import { profileApiService, UserProfileData } from '../services/profileApi';
+import { profileApiService } from '../services/profileApi';
+import { orderApiService, CreateOrderRequest } from '../services/orderApi';
 
 type PaymentMethod = 'cash' | 'bank_transfer';
 
@@ -19,8 +20,10 @@ const CheckoutPage: React.FC = () => {
     phone: '',
     address: ''
   });
+  const [deliveryNote, setDeliveryNote] = useState('');
   const [isEditingAddress, setIsEditingAddress] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
 
   const subtotal = items.reduce((sum, item) => {
@@ -65,7 +68,6 @@ const CheckoutPage: React.FC = () => {
     setIsSavingProfile(true);
     try {
         const userMe = await apiService.getMe('user');
-        // Cập nhật lại vào Profile Service để lưu làm mặc định cho lần sau
         await profileApiService.updateProfile(userMe.id, {
             name: deliveryInfo.name,
             phone: deliveryInfo.phone,
@@ -80,26 +82,62 @@ const CheckoutPage: React.FC = () => {
     }
   };
   
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
     if (!deliveryInfo.address || !deliveryInfo.phone) {
         alert("Vui lòng hoàn tất thông tin địa chỉ giao hàng trước khi đặt.");
         return;
     }
 
-    const orderId = `DH${Math.random().toString(36).substr(2, 7).toUpperCase()}`;
-    const orderState = { 
-        restaurant, 
-        items, 
-        total, 
-        paymentMethod,
-        deliveryInfo // Truyền thông tin người nhận sang trang tracking
-    };
+    if (!restaurant) {
+        alert("Thông tin nhà hàng không hợp lệ.");
+        return;
+    }
 
-    if (paymentMethod === 'bank_transfer') {
-      navigate(`/user/payment/${orderId}`, { state: orderState });
-    } else {
-      clearCart();
-      navigate(`/user/order/${orderId}`, { state: orderState });
+    setIsPlacingOrder(true);
+    try {
+        const userMe = await apiService.getMe('user');
+        
+        // Chuẩn bị dữ liệu cho API
+        const orderPayload: CreateOrderRequest = {
+            user_id: userMe.id.toString(),
+            restaurant_id: restaurant.id,
+            delivery_address: `${deliveryInfo.name} | ${deliveryInfo.phone} | ${deliveryInfo.address}`,
+            delivery_note: deliveryNote,
+            payment_method: paymentMethod === 'cash' ? 'CASH' : 'BANK_TRANSFER',
+            items: items.map(item => ({
+                product_id: item.id.toString(),
+                product_name: item.name,
+                quantity: item.quantity,
+                unit_price: parseFloat((item.newPrice || item.price || '0').replace(/\D/g, '')),
+                note: "" // Note cho từng món nếu có
+            }))
+        };
+
+        // Gọi API tạo đơn hàng
+        const orderResponse = await orderApiService.createOrder(orderPayload);
+        const orderId = orderResponse.id;
+
+        const orderState = { 
+            restaurant, 
+            items, 
+            total, 
+            paymentMethod,
+            deliveryInfo 
+        };
+
+        if (paymentMethod === 'bank_transfer') {
+            // Chuyển tới trang thanh toán, truyền Order ID thật
+            navigate(`/user/payment/${orderId}`, { state: orderState });
+        } else {
+            // Thanh toán tiền mặt: Xóa giỏ và đi tới trang tracking
+            clearCart();
+            navigate(`/user/order/${orderId}`, { state: orderState });
+        }
+    } catch (err: any) {
+        console.error("Lỗi khi đặt hàng:", err);
+        alert(err.message || "Đã có lỗi xảy ra khi tạo đơn hàng. Vui lòng thử lại.");
+    } finally {
+        setIsPlacingOrder(false);
     }
   };
 
@@ -218,6 +256,17 @@ const CheckoutPage: React.FC = () => {
                   </div>
                 </div>
             )}
+            
+            <div className="mt-4">
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Ghi chú cho tài xế</label>
+                <input 
+                    type="text"
+                    value={deliveryNote}
+                    onChange={e => setDeliveryNote(e.target.value)}
+                    className="w-full p-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none text-sm"
+                    placeholder="Ví dụ: Để ở quầy lễ tân, Gọi khi đến..."
+                />
+            </div>
           </div>
           
            {/* Payment Method Selection */}
@@ -270,7 +319,7 @@ const CheckoutPage: React.FC = () => {
                     <div key={item.id} className="flex justify-between items-center bg-white p-2 border-b border-gray-50 last:border-0">
                         <div className="flex items-center">
                             <div className="w-10 h-10 rounded-md bg-gray-100 mr-3 overflow-hidden">
-                                {item.image ? <img src={item.image.startsWith('http') ? item.image : `http://localhost:8004/${item.image}`} className="w-full h-full object-cover" /> : null}
+                                {item.image ? <img src={item.image.startsWith('http') || item.image.startsWith('data:') ? item.image : `http://localhost:8004/${item.image}`} className="w-full h-full object-cover" /> : null}
                             </div>
                             <div>
                                 <p className="text-sm font-bold text-gray-800">{item.name}</p>
@@ -316,10 +365,15 @@ const CheckoutPage: React.FC = () => {
 
                 <button 
                   onClick={handlePlaceOrder}
-                  disabled={isLoadingProfile || isEditingAddress}
+                  disabled={isLoadingProfile || isEditingAddress || isPlacingOrder}
                   className="w-full flex justify-center items-center py-4 px-4 border border-transparent rounded-xl font-black text-xl text-white bg-orange-500 hover:bg-orange-600 shadow-xl shadow-orange-200 transition-all active:scale-95 disabled:opacity-50 disabled:grayscale"
                 >
-                    ĐẶT ĐƠN NGAY
+                    {isPlacingOrder ? (
+                        <>
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-3"></div>
+                            ĐANG XỬ LÝ...
+                        </>
+                    ) : 'ĐẶT ĐƠN NGAY'}
                 </button>
                 
                 <p className="text-center text-xs text-gray-400 mt-4 italic">Đảm bảo thông tin của bạn chính xác trước khi nhấn</p>
