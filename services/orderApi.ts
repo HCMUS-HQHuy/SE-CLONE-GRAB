@@ -39,10 +39,11 @@ export interface OrderResponseData {
   updated_at: string;
 }
 
-export interface CreateOrderResponse {
+export interface ApiResponse<T> {
   success: boolean;
   message: string;
-  data: OrderResponseData;
+  data: T;
+  total?: number;
 }
 
 export const orderApiService = {
@@ -62,7 +63,44 @@ export const orderApiService = {
       throw new Error(errorData.detail?.[0]?.msg || errorData.detail || 'Đặt hàng thất bại. Vui lòng thử lại.');
     }
 
-    const result: CreateOrderResponse = await response.json();
+    const result: ApiResponse<OrderResponseData> = await response.json();
+    return result.data;
+  },
+
+  async getUserOrders(userId: string, skip = 0, limit = 100): Promise<{ items: OrderResponseData[], total: number }> {
+    const params = new URLSearchParams({ skip: skip.toString(), limit: limit.toString() });
+    const response = await fetch(`${ORDER_SERVICE_URL}/api/v1/orders/user/${userId}?${params.toString()}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        ...apiService.getAuthHeaders('user'),
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || 'Không thể tải lịch sử đơn hàng.');
+    }
+
+    const result: ApiResponse<OrderResponseData[]> = await response.json();
+    return { items: result.data, total: result.total || result.data.length };
+  },
+
+  async getOrderById(orderId: string): Promise<OrderResponseData> {
+    const response = await fetch(`${ORDER_SERVICE_URL}/api/v1/orders/${orderId}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        ...apiService.getAuthHeaders('user'),
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || 'Không tìm thấy chi tiết đơn hàng.');
+    }
+
+    const result: ApiResponse<OrderResponseData> = await response.json();
     return result.data;
   }
 };

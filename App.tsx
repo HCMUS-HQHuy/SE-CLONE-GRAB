@@ -5,7 +5,8 @@ import AuthPage from './pages/AuthPage';
 import UserProfile from './pages/UserProfile';
 import UserLayout from './layouts/UserLayout';
 import HomePage from './pages/HomePage';
-import SearchResultsPage from './pages/SearchResultsPage'; // Import trang mới
+import SearchResultsPage from './pages/SearchResultsPage';
+import UserOrdersHistoryPage from './pages/UserOrdersHistoryPage'; // Import mới
 import RestaurantLayout from './layouts/RestaurantLayout';
 import StorePage from './pages/RestaurantProfilePage';
 import UserRestaurantProfilePage from './pages/UserRestaurantProfilePage';
@@ -48,7 +49,8 @@ const App: React.FC = () => {
         <Route path="/user" element={<UserLayout />}>
           <Route index element={<Navigate to="home" replace />} />
           <Route path="home" element={<HomePage />} />
-          <Route path="search" element={<SearchResultsPage />} /> {/* Route mới */}
+          <Route path="search" element={<SearchResultsPage />} />
+          <Route path="orders" element={<UserOrdersHistoryPage />} /> {/* Route mới */}
           <Route path="profile" element={<UserProfile />} />
           <Route path="support" element={<SupportPage />} />
           <Route path="restaurant/:id" element={<UserRestaurantProfilePage />} />
