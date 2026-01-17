@@ -7,6 +7,8 @@ import NotificationDropdown from './NotificationDropdown';
 import type { Notification } from './NotificationDropdown';
 import { apiService } from '../services/api';
 import { restaurantApiService, RestaurantListItem, DishResponse } from '../services/restaurantApi';
+import ProductDetailModal from './ProductDetailModal';
+import { FoodItem } from '../pages/HomePage';
 
 const BASE_IMG_URL = 'http://localhost:8004/';
 
@@ -24,15 +26,14 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<{ dishes: (DishResponse & { restaurantName: string })[], restaurants: RestaurantListItem[] }>({ dishes: [], restaurants: [] });
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<FoodItem | null>(null);
   
-  // Dữ liệu nguồn từ API phục vụ tìm kiếm
   const [sourceRestaurants, setSourceRestaurants] = useState<RestaurantListItem[]>([]);
   const [sourceDishes, setSourceDishes] = useState<DishResponse[]>([]);
   
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
-  // Khởi tạo dữ liệu tìm kiếm từ API
   useEffect(() => {
     const fetchSearchData = async () => {
       try {
@@ -57,7 +58,6 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
         }
         const lowercasedQuery = searchQuery.toLowerCase();
 
-        // Tìm kiếm món ăn và map thêm tên nhà hàng
         const foundDishes = sourceDishes
             .filter(d => d.name.toLowerCase().includes(lowercasedQuery))
             .slice(0, 5)
@@ -66,7 +66,6 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
               restaurantName: sourceRestaurants.find(r => r.id === d.restaurant_id)?.name || `Nhà hàng #${d.restaurant_id}`
             }));
 
-        // Tìm kiếm nhà hàng
         const foundRestaurants = sourceRestaurants
             .filter(r => r.name.toLowerCase().includes(lowercasedQuery))
             .slice(0, 3);
@@ -96,7 +95,32 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
     navigate('/');
   };
 
-  const handleSearchItemClick = () => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && searchQuery.trim().length > 0) {
+        setIsSearchFocused(false);
+        navigate(`/user/search?q=${encodeURIComponent(searchQuery)}`);
+    }
+  };
+
+  const openProductModal = (dish: DishResponse & { restaurantName: string }) => {
+    const uiItem: FoodItem = {
+        id: dish.id,
+        name: dish.name,
+        description: dish.description,
+        restaurantId: dish.restaurant_id.toString(),
+        image: dish.image_url || '',
+        isAvailable: dish.is_available,
+        bestseller: false,
+    };
+    // Map giá tiền
+    if (dish.discounted_price && parseFloat(dish.discounted_price) > 0) {
+        uiItem.oldPrice = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(parseFloat(dish.price)).replace(/\s/g, '');
+        uiItem.newPrice = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(parseFloat(dish.discounted_price)).replace(/\s/g, '');
+    } else {
+        uiItem.price = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(parseFloat(dish.price)).replace(/\s/g, '');
+    }
+
+    setSelectedProduct(uiItem);
     setIsSearchFocused(false);
     setSearchQuery('');
   };
@@ -109,6 +133,7 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
   ];
 
   return (
+    <>
     <header className="bg-white shadow-md sticky top-0 z-20">
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
@@ -139,7 +164,11 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
                     autoComplete="off"
                     className="block w-full bg-transparent py-3 pl-10 pr-4 border-none rounded-r-full leading-5 text-gray-900 placeholder-gray-500 focus:outline-none"
                     placeholder="Tìm món ăn, trà sữa, quán cơm..."
-                    type="search" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onFocus={() => setIsSearchFocused(true)}
+                    type="search" 
+                    value={searchQuery} 
+                    onChange={(e) => setSearchQuery(e.target.value)} 
+                    onFocus={() => setIsSearchFocused(true)}
+                    onKeyDown={handleKeyDown}
                   />
                 </div>
               </div>
@@ -150,11 +179,14 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
                     <div className="max-h-[70vh] overflow-y-auto">
                       {searchResults.dishes.length > 0 && (
                         <div className="p-4">
-                          <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 px-2">Món ăn gợi ý</h3>
+                          <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 px-2">Món ăn gợi ý (Click để đặt)</h3>
                           <ul className="space-y-1">
                             {searchResults.dishes.map(dish => (
                               <li key={`dish-${dish.id}`}>
-                                <Link to={`/user/restaurant/${dish.restaurant_id}`} onClick={handleSearchItemClick} className="flex items-center p-2 rounded-lg hover:bg-orange-50 group transition-colors">
+                                <button 
+                                  onClick={() => openProductModal(dish)}
+                                  className="w-full text-left flex items-center p-2 rounded-lg hover:bg-orange-50 group transition-colors"
+                                >
                                   <div className="h-12 w-12 rounded-lg bg-gray-100 overflow-hidden mr-3 flex-shrink-0 border border-gray-50">
                                     {dish.image_url ? (
                                       <img src={dish.image_url.startsWith('http') ? dish.image_url : `${BASE_IMG_URL}${dish.image_url}`} alt={dish.name} className="h-full w-full object-cover"/>
@@ -169,7 +201,7 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
                                   <div className="text-right ml-2">
                                      <p className="text-sm font-black text-orange-500">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(parseFloat(dish.price)).replace(/\s/g, '')}</p>
                                   </div>
-                                </Link>
+                                </button>
                               </li>
                             ))}
                           </ul>
@@ -181,7 +213,7 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
                            <ul className="space-y-1">
                              {searchResults.restaurants.map(restaurant => (
                                 <li key={`res-${restaurant.id}`}>
-                                  <Link to={`/user/restaurant/${restaurant.id}`} onClick={handleSearchItemClick} className="flex items-center p-2 rounded-lg hover:bg-orange-50 group transition-colors">
+                                  <Link to={`/user/restaurant/${restaurant.id}`} onClick={() => setIsSearchFocused(false)} className="flex items-center p-2 rounded-lg hover:bg-orange-50 group transition-colors">
                                     <div className="h-12 w-12 rounded-full bg-orange-100 flex items-center justify-center mr-3 flex-shrink-0 font-black text-orange-600 border-2 border-white shadow-sm overflow-hidden">
                                         {restaurant.name.charAt(0)}
                                     </div>
@@ -265,6 +297,10 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
         </div>
       </div>
     </header>
+    {selectedProduct && (
+        <ProductDetailModal product={selectedProduct} onClose={() => setSelectedProduct(null)} />
+    )}
+    </>
   );
 };
 

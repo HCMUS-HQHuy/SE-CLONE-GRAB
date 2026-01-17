@@ -1,9 +1,11 @@
+
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import AuthPage from './pages/AuthPage';
 import UserProfile from './pages/UserProfile';
 import UserLayout from './layouts/UserLayout';
 import HomePage from './pages/HomePage';
+import SearchResultsPage from './pages/SearchResultsPage'; // Import trang mới
 import RestaurantLayout from './layouts/RestaurantLayout';
 import StorePage from './pages/RestaurantProfilePage';
 import UserRestaurantProfilePage from './pages/UserRestaurantProfilePage';
@@ -44,20 +46,18 @@ const App: React.FC = () => {
       <Route path="/" element={<AuthPage />} />
       <Route element={<UserAuthGuard />}>
         <Route path="/user" element={<UserLayout />}>
-          {/* Redirect /user to /user/home by default */}
           <Route index element={<Navigate to="home" replace />} />
           <Route path="home" element={<HomePage />} />
+          <Route path="search" element={<SearchResultsPage />} /> {/* Route mới */}
           <Route path="profile" element={<UserProfile />} />
           <Route path="support" element={<SupportPage />} />
           <Route path="restaurant/:id" element={<UserRestaurantProfilePage />} />
           <Route path="checkout" element={<CheckoutPage />} />
           <Route path="order/:orderId" element={<OrderTrackingPage />} />
           <Route path="payment/:orderId" element={<BankTransferPage />} />
-          {/* Add other user routes here, e.g., orders, settings */}
         </Route>
       </Route>
 
-      {/* Restaurant Portal Routes */}
       <Route path="/restaurant/auth" element={<RestaurantAuthPage />} />
       <Route path="/restaurant/pending" element={<RestaurantPendingPage />} />
       <Route path="/restaurant/application" element={<RestaurantApplicationPage />} />
@@ -71,7 +71,6 @@ const App: React.FC = () => {
         </Route>
       </Route>
 
-       {/* Shipper Portal Routes */}
       <Route path="/shipper/auth" element={<ShipperAuthPage />} />
       <Route path="/shipper/pending" element={<ShipperPendingPage />} />
       <Route path="/shipper/application" element={<ShipperApplicationPage />} />
@@ -85,7 +84,6 @@ const App: React.FC = () => {
         </Route>
       </Route>
       
-      {/* Admin Portal Routes */}
       <Route path="/admin/login" element={<AdminAuthPage />} />
       <Route element={<AdminAuthGuard />}>
         <Route path="/admin" element={<AdminLayout />}>
@@ -95,11 +93,9 @@ const App: React.FC = () => {
           <Route path="restaurants" element={<AdminRestaurantsPage />} />
           <Route path="shippers" element={<AdminShippersPage />} />
           <Route path="settings" element={<AdminSettingsPage />} />
-          {/* Add other admin routes here, e.g., restaurants */}
         </Route>
       </Route>
 
-      {/* Catch-all route for 404 Not Found */}
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
