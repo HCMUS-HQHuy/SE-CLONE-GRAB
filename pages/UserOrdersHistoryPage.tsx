@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { orderApiService, OrderResponseData } from '../services/orderApi';
 import { apiService } from '../services/api';
 import { ClipboardListIcon, ClockIcon, CashIcon, ChevronRightIcon } from '../components/Icons';
@@ -37,10 +38,20 @@ const UserOrdersHistoryPage: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+    
+    const location = useLocation();
+    const navigate = useNavigate();
 
     useEffect(() => {
         fetchOrders();
-    }, []);
+        
+        // Kiểm tra xem có yêu cầu mở đơn hàng mới từ URL không (?newOrder=xyz)
+        const params = new URLSearchParams(location.search);
+        const newOrderId = params.get('newOrder');
+        if (newOrderId) {
+            setSelectedOrderId(newOrderId);
+        }
+    }, [location.search]);
 
     const fetchOrders = async () => {
         setIsLoading(true);
@@ -56,6 +67,13 @@ const UserOrdersHistoryPage: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const handleCloseModal = () => {
+        setSelectedOrderId(null);
+        // Xóa query param để không tự mở lại khi refresh
+        navigate('/user/orders', { replace: true });
+        fetchOrders(); // Làm mới danh sách khi đóng modal chi tiết
     };
 
     if (isLoading) {
@@ -139,10 +157,7 @@ const UserOrdersHistoryPage: React.FC = () => {
             {selectedOrderId && (
                 <UserOrderDetailModal 
                     orderId={selectedOrderId} 
-                    onClose={() => {
-                        setSelectedOrderId(null);
-                        fetchOrders(); // Làm mới danh sách khi đóng modal chi tiết
-                    }} 
+                    onClose={handleCloseModal} 
                 />
             )}
         </div>

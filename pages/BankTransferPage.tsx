@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import { Restaurant, FoodItem } from './HomePage';
@@ -72,14 +73,15 @@ const BankTransferPage: React.FC = () => {
     // Use localStorage to signal that payment proof has been submitted
     localStorage.setItem(`payment_status_${orderId}`, 'submitted');
     
-    // Manually trigger a storage event for the OrderTrackingPage to pick up
+    // Manually trigger a storage event for the listeners
     window.dispatchEvent(new StorageEvent('storage', {
         key: `payment_status_${orderId}`,
         newValue: 'submitted'
     }));
     
     clearCart();
-    navigate(`/user/order/${orderId}`, { state: location.state });
+    // Điều hướng sang lịch sử đơn hàng và tự động mở modal của đơn này
+    navigate(`/user/orders?newOrder=${orderId}`);
   };
   
   if (!restaurant || !items) {

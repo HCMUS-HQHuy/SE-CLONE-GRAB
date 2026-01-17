@@ -129,9 +129,9 @@ const CheckoutPage: React.FC = () => {
             // Chuyển tới trang thanh toán, truyền Order ID thật
             navigate(`/user/payment/${orderId}`, { state: orderState });
         } else {
-            // Thanh toán tiền mặt: Xóa giỏ và đi tới trang tracking
+            // Thanh toán tiền mặt: Xóa giỏ và đi tới trang Lịch sử đơn hàng để mở Modal
             clearCart();
-            navigate(`/user/order/${orderId}`, { state: orderState });
+            navigate(`/user/orders?newOrder=${orderId}`);
         }
     } catch (err: any) {
         console.error("Lỗi khi đặt hàng:", err);
