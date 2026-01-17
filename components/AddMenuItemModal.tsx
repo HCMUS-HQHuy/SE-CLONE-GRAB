@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { XIcon, UploadIcon, ImageIcon } from './Icons';
 import { FoodItem } from '../pages/HomePage';
@@ -10,15 +11,24 @@ type AddMenuItemModalProps = {
   categories: string[];
 };
 
+// Mapping tên category sang ID theo yêu cầu backend
+const CATEGORY_MAP: Record<string, number> = {
+    'Đại hạ giá': 1,
+    'Ăn vặt': 2,
+    'Ăn trưa': 3,
+    'Đồ uống': 4
+};
+
 const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({ isOpen, onClose, onSave, itemToEdit, categories }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [discountPrice, setDiscountPrice] = useState('');
-  const [category, setCategory] = useState(categories[0] || '');
+  const [category, setCategory] = useState(categories[0] || 'Đại hạ giá');
   const [stock, setStock] = useState('');
   const [isBestseller, setIsBestseller] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -51,20 +61,21 @@ const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({ isOpen, onClose, on
             setDiscountPrice('');
         }
         
-        setCategory(itemToEdit.category || categories[0] || '');
+        setCategory(itemToEdit.category || categories[0] || 'Đại hạ giá');
         setIsBestseller(itemToEdit.bestseller);
         setImagePreview(itemToEdit.image || null);
-        setStock(''); // Reset stock for simplicity in this prototype
+        setImageFile(null);
+        setStock(''); 
       } else {
-        // Reset form for adding new item
         setName('');
         setDescription('');
         setPrice('');
         setDiscountPrice('');
-        setCategory(categories[0] || '');
+        setCategory(categories[0] || 'Đại hạ giá');
         setStock('');
         setIsBestseller(false);
         setImagePreview(null);
+        setImageFile(null);
       }
     }
   }, [isOpen, itemToEdit, categories]);
@@ -74,6 +85,7 @@ const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({ isOpen, onClose, on
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      setImageFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
@@ -94,9 +106,11 @@ const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({ isOpen, onClose, on
         price, 
         discountPrice, 
         category, 
+        categoryId: CATEGORY_MAP[category] || 1,
         stock, 
         bestseller: isBestseller,
-        image: imagePreview 
+        image: imagePreview,
+        imageFile: imageFile // Gửi kèm file thực tế để upload
       });
   };
 
@@ -177,7 +191,8 @@ const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({ isOpen, onClose, on
                     <div>
                         <label htmlFor="item-category" className="block text-sm font-medium text-gray-700">Phân loại <span className="text-red-500">*</span></label>
                         <select id="item-category" value={category} onChange={e => setCategory(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm">
-                            {[...categories, 'Món mới'].filter((v, i, a) => a.indexOf(v) === i).map(cat => (
+                             {/* Luôn đảm bảo có các categories cơ bản từ backend */}
+                            {['Đại hạ giá', 'Ăn vặt', 'Ăn trưa', 'Đồ uống'].map(cat => (
                                 <option key={cat} value={cat}>{cat}</option>
                             ))}
                         </select>

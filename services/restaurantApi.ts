@@ -14,6 +14,17 @@ export interface CreateRestaurantRequest {
   food_safety_certificate_image: File;
 }
 
+export interface CreateDishRequest {
+  name: string;
+  price: string;
+  discounted_price?: string;
+  description?: string;
+  category_id?: number;
+  image?: File;
+  is_available?: boolean;
+  stock_quantity?: number;
+}
+
 export interface RestaurantListItem {
   id: number;
   owner_id: number;
@@ -96,6 +107,36 @@ export const restaurantApiService = {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.detail || 'Cập nhật trạng thái nhà hàng thất bại.');
+    }
+
+    return await response.json();
+  },
+
+  async createDish(restaurantId: number, data: CreateDishRequest) {
+    const formData = new FormData();
+    formData.append('name', data.name);
+    formData.append('price', data.price);
+    if (data.discounted_price) formData.append('discounted_price', data.discounted_price);
+    if (data.description) formData.append('description', data.description);
+    if (data.category_id) formData.append('category_id', data.category_id.toString());
+    if (data.image) formData.append('image', data.image);
+    if (data.is_available !== undefined) formData.append('is_available', data.is_available.toString());
+    if (data.stock_quantity) formData.append('stock_quantity', data.stock_quantity.toString());
+
+    const headers = apiService.getAuthHeaders('seller');
+
+    const response = await fetch(`${RESTAURANT_SERVICE_URL}/api/v1/menu/restaurants/${restaurantId}/dishes`, {
+      method: 'POST',
+      headers: {
+        ...headers,
+        // Không set Content-Type để browser tự set boundary cho multipart/form-data
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail?.[0]?.msg || errorData.detail || 'Không thể tạo món ăn.');
     }
 
     return await response.json();

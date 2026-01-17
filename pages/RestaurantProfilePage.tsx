@@ -1,8 +1,11 @@
-import React, { useState, useMemo } from 'react';
+
+import React, { useState, useMemo, useEffect } from 'react';
 import { restaurants, foodCategories, FoodItem as BaseFoodItem, Restaurant } from './HomePage';
 import { PencilIcon, LocationMarkerIcon, PhoneIcon, ClockIcon, StarIcon, ImageIcon, PlusIcon, ChatAltIcon, ClipboardListIcon, TrashIcon } from '../components/Icons';
 import AddMenuItemModal from '../components/AddMenuItemModal';
 import EditRestaurantProfileModal from '../components/EditRestaurantProfileModal';
+import { restaurantApiService } from '../services/restaurantApi';
+import { apiService } from '../services/api';
 
 // Extend FoodItem type to ensure isAvailable is always present for management
 type FoodItem = BaseFoodItem & { isAvailable: boolean; category: string };
@@ -77,6 +80,7 @@ const StorePage: React.FC = () => {
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const [currentItem, setCurrentItem] = useState<FoodItem | null>(null);
     const [activeTab, setActiveTab] = useState('Tất cả');
+    const [isLoading, setIsLoading] = useState(false);
 
     const initialMenu = useMemo((): MenuData => {
         const menu: MenuData = {};
@@ -93,7 +97,7 @@ const StorePage: React.FC = () => {
     
     const [menuByCategories, setMenuByCategories] = useState<MenuData>(initialMenu);
     
-    const categoryTabs = useMemo(() => ['Tất cả', ...Object.keys(menuByCategories)], [menuByCategories]);
+    const categoryTabs = useMemo(() => ['Tất cả', 'Đại hạ giá', 'Ăn vặt', 'Ăn trưa', 'Đồ uống'], []);
 
     const itemsToShow = useMemo(() => {
         if (activeTab === 'Tất cả') {
@@ -145,66 +149,73 @@ const StorePage: React.FC = () => {
         return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(num).replace(/\s/g, '');
     };
 
-    const handleSaveItem = (itemData: any) => {
-        const { id, category: newCategory, ...rest } = itemData;
+    const handleSaveItem = async (itemData: any) => {
+        setIsLoading(true);
+        try {
+            // 1. Lấy thông tin nhà hàng hiện tại từ Auth Service
+            const userProfile = await apiService.getMe('seller');
+            // Trong thực tế sẽ fetch restaurant bằng owner_id, ở đây dùng tạm restaurantData.id (cần parse sang int)
+            const restaurantId = parseInt(restaurantData.id, 10);
 
-        setMenuByCategories(prevMenu => {
-            let newMenu = JSON.parse(JSON.stringify(prevMenu)); // Deep copy
-
-            // Find and remove old item if it exists (for both edit and category change)
-            let oldItem: FoodItem | undefined;
-            if (id) {
-                for (const cat in newMenu) {
-                    const itemIndex = newMenu[cat].findIndex((i: FoodItem) => i.id === id);
-                    if (itemIndex > -1) {
-                        oldItem = newMenu[cat][itemIndex];
-                        newMenu[cat].splice(itemIndex, 1);
-                        if (newMenu[cat].length === 0) delete newMenu[cat];
-                        break;
-                    }
-                }
-            }
-            
-            // Prepare price fields
-            const priceData: { price?: string; oldPrice?: string; newPrice?:string; } = {};
-            if (rest.discountPrice && parseFloat(rest.discountPrice) > 0) {
-                priceData.oldPrice = formatCurrency(rest.price);
-                priceData.newPrice = formatCurrency(rest.discountPrice);
-                delete priceData.price;
-            } else {
-                priceData.price = formatCurrency(rest.price);
-                delete priceData.oldPrice;
-                delete priceData.newPrice;
-            }
-
-            // Prepare the new/updated item object
-            const updatedItem: FoodItem = {
-                ...(oldItem || {}),
-                ...rest,
-                ...priceData,
-                id: id || Math.max(0, ...Object.values(newMenu).flat().map((i: FoodItem) => i.id)) + 1,
-                restaurantId: restaurantData.id,
-                isAvailable: itemData.isAvailable ?? true,
-                category: newCategory,
+            // 2. Chuẩn bị dữ liệu cho API
+            const dishPayload = {
+                name: itemData.name,
+                price: itemData.price.toString(),
+                discounted_price: itemData.discountPrice ? itemData.discountPrice.toString() : undefined,
+                description: itemData.description,
+                category_id: itemData.categoryId, // ID từ 1-4
+                image: itemData.imageFile, // File blob từ input
+                is_available: true,
+                stock_quantity: itemData.stock ? parseInt(itemData.stock, 10) : undefined
             };
 
-            // Add the item to the new category
-            if (!newMenu[newCategory]) {
-                newMenu[newCategory] = [];
-            }
-            newMenu[newCategory].push(updatedItem);
-            
-            return newMenu;
-        });
+            // 3. Gọi API thực tế
+            const response = await restaurantApiService.createDish(restaurantId, dishPayload);
+            console.log('Dish created successfully:', response);
 
-        setIsMenuModalOpen(false);
-        setCurrentItem(null);
+            // 4. Cập nhật UI (Logic mock cũ được giữ lại để hiển thị ngay lập tức)
+            const { id, category: newCategory, ...rest } = itemData;
+            setMenuByCategories(prevMenu => {
+                let newMenu = JSON.parse(JSON.stringify(prevMenu));
+                
+                // Chuẩn bị price hiển thị
+                const priceData: { price?: string; oldPrice?: string; newPrice?:string; } = {};
+                if (rest.discountPrice && parseFloat(rest.discountPrice) > 0) {
+                    priceData.oldPrice = formatCurrency(rest.price);
+                    priceData.newPrice = formatCurrency(rest.discountPrice);
+                } else {
+                    priceData.price = formatCurrency(rest.price);
+                }
+
+                const newItem: FoodItem = {
+                    ...rest,
+                    ...priceData,
+                    id: response.id || Date.now(),
+                    restaurantId: restaurantData.id,
+                    isAvailable: itemData.isAvailable ?? true,
+                    category: newCategory,
+                    image: itemData.image // Giữ base64 preview cho UI demo
+                };
+
+                if (!newMenu[newCategory]) newMenu[newCategory] = [];
+                newMenu[newCategory].push(newItem);
+                return newMenu;
+            });
+
+            alert('Món ăn đã được tạo thành công trên hệ thống!');
+            setIsMenuModalOpen(false);
+            setCurrentItem(null);
+
+        } catch (err: any) {
+            alert('Lỗi: ' + err.message);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
 
     const handleSaveProfile = (updatedData: Partial<Restaurant>) => {
         console.log('Saving profile:', updatedData);
-        // Here you would typically update the restaurantData state
         setIsProfileModalOpen(false);
     };
 
@@ -268,8 +279,12 @@ const StorePage: React.FC = () => {
                                 role="button" aria-label="Thêm món ăn mới"
                             >
                                 <div className="text-center text-gray-400 group-hover:text-orange-500 transition-colors">
-                                    <PlusIcon className="h-10 w-10 mx-auto" />
-                                    <p className="mt-2 text-sm font-semibold">Thêm món</p>
+                                    {isLoading ? (
+                                        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500 mx-auto"></div>
+                                    ) : (
+                                        <PlusIcon className="h-10 w-10 mx-auto" />
+                                    )}
+                                    <p className="mt-2 text-sm font-semibold">{isLoading ? 'Đang xử lý...' : 'Thêm món'}</p>
                                 </div>
                             </div>
                             {itemsToShow.map(item => (
@@ -316,7 +331,7 @@ const StorePage: React.FC = () => {
                 onClose={() => setIsMenuModalOpen(false)}
                 onSave={handleSaveItem}
                 itemToEdit={currentItem}
-                categories={Object.keys(menuByCategories)}
+                categories={['Đại hạ giá', 'Ăn vặt', 'Ăn trưa', 'Đồ uống']}
             />
             <EditRestaurantProfileModal
                 isOpen={isProfileModalOpen}
