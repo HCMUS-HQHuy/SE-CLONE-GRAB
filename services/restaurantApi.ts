@@ -25,6 +25,19 @@ export interface CreateDishRequest {
   stock_quantity?: number;
 }
 
+export interface DishResponse {
+  id: number;
+  restaurant_id: number;
+  name: string;
+  description: string;
+  price: string;
+  discounted_price: string | null;
+  image_url: string | null;
+  category_id: number;
+  is_available: boolean;
+  stock_quantity: number;
+}
+
 export interface RestaurantListItem {
   id: number;
   owner_id: number;
@@ -134,6 +147,24 @@ export const restaurantApiService = {
     return await response.json();
   },
 
+  async getDishes(restaurantId: number): Promise<DishResponse[]> {
+    const headers = apiService.getAuthHeaders('seller');
+    const response = await fetch(`${RESTAURANT_SERVICE_URL}/api/v1/menu/restaurants/${restaurantId}/dishes`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        ...headers,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || 'Không thể lấy danh sách món ăn.');
+    }
+
+    return await response.json();
+  },
+
   async createDish(restaurantId: number, data: CreateDishRequest) {
     const formData = new FormData();
     formData.append('name', data.name);
@@ -151,7 +182,6 @@ export const restaurantApiService = {
       method: 'POST',
       headers: {
         ...headers,
-        // Không set Content-Type để browser tự set boundary cho multipart/form-data
       },
       body: formData,
     });

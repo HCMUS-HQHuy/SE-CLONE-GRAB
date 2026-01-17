@@ -1,20 +1,32 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { restaurants, foodCategories, FoodItem as BaseFoodItem, Restaurant } from './HomePage';
-// FIX: Added DocumentTextIcon to the import list to resolve the "Cannot find name" error.
+import { restaurants, FoodItem as BaseFoodItem, Restaurant } from './HomePage';
 import { PencilIcon, LocationMarkerIcon, PhoneIcon, ClockIcon, StarIcon, ImageIcon, PlusIcon, ChatAltIcon, ClipboardListIcon, TrashIcon, ExclamationIcon, DocumentTextIcon } from '../components/Icons';
 import AddMenuItemModal from '../components/AddMenuItemModal';
 import EditRestaurantProfileModal from '../components/EditRestaurantProfileModal';
-import { restaurantApiService, RestaurantListItem } from '../services/restaurantApi';
+import { restaurantApiService, RestaurantListItem, DishResponse } from '../services/restaurantApi';
 import { apiService } from '../services/api';
 
-// Extend FoodItem type to ensure isAvailable is always present for management
+// Extend FoodItem type for management
 type FoodItem = BaseFoodItem & { isAvailable: boolean; category: string };
 type MenuData = { [category: string]: FoodItem[] };
 
 const BASE_IMG_URL = 'http://localhost:8004/';
 
-// Custom toggle switch component
+// Mapping ID từ backend sang tên category hiển thị
+const ID_TO_CATEGORY_NAME: Record<number, string> = {
+    1: 'Đại hạ giá',
+    2: 'Ăn vặt',
+    3: 'Ăn trưa',
+    4: 'Đồ uống'
+};
+
+const formatCurrency = (amount: number | string) => {
+    const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+    if (isNaN(num)) return '';
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(num).replace(/\s/g, '');
+};
+
 const ToggleSwitch: React.FC<{ checked: boolean; onChange: () => void; }> = ({ checked, onChange }) => (
     <button
         onClick={(e) => { e.stopPropagation(); onChange(); }}
@@ -26,12 +38,15 @@ const ToggleSwitch: React.FC<{ checked: boolean; onChange: () => void; }> = ({ c
     </button>
 );
 
-// Card for managing menu items
 const MenuItemCard: React.FC<{ item: FoodItem; onEdit: () => void; onDelete: () => void; onToggle: () => void; }> = ({ item, onEdit, onDelete, onToggle }) => (
     <div className="bg-white rounded-lg shadow-md border overflow-hidden flex flex-col h-full transition-all duration-300 hover:shadow-xl hover:border-orange-300">
         <div className="relative w-full h-32 bg-gray-100">
             {item.image ? (
-                <img className={`h-full w-full object-cover ${!item.isAvailable ? 'filter grayscale' : ''}`} src={item.image.startsWith('http') ? item.image : `${BASE_IMG_URL}${item.image}`} alt={item.name} />
+                <img 
+                    className={`h-full w-full object-cover ${!item.isAvailable ? 'filter grayscale' : ''}`} 
+                    src={item.image.startsWith('data:') || item.image.startsWith('http') ? item.image : `${BASE_IMG_URL}${item.image}`} 
+                    alt={item.name} 
+                />
             ) : (
                 <div className={`h-full w-full flex items-center justify-center ${!item.isAvailable ? 'filter grayscale' : ''}`}>
                     <ImageIcon className="h-12 w-12 text-gray-400" />
@@ -77,30 +92,13 @@ const MenuItemCard: React.FC<{ item: FoodItem; onEdit: () => void; onDelete: () 
 
 const StorePage: React.FC = () => {
     const [restaurantData, setRestaurantData] = useState<RestaurantListItem | null>(null);
+    const [menuByCategories, setMenuByCategories] = useState<MenuData>({});
     const [isMenuModalOpen, setIsMenuModalOpen] = useState(false);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const [currentItem, setCurrentItem] = useState<FoodItem | null>(null);
     const [activeTab, setActiveTab] = useState('Tất cả');
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-
-    // Menu logic
-    const initialMenu = useMemo((): MenuData => {
-        const menu: MenuData = {};
-        if (!restaurantData) return menu;
-
-        foodCategories.forEach(category => {
-            const items = category.items
-                .filter(item => item.restaurantId === restaurantData.id.toString())
-                .map(item => ({ ...item, isAvailable: item.isAvailable ?? true, category: category.name }));
-            if (items.length > 0) {
-                menu[category.name] = items;
-            }
-        });
-        return menu;
-    }, [restaurantData]);
-    
-    const [menuByCategories, setMenuByCategories] = useState<MenuData>(initialMenu);
 
     useEffect(() => {
         fetchProfile();
@@ -110,23 +108,55 @@ const StorePage: React.FC = () => {
         setIsLoading(true);
         setError(null);
         try {
-            // 1. Lấy thông tin user hiện tại (Auth Service 8003)
+            // 1. Lấy thông tin user (8003)
             const me = await apiService.getMe('seller');
-            // 2. Lấy nhà hàng theo owner_id (Restaurant Service 8004)
+            // 2. Lấy nhà hàng (8004)
             const res = await restaurantApiService.getRestaurantByOwner(me.id);
             setRestaurantData(res);
+            
+            // 3. Lấy danh sách món ăn (8004)
+            const dishes = await restaurantApiService.getDishes(res.id);
+            const mappedMenu = mapApiDishesToMenuData(dishes, res.id.toString());
+            setMenuByCategories(mappedMenu);
         } catch (err: any) {
-            setError(err.message || 'Không thể tải thông tin nhà hàng.');
+            setError(err.message || 'Không thể tải dữ liệu.');
         } finally {
             setIsLoading(false);
         }
     };
 
-    useEffect(() => {
-        if (restaurantData) {
-            setMenuByCategories(initialMenu);
-        }
-    }, [restaurantData, initialMenu]);
+    const mapApiDishesToMenuData = (apiDishes: DishResponse[], resId: string): MenuData => {
+        const menu: MenuData = {};
+        
+        apiDishes.forEach(dish => {
+            const catName = ID_TO_CATEGORY_NAME[dish.category_id] || 'Khác';
+            
+            // Chuyển đổi dữ liệu từ API sang FoodItem UI
+            const uiItem: FoodItem = {
+                id: dish.id,
+                name: dish.name,
+                description: dish.description,
+                restaurantId: resId,
+                image: dish.image_url || '',
+                isAvailable: dish.is_available,
+                category: catName,
+                bestseller: false, // Default
+            };
+
+            // Xử lý giá tiền
+            if (dish.discounted_price && parseFloat(dish.discounted_price) > 0) {
+                uiItem.oldPrice = formatCurrency(dish.price);
+                uiItem.newPrice = formatCurrency(dish.discounted_price);
+            } else {
+                uiItem.price = formatCurrency(dish.price);
+            }
+
+            if (!menu[catName]) menu[catName] = [];
+            menu[catName].push(uiItem);
+        });
+
+        return menu;
+    };
     
     const categoryTabs = useMemo(() => ['Tất cả', 'Đại hạ giá', 'Ăn vặt', 'Ăn trưa', 'Đồ uống'], []);
 
@@ -153,9 +183,7 @@ const StorePage: React.FC = () => {
                 const newMenu = { ...prev };
                 for (const category in newMenu) {
                     newMenu[category] = newMenu[category].filter(item => item.id !== itemId);
-                    if (newMenu[category].length === 0) {
-                        delete newMenu[category];
-                    }
+                    if (newMenu[category].length === 0) delete newMenu[category];
                 }
                 return newMenu;
             });
@@ -172,12 +200,6 @@ const StorePage: React.FC = () => {
             }
             return newMenu;
         });
-    };
-
-    const formatCurrency = (amount: number | string) => {
-        const num = typeof amount === 'string' ? parseFloat(amount) : amount;
-        if (isNaN(num)) return '';
-        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(num).replace(/\s/g, '');
     };
 
     const handleSaveItem = async (itemData: any) => {
@@ -197,32 +219,9 @@ const StorePage: React.FC = () => {
 
             const response = await restaurantApiService.createDish(restaurantData.id, dishPayload);
             
-            // Cập nhật UI ngay lập tức
-            const { id, category: newCategory, ...rest } = itemData;
-            setMenuByCategories(prevMenu => {
-                let newMenu = JSON.parse(JSON.stringify(prevMenu));
-                const priceData: { price?: string; oldPrice?: string; newPrice?:string; } = {};
-                if (rest.discountPrice && parseFloat(rest.discountPrice) > 0) {
-                    priceData.oldPrice = formatCurrency(rest.price);
-                    priceData.newPrice = formatCurrency(rest.discountPrice);
-                } else {
-                    priceData.price = formatCurrency(rest.price);
-                }
-
-                const newItem: FoodItem = {
-                    ...rest,
-                    ...priceData,
-                    id: response.id || Date.now(),
-                    restaurantId: restaurantData.id.toString(),
-                    isAvailable: true,
-                    category: newCategory,
-                    image: itemData.image
-                };
-
-                if (!newMenu[newCategory]) newMenu[newCategory] = [];
-                newMenu[newCategory].push(newItem);
-                return newMenu;
-            });
+            // Fetch lại toàn bộ menu sau khi tạo thành công để đảm bảo đồng bộ
+            const dishes = await restaurantApiService.getDishes(restaurantData.id);
+            setMenuByCategories(mapApiDishesToMenuData(dishes, restaurantData.id.toString()));
 
             alert('Món ăn đã được tạo thành công!');
             setIsMenuModalOpen(false);
@@ -234,11 +233,10 @@ const StorePage: React.FC = () => {
     };
 
     const handleSaveProfile = (updatedData: Partial<Restaurant>) => {
-        console.log('Saving profile:', updatedData);
         setIsProfileModalOpen(false);
     };
 
-    if (isLoading) {
+    if (isLoading && !restaurantData) {
         return (
             <div className="min-h-[80vh] flex flex-col items-center justify-center bg-gray-50">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mb-4"></div>
@@ -262,19 +260,18 @@ const StorePage: React.FC = () => {
         );
     }
 
-    // Mapping RestaurantListItem to the expected Restaurant interface for display components
     const displayRestaurant: Restaurant = {
         id: restaurantData.id.toString(),
         name: restaurantData.name,
         address: restaurantData.address,
-        lat: 0, // Not provided in API
-        lon: 0, // Not provided in API
-        cuisine: 'Ẩm thực Việt', // Mock as API doesn't have this
+        lat: 0,
+        lon: 0,
+        cuisine: 'Ẩm thực Việt',
         phone: restaurantData.phone,
         openingHours: restaurantData.opening_hours,
         description: restaurantData.description,
-        bannerUrl: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=1200&q=80', // Placeholder
-        logoUrl: 'https://cdn-icons-png.flaticon.com/512/3448/3448609.png', // Placeholder
+        bannerUrl: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=1200&q=80',
+        logoUrl: 'https://cdn-icons-png.flaticon.com/512/3448/3448609.png',
         rating: restaurantData.rating || 0,
         reviewCount: 0,
         commentCount: 0,
@@ -284,15 +281,12 @@ const StorePage: React.FC = () => {
 
     return (
         <div className="bg-gray-50 pb-12">
-            {/* Banner and Header */}
             <div className="relative">
                 <div className="h-48 bg-cover bg-center bg-gray-300" style={{ backgroundImage: `url(${displayRestaurant.bannerUrl})` }}></div>
                 <div className="absolute inset-0 bg-black bg-opacity-30"></div>
             </div>
 
-            {/* Main Content */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                {/* Store Profile Header */}
                 <div className="relative -mt-20">
                     <div className="bg-white rounded-xl shadow-lg p-5 flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-6 border border-gray-100">
                         <div className="relative flex-shrink-0">
@@ -321,9 +315,7 @@ const StorePage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Two-column Layout */}
                 <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Left Column: Menu */}
                     <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow-md border">
                         <div className="border-b border-gray-200 mb-6">
                             <nav className="-mb-px flex space-x-6 overflow-x-auto" aria-label="Tabs">
@@ -349,8 +341,12 @@ const StorePage: React.FC = () => {
                                 role="button" aria-label="Thêm món"
                             >
                                 <div className="text-center text-gray-400 group-hover:text-orange-500 transition-colors">
-                                    <PlusIcon className="h-10 w-10 mx-auto" />
-                                    <p className="mt-2 text-sm font-semibold">Thêm món</p>
+                                    {isLoading ? (
+                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto"></div>
+                                    ) : (
+                                        <PlusIcon className="h-10 w-10 mx-auto" />
+                                    )}
+                                    <p className="mt-2 text-sm font-semibold">{isLoading ? 'Đang tải...' : 'Thêm món'}</p>
                                 </div>
                             </div>
                             {itemsToShow.map(item => (
@@ -365,7 +361,6 @@ const StorePage: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Right Column: Sidebar */}
                     <div className="lg:col-span-1 space-y-8">
                         <div className="bg-white p-6 rounded-lg shadow-md border">
                             <h3 className="text-lg font-semibold text-gray-800 border-b pb-3 mb-4 flex items-center">
