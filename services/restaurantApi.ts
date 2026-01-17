@@ -118,6 +118,23 @@ export const restaurantApiService = {
     return await response.json();
   },
 
+  async getRestaurantById(id: number): Promise<RestaurantListItem> {
+    const response = await fetch(`${RESTAURANT_SERVICE_URL}/api/v1/restaurants/${id}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        ...apiService.getAuthHeaders('user'),
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || 'Không tìm thấy thông tin nhà hàng.');
+    }
+
+    return await response.json();
+  },
+
   async getRestaurantByOwner(ownerId: number): Promise<RestaurantListItem> {
     const headers = apiService.getAuthHeaders('seller');
     const response = await fetch(`${RESTAURANT_SERVICE_URL}/api/v1/restaurants/owner/${ownerId}`, {
