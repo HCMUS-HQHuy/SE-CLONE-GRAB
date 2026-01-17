@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { restaurants, foodCategories, FoodItem, Review } from './HomePage';
@@ -193,7 +194,8 @@ const UserRestaurantProfilePage: React.FC = () => {
                             <span className="text-xs text-gray-400">{review.date}</span>
                           </div>
                           <div className="flex items-center mt-1">
-                            {[...Array(5)].map((_, i) => (
+                            {/* FIX: Using Array.from to avoid potential issues with spreading uninitialized Array(5) which was causing an 'unknown' type error. */}
+                            {Array.from({ length: 5 }).map((_, i) => (
                               <StarIcon key={i} className={`w-4 h-4 ${i < review.rating ? 'text-yellow-400' : 'text-gray-300'}`} />
                             ))}
                           </div>

@@ -159,7 +159,7 @@ export const restaurantApiService = {
   },
 
   async getDishes(restaurantId: number): Promise<DishResponse[]> {
-    const headers = apiService.getAuthHeaders('seller');
+    const headers = apiService.getAuthHeaders('user');
     const response = await fetch(`${RESTAURANT_SERVICE_URL}/api/v1/menu/restaurants/${restaurantId}/dishes`, {
       method: 'GET',
       headers: {
@@ -171,6 +171,49 @@ export const restaurantApiService = {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.detail || 'Không thể lấy danh sách món ăn.');
+    }
+
+    return await response.json();
+  },
+
+  async getAllDishes(params?: { category_id?: number, available_only?: boolean, skip?: number, limit?: number }): Promise<DishResponse[]> {
+    const query = new URLSearchParams();
+    if (params?.category_id) query.append('category_id', params.category_id.toString());
+    if (params?.available_only !== undefined) query.append('available_only', params.available_only.toString());
+    if (params?.skip !== undefined) query.append('skip', params.skip.toString());
+    if (params?.limit !== undefined) query.append('limit', params.limit.toString());
+
+    const response = await fetch(`${RESTAURANT_SERVICE_URL}/api/v1/menu/dishes?${query.toString()}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        ...apiService.getAuthHeaders('user'),
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || 'Không thể tải danh sách món ăn.');
+    }
+
+    return await response.json();
+  },
+
+  async updateDish(dishId: number, data: UpdateDishRequest): Promise<DishResponse> {
+    const headers = apiService.getAuthHeaders('seller');
+    const response = await fetch(`${RESTAURANT_SERVICE_URL}/api/v1/menu/dishes/${dishId}`, {
+      method: 'PUT',
+      headers: {
+        ...headers,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail?.[0]?.msg || errorData.detail || 'Cập nhật món ăn thất bại.');
     }
 
     return await response.json();
@@ -200,26 +243,6 @@ export const restaurantApiService = {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.detail?.[0]?.msg || errorData.detail || 'Không thể tạo món ăn.');
-    }
-
-    return await response.json();
-  },
-
-  async updateDish(dishId: number, data: UpdateDishRequest): Promise<DishResponse> {
-    const headers = apiService.getAuthHeaders('seller');
-    const response = await fetch(`${RESTAURANT_SERVICE_URL}/api/v1/menu/dishes/${dishId}`, {
-      method: 'PUT',
-      headers: {
-        ...headers,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.detail?.[0]?.msg || errorData.detail || 'Cập nhật món ăn thất bại.');
     }
 
     return await response.json();
