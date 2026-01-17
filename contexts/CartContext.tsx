@@ -1,5 +1,7 @@
-import React, { createContext, useContext } from 'react';
+
+import { createContext, useContext } from 'react';
 import { createStore, useStore } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { FoodItem, Restaurant } from '../pages/HomePage';
 
 export type CartItem = FoodItem & { quantity: number };
@@ -18,88 +20,100 @@ type CartActions = {
   clearCartAndAddItem: (item: FoodItem | null, quantity?: number) => void;
 };
 
-const store = createStore<CartState & CartActions>((set, get) => ({
-  items: [],
-  restaurant: null,
-  pendingItem: null,
+// Sử dụng persist middleware để tự động lưu vào localStorage
+const store = createStore<CartState & CartActions>()(
+  persist(
+    (set, get) => ({
+      items: [],
+      restaurant: null,
+      pendingItem: null,
 
-  addItem: (item, quantity, restaurant, isBuyNow = false) => {
-    const currentRestaurant = get().restaurant;
-    if (currentRestaurant && currentRestaurant.id !== restaurant.id) {
-      set({ pendingItem: { item, quantity, isBuyNow } });
-      return;
-    }
-
-    set(state => {
-      const existingItemIndex = state.items.findIndex(i => i.id === item.id);
-      let newItems = [...state.items];
-
-      if (existingItemIndex > -1) {
-        const existingItem = newItems[existingItemIndex];
-        newItems[existingItemIndex] = { ...existingItem, quantity: existingItem.quantity + quantity };
-      } else {
-        newItems.push({ ...item, quantity });
-      }
-
-      return { items: newItems, restaurant: restaurant };
-    });
-  },
-
-  clearCartAndAddItem: (item, quantity) => {
-    const pending = get().pendingItem;
-    set({ pendingItem: null }); // Always clear pending item
-
-    if (item && quantity && pending) {
-       const { isBuyNow } = pending;
-       set({
-         items: [{ ...item, quantity }],
-         restaurant: item.restaurant || null,
-       });
-       // If it was a "buy now" action, the component will handle navigation.
-       // This is a simplified way to signal success.
-       if (isBuyNow) {
-            setTimeout(() => window.location.href = '/user/checkout', 0);
-       }
-
-    } else if (pending?.item && pending?.quantity){
-        // Case where user confirms from modal, but we use the pending item data
-        const { item: pendingItem, quantity: pendingQuantity, isBuyNow } = pending;
-        set({
-            items: [{...pendingItem, quantity: pendingQuantity}],
-            restaurant: pendingItem.restaurant || null,
-        });
-        if (isBuyNow) {
-            setTimeout(() => window.location.href = '/user/checkout', 0);
+      addItem: (item, quantity, restaurant, isBuyNow = false) => {
+        const currentRestaurant = get().restaurant;
+        // Nếu đã có hàng từ nhà hàng khác, hiển thị modal xác nhận (pendingItem)
+        if (currentRestaurant && currentRestaurant.id !== restaurant.id) {
+          set({ pendingItem: { item, quantity, isBuyNow } });
+          return;
         }
+
+        set(state => {
+          const existingItemIndex = state.items.findIndex(i => i.id === item.id);
+          let newItems = [...state.items];
+
+          if (existingItemIndex > -1) {
+            const existingItem = newItems[existingItemIndex];
+            newItems[existingItemIndex] = { ...existingItem, quantity: existingItem.quantity + quantity };
+          } else {
+            newItems.push({ ...item, quantity });
+          }
+
+          return { items: newItems, restaurant: restaurant };
+        });
+      },
+
+      clearCartAndAddItem: (item, quantity) => {
+        const pending = get().pendingItem;
+        set({ pendingItem: null }); // Xóa item chờ
+
+        if (item && quantity && pending) {
+          const { isBuyNow } = pending;
+          set({
+            items: [{ ...item, quantity }],
+            restaurant: item.restaurant || null,
+          });
+          if (isBuyNow) {
+            setTimeout(() => window.location.href = '/user/checkout', 0);
+          }
+        } else if (pending?.item && pending?.quantity) {
+          const { item: pendingItem, quantity: pendingQuantity, isBuyNow } = pending;
+          set({
+            items: [{ ...pendingItem, quantity: pendingQuantity }],
+            restaurant: pendingItem.restaurant || null,
+          });
+          if (isBuyNow) {
+            setTimeout(() => window.location.href = '/user/checkout', 0);
+          }
+        }
+      },
+
+      updateQuantity: (itemId, quantity) => {
+        set(state => {
+          const newItems = state.items
+            .map(item => (item.id === itemId ? { ...item, quantity } : item))
+            .filter(item => item.quantity > 0);
+          
+          return {
+            items: newItems,
+            restaurant: newItems.length === 0 ? null : state.restaurant
+          };
+        });
+      },
+
+      removeItem: (itemId) => {
+        set(state => {
+          const newItems = state.items.filter(item => item.id !== itemId);
+          return {
+            items: newItems,
+            restaurant: newItems.length === 0 ? null : state.restaurant
+          };
+        });
+      },
+
+      clearCart: () => {
+        set({ items: [], restaurant: null });
+      },
+    }),
+    {
+      name: 'food-delivery-cart', // Tên key trong localStorage
+      storage: createJSONStorage(() => localStorage),
+      // Chỉ lưu trữ items và restaurant, không lưu trạng thái UI tạm thời (pendingItem)
+      partialize: (state) => ({
+        items: state.items,
+        restaurant: state.restaurant,
+      }),
     }
-  },
-
-  updateQuantity: (itemId, quantity) => {
-    set(state => ({
-      items: state.items
-        .map(item => (item.id === itemId ? { ...item, quantity } : item))
-        .filter(item => item.quantity > 0),
-    }));
-    // If last item is removed, clear restaurant
-    if (get().items.length === 0) {
-        set({ restaurant: null });
-    }
-  },
-
-  removeItem: (itemId) => {
-    set(state => ({
-      items: state.items.filter(item => item.id !== itemId),
-    }));
-     if (get().items.length === 0) {
-        set({ restaurant: null });
-    }
-  },
-
-  clearCart: () => {
-    set({ items: [], restaurant: null });
-  },
-}));
-
+  )
+);
 
 const CartContext = createContext<typeof store | undefined>(undefined);
 
@@ -108,12 +122,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 };
 
 export const useCart = () => {
-    const context = useContext(CartContext);
-    if (context === undefined) {
-        throw new Error('useCart must be used within a CartProvider');
-    }
-    return useStore(context);
+  const context = useContext(CartContext);
+  if (context === undefined) {
+    throw new Error('useCart must be used within a CartProvider');
+  }
+  return useStore(context);
 };
 
-// Add a static getter to the hook for rare cases where you need state outside of React components.
+// Truy cập trực tiếp state cho các trường hợp ngoài React components
 useCart.getState = store.getState;
