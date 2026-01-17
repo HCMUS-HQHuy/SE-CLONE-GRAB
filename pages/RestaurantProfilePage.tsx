@@ -4,11 +4,11 @@ import { restaurants, FoodItem as BaseFoodItem, Restaurant } from './HomePage';
 import { PencilIcon, LocationMarkerIcon, PhoneIcon, ClockIcon, StarIcon, ImageIcon, PlusIcon, ChatAltIcon, ClipboardListIcon, TrashIcon, ExclamationIcon, DocumentTextIcon } from '../components/Icons';
 import AddMenuItemModal from '../components/AddMenuItemModal';
 import EditRestaurantProfileModal from '../components/EditRestaurantProfileModal';
-import { restaurantApiService, RestaurantListItem, DishResponse } from '../services/restaurantApi';
+import { restaurantApiService, RestaurantListItem, DishResponse, UpdateDishRequest } from '../services/restaurantApi';
 import { apiService } from '../services/api';
 
 // Extend FoodItem type for management
-type FoodItem = BaseFoodItem & { isAvailable: boolean; category: string };
+type FoodItem = BaseFoodItem & { isAvailable: boolean; category: string; stock_quantity?: number; category_id?: number };
 type MenuData = { [category: string]: FoodItem[] };
 
 const BASE_IMG_URL = 'http://localhost:8004/';
@@ -27,18 +27,19 @@ const formatCurrency = (amount: number | string) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(num).replace(/\s/g, '');
 };
 
-const ToggleSwitch: React.FC<{ checked: boolean; onChange: () => void; }> = ({ checked, onChange }) => (
+const ToggleSwitch: React.FC<{ checked: boolean; onChange: () => void; disabled?: boolean }> = ({ checked, onChange, disabled }) => (
     <button
-        onClick={(e) => { e.stopPropagation(); onChange(); }}
+        onClick={(e) => { e.stopPropagation(); if(!disabled) onChange(); }}
         role="switch"
         aria-checked={checked}
-        className={`relative inline-flex h-5 w-10 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 ${checked ? 'bg-green-500' : 'bg-gray-300'}`}
+        disabled={disabled}
+        className={`relative inline-flex h-5 w-10 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 ${checked ? 'bg-green-500' : 'bg-gray-300'} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
     >
         <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${checked ? 'translate-x-5' : 'translate-x-1'}`} />
     </button>
 );
 
-const MenuItemCard: React.FC<{ item: FoodItem; onEdit: () => void; onDelete: () => void; onToggle: () => void; }> = ({ item, onEdit, onDelete, onToggle }) => (
+const MenuItemCard: React.FC<{ item: FoodItem; onEdit: () => void; onDelete: () => void; onToggle: () => void; isUpdating?: boolean }> = ({ item, onEdit, onDelete, onToggle, isUpdating }) => (
     <div className="bg-white rounded-lg shadow-md border overflow-hidden flex flex-col h-full transition-all duration-300 hover:shadow-xl hover:border-orange-300">
         <div className="relative w-full h-32 bg-gray-100">
             {item.image ? (
@@ -66,7 +67,7 @@ const MenuItemCard: React.FC<{ item: FoodItem; onEdit: () => void; onDelete: () 
                 </div>
             )}
              <div className="absolute top-2 right-2 z-10 bg-white/50 backdrop-blur-sm p-0.5 rounded-full">
-                <ToggleSwitch checked={item.isAvailable} onChange={onToggle} />
+                <ToggleSwitch checked={item.isAvailable} onChange={onToggle} disabled={isUpdating} />
             </div>
         </div>
         <div className="p-3 flex flex-col flex-grow">
@@ -98,6 +99,7 @@ const StorePage: React.FC = () => {
     const [currentItem, setCurrentItem] = useState<FoodItem | null>(null);
     const [activeTab, setActiveTab] = useState('Tất cả');
     const [isLoading, setIsLoading] = useState(true);
+    const [isActionLoading, setIsActionLoading] = useState<number | null>(null); // Lưu ID món đang cập nhật status
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
@@ -140,6 +142,8 @@ const StorePage: React.FC = () => {
                 image: dish.image_url || '',
                 isAvailable: dish.is_available,
                 category: catName,
+                category_id: dish.category_id,
+                stock_quantity: dish.stock_quantity,
                 bestseller: false, // Default
             };
 
@@ -190,40 +194,70 @@ const StorePage: React.FC = () => {
         }
     };
 
-    const handleToggleAvailability = (itemId: number) => {
-        setMenuByCategories(prev => {
-            const newMenu = { ...prev };
-            for (const category in newMenu) {
-                newMenu[category] = newMenu[category].map(item =>
-                    item.id === itemId ? { ...item, isAvailable: !item.isAvailable } : item
-                );
-            }
-            return newMenu;
-        });
+    const handleToggleAvailability = async (item: FoodItem) => {
+        setIsActionLoading(item.id);
+        try {
+            const updatePayload: UpdateDishRequest = {
+                is_available: !item.isAvailable
+            };
+            await restaurantApiService.updateDish(item.id, updatePayload);
+            
+            // Cập nhật state local
+            setMenuByCategories(prev => {
+                const newMenu = { ...prev };
+                for (const category in newMenu) {
+                    newMenu[category] = newMenu[category].map(i =>
+                        i.id === item.id ? { ...i, isAvailable: !item.isAvailable } : i
+                    );
+                }
+                return newMenu;
+            });
+        } catch (err: any) {
+            alert('Cập nhật trạng thái thất bại: ' + err.message);
+        } finally {
+            setIsActionLoading(null);
+        }
     };
 
     const handleSaveItem = async (itemData: any) => {
         if (!restaurantData) return;
         setIsLoading(true);
         try {
-            const dishPayload = {
-                name: itemData.name,
-                price: itemData.price.toString(),
-                discounted_price: itemData.discountPrice ? itemData.discountPrice.toString() : undefined,
-                description: itemData.description,
-                category_id: itemData.categoryId,
-                image: itemData.imageFile,
-                is_available: true,
-                stock_quantity: itemData.stock ? parseInt(itemData.stock, 10) : undefined
-            };
+            if (itemData.id) {
+                // LOGIC UPDATE (PUT)
+                const updatePayload: UpdateDishRequest = {
+                    name: itemData.name,
+                    description: itemData.description,
+                    price: parseFloat(itemData.price),
+                    discounted_price: itemData.discountPrice ? parseFloat(itemData.discountPrice) : 0,
+                    category_id: itemData.categoryId,
+                    stock_quantity: itemData.stock ? parseInt(itemData.stock, 10) : undefined,
+                    is_available: true,
+                    // image_url: ... (Nếu có API upload ảnh riêng để lấy URL mới)
+                };
+                
+                await restaurantApiService.updateDish(itemData.id, updatePayload);
+                alert('Cập nhật món ăn thành công!');
+            } else {
+                // LOGIC CREATE (POST)
+                const dishPayload = {
+                    name: itemData.name,
+                    price: itemData.price.toString(),
+                    discounted_price: itemData.discountPrice ? itemData.discountPrice.toString() : undefined,
+                    description: itemData.description,
+                    category_id: itemData.categoryId,
+                    image: itemData.imageFile,
+                    is_available: true,
+                    stock_quantity: itemData.stock ? parseInt(itemData.stock, 10) : undefined
+                };
 
-            const response = await restaurantApiService.createDish(restaurantData.id, dishPayload);
+                await restaurantApiService.createDish(restaurantData.id, dishPayload);
+                alert('Món ăn đã được tạo thành công!');
+            }
             
-            // Fetch lại toàn bộ menu sau khi tạo thành công để đảm bảo đồng bộ
+            // Fetch lại toàn bộ menu sau khi thay đổi để đồng bộ
             const dishes = await restaurantApiService.getDishes(restaurantData.id);
             setMenuByCategories(mapApiDishesToMenuData(dishes, restaurantData.id.toString()));
-
-            alert('Món ăn đã được tạo thành công!');
             setIsMenuModalOpen(false);
         } catch (err: any) {
             alert('Lỗi: ' + err.message);
@@ -353,9 +387,10 @@ const StorePage: React.FC = () => {
                                 <MenuItemCard
                                     key={item.id}
                                     item={item}
+                                    isUpdating={isActionLoading === item.id}
                                     onEdit={() => handleEditItem(item)}
                                     onDelete={() => handleDeleteItem(item.id)}
-                                    onToggle={() => handleToggleAvailability(item.id)}
+                                    onToggle={() => handleToggleAvailability(item)}
                                 />
                             ))}
                         </div>

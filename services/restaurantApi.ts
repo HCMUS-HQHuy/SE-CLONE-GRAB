@@ -25,6 +25,17 @@ export interface CreateDishRequest {
   stock_quantity?: number;
 }
 
+export interface UpdateDishRequest {
+  name?: string;
+  description?: string;
+  price?: number;
+  discounted_price?: number;
+  image_url?: string;
+  category_id?: number;
+  is_available?: boolean;
+  stock_quantity?: number;
+}
+
 export interface DishResponse {
   id: number;
   restaurant_id: number;
@@ -189,6 +200,26 @@ export const restaurantApiService = {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.detail?.[0]?.msg || errorData.detail || 'Không thể tạo món ăn.');
+    }
+
+    return await response.json();
+  },
+
+  async updateDish(dishId: number, data: UpdateDishRequest): Promise<DishResponse> {
+    const headers = apiService.getAuthHeaders('seller');
+    const response = await fetch(`${RESTAURANT_SERVICE_URL}/api/v1/menu/dishes/${dishId}`, {
+      method: 'PUT',
+      headers: {
+        ...headers,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail?.[0]?.msg || errorData.detail || 'Cập nhật món ăn thất bại.');
     }
 
     return await response.json();
