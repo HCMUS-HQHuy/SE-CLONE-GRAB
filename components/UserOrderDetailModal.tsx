@@ -2,8 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { orderApiService, OrderResponseData } from '../services/orderApi';
 import { restaurantApiService, RestaurantListItem } from '../services/restaurantApi';
-// Add XCircleIcon to the imports
-import { XIcon, ClockIcon, LocationMarkerIcon, PhoneIcon, CheckCircleIcon, CashIcon, ClipboardListIcon, StarIcon, XCircleIcon } from './Icons';
+import { XIcon, ClockIcon, LocationMarkerIcon, PhoneIcon, CheckCircleIcon, CashIcon, ClipboardListIcon, StarIcon, XCircleIcon, TagIcon } from './Icons';
 
 type Props = {
     orderId: string;
@@ -21,7 +20,6 @@ const UserOrderDetailModal: React.FC<Props> = ({ orderId, onClose }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Cơ chế Polling để cập nhật trạng thái đơn hàng mỗi 5 giây
     useEffect(() => {
         let interval: any;
 
@@ -31,13 +29,11 @@ const UserOrderDetailModal: React.FC<Props> = ({ orderId, onClose }) => {
                 const orderData = await orderApiService.getOrderById(orderId);
                 setOrder(orderData);
                 
-                // Nếu chưa có thông tin nhà hàng, tải thông tin nhà hàng
                 if (!restaurant) {
                     const resData = await restaurantApiService.getRestaurantById(parseInt(orderData.restaurant_id, 10));
                     setRestaurant(resData);
                 }
 
-                // Nếu đơn hàng đã kết thúc (Giao xong hoặc Hủy), dừng polling
                 const finishedStatus = ['DELIVERED', 'CANCELLED', 'REJECTED'];
                 if (finishedStatus.includes(orderData.status.toUpperCase())) {
                     clearInterval(interval);
@@ -70,7 +66,6 @@ const UserOrderDetailModal: React.FC<Props> = ({ orderId, onClose }) => {
         return (
             <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
                 <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center">
-                    {/* Fixed: XCircleIcon is now imported */}
                     <XCircleIcon className="h-16 w-16 text-red-500 mx-auto mb-4" />
                     <h3 className="text-xl font-bold text-gray-900">Lỗi</h3>
                     <p className="text-gray-500 mt-2">{error || 'Không tìm thấy đơn hàng.'}</p>
@@ -90,11 +85,11 @@ const UserOrderDetailModal: React.FC<Props> = ({ orderId, onClose }) => {
 
     const currentIdx = steps.findIndex(s => s.key === order.status.toUpperCase());
     const isCancelled = order.status.toUpperCase() === 'CANCELLED' || order.status.toUpperCase() === 'REJECTED';
+    const discountAmount = parseFloat(order.discount || '0');
 
     return (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm overflow-y-auto" onClick={onClose}>
             <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                {/* Header */}
                 <div className="p-6 border-b sticky top-0 bg-white z-10 flex justify-between items-center">
                     <div>
                         <h2 className="text-xl font-black text-gray-900">Chi tiết đơn #{order.id.substring(0, 8).toUpperCase()}</h2>
@@ -106,11 +101,9 @@ const UserOrderDetailModal: React.FC<Props> = ({ orderId, onClose }) => {
                 </div>
 
                 <div className="p-6 space-y-8">
-                    {/* Status Tracker */}
                     <div className="bg-gray-50 rounded-3xl p-6 border border-gray-100">
                         {isCancelled ? (
                             <div className="flex items-center space-x-3 text-red-600 bg-red-50 p-4 rounded-2xl border border-red-100">
-                                {/* Fixed: XCircleIcon is now imported */}
                                 <XCircleIcon className="h-6 w-6" />
                                 <span className="font-bold">Đơn hàng đã bị hủy hoặc bị từ chối</span>
                             </div>
@@ -131,7 +124,6 @@ const UserOrderDetailModal: React.FC<Props> = ({ orderId, onClose }) => {
                                         </div>
                                     );
                                 })}
-                                {/* Progress Line */}
                                 <div className="absolute top-5 left-0 w-full h-0.5 bg-gray-200 -z-0">
                                     <div 
                                         className="h-full bg-orange-500 transition-all duration-700" 
@@ -143,7 +135,6 @@ const UserOrderDetailModal: React.FC<Props> = ({ orderId, onClose }) => {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        {/* Info Section */}
                         <div className="space-y-6">
                             <div>
                                 <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Nhà hàng</h3>
@@ -188,7 +179,6 @@ const UserOrderDetailModal: React.FC<Props> = ({ orderId, onClose }) => {
                             </div>
                         </div>
 
-                        {/* Order Items Section */}
                         <div>
                             <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Món ăn đã chọn</h3>
                             <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
@@ -214,6 +204,12 @@ const UserOrderDetailModal: React.FC<Props> = ({ orderId, onClose }) => {
                                         <span>Phí giao hàng</span>
                                         <span>{formatCurrency(order.delivery_fee)}</span>
                                     </div>
+                                    {discountAmount > 0 && (
+                                        <div className="flex justify-between text-xs text-green-700 font-black">
+                                            <span className="flex items-center"><TagIcon className="h-3 w-3 mr-1" /> Giảm giá</span>
+                                            <span>-{formatCurrency(discountAmount)}</span>
+                                        </div>
+                                    )}
                                     <div className="flex justify-between text-lg font-black text-orange-600 border-t border-orange-100 pt-2 mt-2">
                                         <span>Tổng thanh toán</span>
                                         <span>{formatCurrency(order.total_amount)}</span>

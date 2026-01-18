@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { orderApiService, OrderResponseData } from '../services/orderApi';
 import { apiService } from '../services/api';
-import { ClipboardListIcon, ClockIcon, CashIcon, ChevronRightIcon } from '../components/Icons';
+import { ClipboardListIcon, ClockIcon, CashIcon, ChevronRightIcon, TagIcon } from '../components/Icons';
 import UserOrderDetailModal from '../components/UserOrderDetailModal';
 
 const formatCurrency = (amount: string | number) => {
@@ -45,7 +45,6 @@ const UserOrdersHistoryPage: React.FC = () => {
     useEffect(() => {
         fetchOrders();
         
-        // Kiểm tra xem có yêu cầu mở đơn hàng mới từ URL không (?newOrder=xyz)
         const params = new URLSearchParams(location.search);
         const newOrderId = params.get('newOrder');
         if (newOrderId) {
@@ -59,7 +58,6 @@ const UserOrdersHistoryPage: React.FC = () => {
         try {
             const me = await apiService.getMe('user');
             const data = await orderApiService.getUserOrders(me.id.toString());
-            // Sắp xếp đơn mới nhất lên đầu
             const sorted = data.items.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
             setOrders(sorted);
         } catch (err: any) {
@@ -71,9 +69,8 @@ const UserOrdersHistoryPage: React.FC = () => {
 
     const handleCloseModal = () => {
         setSelectedOrderId(null);
-        // Xóa query param để không tự mở lại khi refresh
         navigate('/user/orders', { replace: true });
-        fetchOrders(); // Làm mới danh sách khi đóng modal chi tiết
+        fetchOrders();
     };
 
     if (isLoading) {
@@ -108,37 +105,45 @@ const UserOrdersHistoryPage: React.FC = () => {
 
             {orders.length > 0 ? (
                 <div className="space-y-4">
-                    {orders.map(order => (
-                        <div 
-                            key={order.id}
-                            onClick={() => setSelectedOrderId(order.id)}
-                            className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-all cursor-pointer group"
-                        >
-                            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-                                <div className="flex items-start space-x-4">
-                                    <div className="h-12 w-12 rounded-xl bg-orange-100 flex items-center justify-center flex-shrink-0">
-                                        <ClipboardListIcon className="h-6 w-6 text-orange-600" />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-bold text-gray-900 group-hover:text-orange-600 transition-colors">Đơn hàng #{order.id.substring(0, 8).toUpperCase()}</h3>
-                                        <div className="flex items-center text-xs text-gray-500 mt-1 space-x-3">
-                                            <span className="flex items-center"><ClockIcon className="h-3.5 w-3.5 mr-1" /> {formatDate(order.created_at)}</span>
-                                            <span className="flex items-center"><CashIcon className="h-3.5 w-3.5 mr-1" /> {order.payment_method === 'CASH' ? 'Tiền mặt' : 'Chuyển khoản'}</span>
+                    {orders.map(order => {
+                        const discountVal = parseFloat(order.discount || '0');
+                        return (
+                            <div 
+                                key={order.id}
+                                onClick={() => setSelectedOrderId(order.id)}
+                                className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+                            >
+                                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                                    <div className="flex items-start space-x-4">
+                                        <div className="h-12 w-12 rounded-xl bg-orange-100 flex items-center justify-center flex-shrink-0">
+                                            <ClipboardListIcon className="h-6 w-6 text-orange-600" />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-bold text-gray-900 group-hover:text-orange-600 transition-colors">Đơn hàng #{order.id.substring(0, 8).toUpperCase()}</h3>
+                                            <div className="flex items-center text-xs text-gray-500 mt-1 space-x-3">
+                                                <span className="flex items-center"><ClockIcon className="h-3.5 w-3.5 mr-1" /> {formatDate(order.created_at)}</span>
+                                                <span className="flex items-center"><CashIcon className="h-3.5 w-3.5 mr-1" /> {order.payment_method === 'CASH' ? 'Tiền mặt' : 'Chuyển khoản'}</span>
+                                            </div>
+                                            {discountVal > 0 && (
+                                                <div className="flex items-center text-[10px] text-green-600 font-black mt-1 uppercase tracking-tight">
+                                                    <TagIcon className="h-3 w-3 mr-1" /> Đã giảm {formatCurrency(discountVal)}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
-                                </div>
-                                <div className="flex items-center justify-between sm:justify-end sm:space-x-6">
-                                    <div className="text-right">
-                                        <p className="text-lg font-black text-gray-900">{formatCurrency(order.total_amount)}</p>
-                                        <span className={`inline-block px-2.5 py-0.5 mt-1 rounded-full text-[10px] font-black uppercase border ${getStatusColor(order.status)}`}>
-                                            {order.status}
-                                        </span>
+                                    <div className="flex items-center justify-between sm:justify-end sm:space-x-6">
+                                        <div className="text-right">
+                                            <p className="text-lg font-black text-gray-900">{formatCurrency(order.total_amount)}</p>
+                                            <span className={`inline-block px-2.5 py-0.5 mt-1 rounded-full text-[10px] font-black uppercase border ${getStatusColor(order.status)}`}>
+                                                {order.status}
+                                            </span>
+                                        </div>
+                                        <ChevronRightIcon className="h-5 w-5 text-gray-300 group-hover:text-orange-500 transition-colors hidden sm:block" />
                                     </div>
-                                    <ChevronRightIcon className="h-5 w-5 text-gray-300 group-hover:text-orange-500 transition-colors hidden sm:block" />
                                 </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             ) : (
                 <div className="bg-white rounded-2xl border-2 border-dashed border-gray-200 py-20 text-center">
