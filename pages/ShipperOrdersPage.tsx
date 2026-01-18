@@ -99,6 +99,8 @@ const ShipperOrdersPage: React.FC = () => {
                 driver_id: driverId || undefined
             });
 
+            // Cập nhật state local để chuyển UI ngay
+            setActiveTrip(prev => prev ? { ...prev, status: 'Accepted' } : null);
             setPageState('delivery-in-progress');
         } catch (err: any) {
             alert(err.message || "Lỗi khi chấp nhận đơn hàng.");
@@ -140,6 +142,10 @@ const ShipperOrdersPage: React.FC = () => {
             
             // 3. Tự động chuyển Trip sang 'InTransit' (Đang di chuyển trên đường)
             await shipperApiService.updateTripStatus(activeTrip.id, 'InTransit');
+
+            // CẬP NHẬT STATE LOCAL: Chuyển status của activeTrip sang 'InTransit'
+            // Điều này sẽ làm cho component DeliveryInProgress chuyển từ nút "Lấy hàng" sang "Giao hàng"
+            setActiveTrip(prev => prev ? { ...prev, status: 'InTransit' } : null);
         } catch (err: any) {
             alert(err.message || "Lỗi khi cập nhật trạng thái đã lấy hàng.");
         } finally {
@@ -152,15 +158,15 @@ const ShipperOrdersPage: React.FC = () => {
 
         setIsActionLoading(true);
         try {
-            // SỬ DỤNG API COMPLETE MỚI THEO YÊU CẦU
+            // SỬ DỤNG API COMPLETE MỚI THEO YÊU CẦU: Body rỗng {}
             await shipperApiService.completeTrip(activeTrip.id);
 
             // Cập nhật Order sang 'delivered' trên Order Service
             await orderApiService.updateOrder(activeTrip.orderId, { status: 'delivered' });
 
             alert('Giao hàng thành công!');
-            setPageState('waiting');
             setActiveTrip(null);
+            setPageState('waiting');
         } catch (err: any) {
             alert(err.message || 'Lỗi khi hoàn thành đơn hàng.');
         } finally {
