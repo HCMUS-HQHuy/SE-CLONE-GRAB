@@ -30,25 +30,32 @@ const ShipperOrdersPage: React.FC = () => {
         init();
     }, []);
 
-    // Cơ chế Polling kiểm tra Trips mới
+    // Cơ chế Polling kiểm tra Trips mới hoặc trạng thái hiện tại
     useEffect(() => {
-        if (!driverId || pageState !== 'waiting') {
-            if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
-            return;
-        }
+        if (!driverId) return;
 
         const pollTrips = async () => {
             try {
-                // Chỉ lấy các chuyến đi đang hoạt động
                 const data = await shipperApiService.getDriverTrips(driverId, true);
                 
-                // Tìm chuyến đi có trạng thái "Assigned" (Mới được gán, cần xác nhận)
+                // 1. Tìm đơn mới (Assigned)
                 const assignedTrip = data.items.find(trip => trip.status === 'Assigned');
-                
-                if (assignedTrip) {
+                if (assignedTrip && pageState === 'waiting') {
                     setActiveTrip(assignedTrip);
                     setPageState('new-order');
-                    setTimeLeft(30); // Reset timer cho đơn mới
+                    setTimeLeft(30);
+                    if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
+                    return;
+                }
+
+                // 2. Nếu đang có đơn đang giao, cập nhật activeTrip để đồng bộ UI
+                const inProgressTrip = data.items.find(trip => 
+                    ['Accepted', 'PickedUp', 'InTransit'].includes(trip.status)
+                );
+                
+                if (inProgressTrip) {
+                    setActiveTrip(inProgressTrip);
+                    setPageState('delivery-in-progress');
                     if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
                 }
             } catch (err) {
@@ -56,16 +63,17 @@ const ShipperOrdersPage: React.FC = () => {
             }
         };
 
-        // Chạy ngay lần đầu và sau đó mỗi 5 giây
-        pollTrips();
-        pollingIntervalRef.current = setInterval(pollTrips, 5000);
+        if (pageState === 'waiting') {
+            pollTrips();
+            pollingIntervalRef.current = setInterval(pollTrips, 5000);
+        }
 
         return () => {
             if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
         };
     }, [driverId, pageState]);
 
-    // Countdown timer cho màn hình nhận đơn
+    // Countdown timer
     useEffect(() => {
         if (pageState === 'new-order' && timeLeft > 0) {
             const timer = setTimeout(() => {
@@ -82,10 +90,10 @@ const ShipperOrdersPage: React.FC = () => {
         
         setIsActionLoading(true);
         try {
-            // 1. Chấp nhận Trip trên Shipper Service (8001)
+            // Cập nhật Trip sang 'Accepted'
             await shipperApiService.updateTripStatus(activeTrip.id, 'Accepted');
             
-            // 2. Cập nhật trạng thái Order trên Order Service (8002) sang 'driver_accepted'
+            // Cập nhật Order sang 'driver_accepted'
             await orderApiService.updateOrder(activeTrip.orderId, { 
                 status: 'driver_accepted',
                 driver_id: driverId || undefined
@@ -93,7 +101,7 @@ const ShipperOrdersPage: React.FC = () => {
 
             setPageState('delivery-in-progress');
         } catch (err: any) {
-            alert(err.message || "Không thể nhận đơn hàng này. Có thể đơn đã hết hạn hoặc được gán cho người khác.");
+            alert(err.message || "Lỗi khi chấp nhận đơn hàng.");
             setPageState('waiting');
             setActiveTrip(null);
         } finally {
@@ -109,7 +117,6 @@ const ShipperOrdersPage: React.FC = () => {
 
         setIsActionLoading(true);
         try {
-            // Cập nhật trạng thái Trip thành 'Rejected'
             await shipperApiService.updateTripStatus(activeTrip.id, 'Rejected');
         } catch (err) {
             console.error("Lỗi từ chối đơn hàng:", err);
@@ -125,10 +132,13 @@ const ShipperOrdersPage: React.FC = () => {
 
         setIsActionLoading(true);
         try {
-            // 1. Cập nhật Order sang 'delivering' (đang vận chuyển)
+            // 1. Cập nhật Trip sang 'PickedUp' (Đã lấy hàng)
+            await shipperApiService.updateTripStatus(activeTrip.id, 'PickedUp');
+            
+            // 2. Cập nhật Order sang 'delivering' (Đang vận chuyển)
             await orderApiService.updateOrder(activeTrip.orderId, { status: 'delivering' });
             
-            // 2. Cập nhật Trip sang 'InTransit' (đang di chuyển)
+            // 3. Tự động chuyển Trip sang 'InTransit' (Đang di chuyển trên đường)
             await shipperApiService.updateTripStatus(activeTrip.id, 'InTransit');
         } catch (err: any) {
             alert(err.message || "Lỗi khi cập nhật trạng thái đã lấy hàng.");
@@ -142,23 +152,22 @@ const ShipperOrdersPage: React.FC = () => {
 
         setIsActionLoading(true);
         try {
-            // 1. Cập nhật Order sang 'delivered' (hoàn thành)
+            // 1. Cập nhật Trip sang 'Delivered'
+            await shipperApiService.updateTripStatus(activeTrip.id, 'Delivered');
+
+            // 2. Cập nhật Order sang 'delivered'
             await orderApiService.updateOrder(activeTrip.orderId, { status: 'delivered' });
-            
-            // 2. Cập nhật Trip sang 'Completed'
-            await shipperApiService.updateTripStatus(activeTrip.id, 'Completed');
 
             alert('Giao hàng thành công!');
             setPageState('waiting');
             setActiveTrip(null);
         } catch (err: any) {
-            alert(err.message || 'Lỗi khi hoàn thành chuyến đi.');
+            alert(err.message || 'Lỗi khi hoàn thành đơn hàng.');
         } finally {
             setIsActionLoading(false);
         }
     };
 
-    // Hàm format thông tin hiển thị từ dữ liệu Trip
     const getFormattedOrderData = () => {
         if (!activeTrip) return null;
 
@@ -172,6 +181,7 @@ const ShipperOrdersPage: React.FC = () => {
             customerAddress: customerDisplay,
             shippingFee: activeTrip.fare,
             distance: activeTrip.distanceKm || 0,
+            status: activeTrip.status
         };
     };
 
@@ -189,7 +199,7 @@ const ShipperOrdersPage: React.FC = () => {
                             </div>
                         </div>
                         <h3 className="text-2xl font-black text-gray-900">Bạn đang Online</h3>
-                        <p className="text-gray-500 mt-2 font-medium">Hệ thống đang tìm kiếm đơn hàng phù hợp với vị trí của bạn...</p>
+                        <p className="text-gray-500 mt-2 font-medium">Hệ thống đang tìm kiếm đơn hàng phù hợp...</p>
                         <div className="mt-8 flex items-center justify-center space-x-2 text-xs font-bold text-green-600 bg-green-50 px-4 py-2 rounded-full w-fit mx-auto">
                             <span className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></span>
                             <span>SẴN SÀNG NHẬN ĐƠN</span>
@@ -220,7 +230,6 @@ const ShipperOrdersPage: React.FC = () => {
 
     return (
         <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 relative">
-            {/* Overlay loading khi thực hiện action */}
             {isActionLoading && (
                 <div className="fixed inset-0 bg-white/50 backdrop-blur-[1px] z-50 flex items-center justify-center">
                     <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500"></div>

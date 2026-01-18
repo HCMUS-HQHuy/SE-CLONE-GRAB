@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { LocationMarkerIcon, HomeIcon, CheckCircleIcon, PhoneIcon } from './Icons';
 
 type OrderInfo = {
@@ -7,6 +7,7 @@ type OrderInfo = {
   restaurantName: string;
   restaurantAddress: string;
   customerAddress: string;
+  status?: string;
 };
 
 type DeliveryInProgressProps = {
@@ -15,17 +16,16 @@ type DeliveryInProgressProps = {
   onCompleteDelivery: () => Promise<void>;
 };
 
-type DeliveryStatus = 'picking_up' | 'delivering';
-
 const DeliveryInProgress: React.FC<DeliveryInProgressProps> = ({ order, onPickup, onCompleteDelivery }) => {
-    const [status, setStatus] = useState<DeliveryStatus>('picking_up');
     const [isLoading, setIsLoading] = useState(false);
+
+    // Xác định trạng thái UI dựa trên status của Trip
+    const isPickedUp = order.status === 'PickedUp' || order.status === 'InTransit';
 
     const handlePickupAction = async () => {
         setIsLoading(true);
         try {
             await onPickup();
-            setStatus('delivering');
         } catch (err) {
             console.error(err);
         } finally {
@@ -48,7 +48,7 @@ const DeliveryInProgress: React.FC<DeliveryInProgressProps> = ({ order, onPickup
         <div className="bg-white p-6 rounded-lg shadow-md border max-w-4xl mx-auto">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Đang giao đơn hàng {order.id}</h2>
             <p className="text-gray-500 mb-6">
-                {status === 'picking_up' 
+                {!isPickedUp
                     ? 'Bạn đang trên đường đến nhà hàng để lấy món.' 
                     : 'Món ăn đã được lấy! Vui lòng giao đến địa chỉ của khách hàng.'}
             </p>
@@ -64,9 +64,9 @@ const DeliveryInProgress: React.FC<DeliveryInProgressProps> = ({ order, onPickup
                     </div>
 
                     <div className="space-y-4">
-                        <div className={`flex items-start transition-opacity ${status === 'delivering' ? 'opacity-50' : 'opacity-100'}`}>
-                            <div className={`mt-1 mr-4 flex-shrink-0 h-8 w-8 rounded-full flex items-center justify-center ${status === 'picking_up' ? 'bg-red-100 animate-pulse' : 'bg-gray-100'}`}>
-                                <LocationMarkerIcon className={`h-5 w-5 ${status === 'picking_up' ? 'text-red-600' : 'text-gray-400'}`}/>
+                        <div className={`flex items-start transition-opacity ${isPickedUp ? 'opacity-50' : 'opacity-100'}`}>
+                            <div className={`mt-1 mr-4 flex-shrink-0 h-8 w-8 rounded-full flex items-center justify-center ${!isPickedUp ? 'bg-red-100 animate-pulse' : 'bg-gray-100'}`}>
+                                <LocationMarkerIcon className={`h-5 w-5 ${!isPickedUp ? 'text-red-600' : 'text-gray-400'}`}/>
                             </div>
                             <div>
                                 <p className="text-[10px] font-bold text-gray-400 uppercase">Điểm lấy hàng</p>
@@ -77,9 +77,9 @@ const DeliveryInProgress: React.FC<DeliveryInProgressProps> = ({ order, onPickup
                         
                         <div className="h-8 w-px bg-gray-200 ml-4"></div>
                         
-                        <div className={`flex items-start transition-opacity ${status === 'picking_up' ? 'opacity-50' : 'opacity-100'}`}>
-                             <div className={`mt-1 mr-4 flex-shrink-0 h-8 w-8 rounded-full flex items-center justify-center ${status === 'delivering' ? 'bg-blue-100 animate-pulse' : 'bg-gray-100'}`}>
-                                <HomeIcon className={`h-5 w-5 ${status === 'delivering' ? 'text-blue-600' : 'text-gray-400'}`}/>
+                        <div className={`flex items-start transition-opacity ${!isPickedUp ? 'opacity-50' : 'opacity-100'}`}>
+                             <div className={`mt-1 mr-4 flex-shrink-0 h-8 w-8 rounded-full flex items-center justify-center ${isPickedUp ? 'bg-blue-100 animate-pulse' : 'bg-gray-100'}`}>
+                                <HomeIcon className={`h-5 w-5 ${isPickedUp ? 'text-blue-600' : 'text-gray-400'}`}/>
                             </div>
                             <div>
                                 <p className="text-[10px] font-bold text-gray-400 uppercase">Điểm giao hàng</p>
@@ -94,7 +94,7 @@ const DeliveryInProgress: React.FC<DeliveryInProgressProps> = ({ order, onPickup
                 <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100">
                     <h3 className="text-lg font-black text-gray-900 mb-6 uppercase tracking-tight">Quy trình giao hàng</h3>
                     
-                    {status === 'picking_up' && (
+                    {!isPickedUp ? (
                         <div className="space-y-4">
                             <button
                                 onClick={handlePickupAction}
@@ -108,9 +108,7 @@ const DeliveryInProgress: React.FC<DeliveryInProgressProps> = ({ order, onPickup
                                 Gọi cho nhà hàng
                             </button>
                         </div>
-                    )}
-
-                    {status === 'delivering' && (
+                    ) : (
                         <div className="space-y-4">
                             <button
                                 onClick={handleCompleteAction}
@@ -128,7 +126,7 @@ const DeliveryInProgress: React.FC<DeliveryInProgressProps> = ({ order, onPickup
 
                     <div className="mt-8 pt-6 border-t border-gray-200">
                         <p className="text-xs text-gray-400 italic text-center">
-                            Lưu ý: Mọi thay đổi trạng thái sẽ được thông báo ngay lập tức cho Khách hàng và Nhà hàng.
+                            Trạng thái hiện tại: <span className="font-bold text-orange-500 uppercase">{order.status}</span>
                         </p>
                     </div>
                 </div>

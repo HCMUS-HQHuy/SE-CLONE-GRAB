@@ -38,10 +38,12 @@ export interface DriversResponse {
   hasNextPage: boolean;
 }
 
+export type TripStatus = 'Assigned' | 'Accepted' | 'PickedUp' | 'InTransit' | 'Delivered' | 'Cancelled' | 'Failed' | 'Rejected';
+
 export interface TripItem {
   id: string;
   orderId: string;
-  status: string; // "Assigned", "Accepted", "InTransit", "Completed", "Cancelled"
+  status: TripStatus;
   pickupAddress: string;
   deliveryAddress: string;
   fare: number;
@@ -185,7 +187,7 @@ export const shipperApiService = {
     return await response.json();
   },
 
-  async updateTripStatus(tripId: string, status: 'Accepted' | 'Rejected' | 'InTransit' | 'Completed'): Promise<void> {
+  async updateTripStatus(tripId: string, status: TripStatus): Promise<void> {
     const response = await fetch(`${SHIPPER_SERVICE_URL}/api/Trips/${tripId}/status`, {
       method: 'PATCH',
       headers: {
@@ -193,7 +195,7 @@ export const shipperApiService = {
         'Accept': '*/*',
         ...apiService.getAuthHeaders('shipper'),
       },
-      body: JSON.stringify({ status }), // Sử dụng field 'status' thay vì 'action'
+      body: JSON.stringify({ status }),
     });
 
     if (!response.ok) {
