@@ -1,146 +1,180 @@
-import React, { useState, useMemo } from 'react';
-import { CashIcon, ClipboardListIcon, TrendingUpIcon, CheckCircleIcon, XCircleIcon } from '../components/Icons';
-import HistoryDetailModal from '../components/HistoryDetailModal';
+import React, { useState, useMemo, useEffect } from 'react';
+import { CashIcon, ClipboardListIcon, TrendingUpIcon, CheckCircleIcon, XCircleIcon, ClockIcon } from '../components/Icons';
+import { shipperApiService, Transaction } from '../services/shipperApi';
+import { apiService } from '../services/api';
 
-// Types
-export type HistoryStatus = 'Hoàn thành' | 'Đã hủy';
-
+// ADDED: Export DeliveryHistory type for use in HistoryDetailModal to fix the build error.
 export type DeliveryHistory = {
   id: string;
-  customerName: string;
+  date: string;
+  status: string;
   restaurantName: string;
   restaurantAddress: string;
+  customerName: string;
   customerAddress: string;
-  date: string;
   earnings: number;
-  status: HistoryStatus;
-  review?: {
-    rating: number;
-    comment: string;
-  };
   earningsDetail: {
     deliveryFee: number;
     bonus: number;
   };
+  review?: {
+    rating: number;
+    comment: string;
+  };
 };
 
-// Mock data
-const mockHistory: DeliveryHistory[] = [
-    { id: '#12348', customerName: 'Phạm Thị D', restaurantName: 'Quán Ăn Gỗ', restaurantAddress: '123 Đường Lê Lợi, Quận 1, TP.HCM', customerAddress: '101 Đường OPQ, Bình Thạnh, TPHCM', date: '2024-07-30T09:30:00Z', earnings: 25000, status: 'Hoàn thành', review: { rating: 5, comment: 'Giao hàng nhanh, tài xế thân thiện!' }, earningsDetail: { deliveryFee: 20000, bonus: 5000 } },
-    { id: '#12349', customerName: 'Võ Văn E', restaurantName: 'Quán Ăn Gỗ', restaurantAddress: '123 Đường Lê Lợi, Quận 1, TP.HCM', customerAddress: '222 Đường UVW, Q2, TPHCM', date: '2024-07-29T12:00:00Z', earnings: 0, status: 'Đã hủy', earningsDetail: { deliveryFee: 0, bonus: 0 } },
-    { id: '#12341', customerName: 'Hoàng A', restaurantName: 'Bếp Việt', restaurantAddress: '45 Phạm Ngọc Thạch, Quận 3, TP.HCM', customerAddress: '333 Đinh Tiên Hoàng, Q1, TPHCM', date: '2024-07-28T18:45:00Z', earnings: 22000, status: 'Hoàn thành', earningsDetail: { deliveryFee: 22000, bonus: 0 } },
-    { id: '#12335', customerName: 'Lê B', restaurantName: 'Phở Ngon 3 Miền', restaurantAddress: '212 Nguyễn Trãi, Quận 5, TP.HCM', customerAddress: '444 Nguyễn Huệ, Q1, TPHCM', date: '2024-07-25T11:20:00Z', earnings: 30000, status: 'Hoàn thành', review: { rating: 4, comment: 'Ok' }, earningsDetail: { deliveryFee: 20000, bonus: 10000 } },
-    { id: '#12330', customerName: 'Trần C', restaurantName: 'Ốc Đảo', restaurantAddress: '88 Nguyễn Thị Thập, Quận 7, TP.HCM', customerAddress: '555 Trần Hưng Đạo, Q5, TPHCM', date: '2024-07-20T20:10:00Z', earnings: 28000, status: 'Hoàn thành', earningsDetail: { deliveryFee: 28000, bonus: 0 } },
-];
+const formatCurrency = (amount: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount).replace(/\s/g, '');
 
-
-const formatCurrency = (amount: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
-const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString('vi-VN');
+const formatDateTime = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + date.toLocaleDateString('vi-VN');
+};
 
 const SummaryCard: React.FC<{ icon: React.ReactNode; title: string; value: string | number; }> = ({ icon, title, value }) => (
-    <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200 flex items-center space-x-4">
-        <div className="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center bg-orange-100 text-orange-600">
+    <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center space-x-4">
+        <div className="flex-shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center bg-orange-50 text-orange-500">
             {icon}
         </div>
         <div>
-            <p className="text-sm text-gray-500">{title}</p>
-            <p className="text-2xl font-bold text-gray-800">{value}</p>
+            <p className="text-xs font-black text-gray-400 uppercase tracking-widest">{title}</p>
+            <p className="text-2xl font-black text-gray-900 tracking-tight">{value}</p>
         </div>
     </div>
 );
 
-const StatusBadge: React.FC<{ status: HistoryStatus }> = ({ status }) => (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-        status === 'Hoàn thành' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-    }`}>
-        {status === 'Hoàn thành' ? <CheckCircleIcon className="h-4 w-4 mr-1.5"/> : <XCircleIcon className="h-4 w-4 mr-1.5"/>}
-        {status}
-    </span>
-);
-
 const ShipperHistoryPage: React.FC = () => {
-    const [filter, setFilter] = useState<'day' | 'week' | 'month'>('week');
-    const [selectedOrder, setSelectedOrder] = useState<DeliveryHistory | null>(null);
+    const [transactions, setTransactions] = useState<Transaction[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [driverId, setDriverId] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        const init = async () => {
+            try {
+                const me = await apiService.getMe('shipper');
+                setDriverId(me.id.toString());
+            } catch (err) {
+                console.error("Lỗi xác thực:", err);
+            }
+        };
+        init();
+    }, []);
+
+    useEffect(() => {
+        if (!driverId) return;
+
+        const fetchHistory = async () => {
+            setIsLoading(true);
+            try {
+                const data = await shipperApiService.getWalletTransactions(driverId);
+                setTransactions(data);
+            } catch (err: any) {
+                setError(err.message || "Lỗi tải lịch sử.");
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchHistory();
+    }, [driverId]);
 
     const summaryData = useMemo(() => {
-        // This is a mock summary. A real app would filter mockHistory by date.
-        const completedTrips = mockHistory.filter(h => h.status === 'Hoàn thành').length;
-        const totalEarnings = mockHistory.reduce((sum, h) => sum + h.earnings, 0);
+        const totalEarnings = transactions.reduce((sum, t) => t.isCredit ? sum + t.amount : sum, 0);
+        const completedTrips = transactions.filter(t => t.type === 'OrderEarning').length;
         return { trips: completedTrips, earnings: totalEarnings };
-    }, [filter]);
+    }, [transactions]);
+
+    if (isLoading) {
+        return (
+            <div className="min-h-[70vh] flex flex-col items-center justify-center">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500 mb-4"></div>
+                <p className="text-gray-500 font-bold tracking-tight">ĐANG TẢI LỊCH SỬ...</p>
+            </div>
+        );
+    }
 
     return (
         <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-6">Lịch sử giao hàng</h1>
-
-            {/* Filters and Summary */}
-            <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="md:col-span-1">
-                    <div className="flex space-x-1 bg-white p-1 rounded-lg border shadow-sm">
-                        {(['Hôm nay', 'Tuần này', 'Tháng này'] as const).map(f => (
-                            <button
-                                key={f}
-                                onClick={() => setFilter(f === 'Hôm nay' ? 'day' : f === 'Tuần này' ? 'week' : 'month')}
-                                className={`w-full px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                                    (filter === 'day' && f === 'Hôm nay') || (filter === 'week' && f === 'Tuần này') || (filter === 'month' && f === 'Tháng này')
-                                    ? 'bg-orange-500 text-white shadow'
-                                    : 'text-gray-600 hover:bg-orange-50'
-                                }`}
-                            >
-                                {f}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-                <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <SummaryCard icon={<TrendingUpIcon className="h-6 w-6"/>} title="Tổng thu nhập" value={formatCurrency(summaryData.earnings)} />
-                    <SummaryCard icon={<ClipboardListIcon className="h-6 w-6"/>} title="Tổng chuyến đi" value={summaryData.trips} />
-                </div>
+            <div className="mb-10">
+                <h1 className="text-4xl font-black text-gray-900 tracking-tight">Lịch sử hoạt động</h1>
+                <p className="text-gray-500 mt-2 font-medium">Theo dõi thu nhập và các chuyến đi của bạn.</p>
             </div>
 
-            {/* History Table */}
-            <div className="bg-white p-6 rounded-lg shadow-md border">
+            <div className="mb-10 grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <SummaryCard icon={<TrendingUpIcon className="h-7 w-7"/>} title="Tổng thu nhập" value={formatCurrency(summaryData.earnings)} />
+                <SummaryCard icon={<ClipboardListIcon className="h-7 w-7"/>} title="Chuyến đi hoàn tất" value={summaryData.trips} />
+            </div>
+
+            <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
+                    <table className="min-w-full divide-y divide-gray-100">
+                        <thead className="bg-gray-50/50">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Mã đơn</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Khách hàng / Nhà hàng</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ngày</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Thu nhập</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Hành động</th>
+                                <th className="px-8 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Thông tin giao dịch</th>
+                                <th className="px-8 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Thời gian</th>
+                                <th className="px-8 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Số tiền</th>
+                                <th className="px-8 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Số dư sau</th>
+                                <th className="px-8 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Trạng thái</th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {mockHistory.map(order => (
-                                <tr key={order.id} className="hover:bg-gray-50">
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-orange-600">{order.id}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                        <div className="font-medium text-gray-900">{order.customerName}</div>
-                                        <div className="text-gray-500">{order.restaurantName}</div>
+                        <tbody className="bg-white divide-y divide-gray-50">
+                            {transactions.length > 0 ? transactions.map(tx => (
+                                <tr key={tx.id} className="hover:bg-gray-50/80 transition-colors group">
+                                    <td className="px-8 py-6">
+                                        <div className="flex items-center">
+                                            <div className={`h-10 w-10 rounded-xl flex items-center justify-center mr-4 transition-transform group-hover:scale-110 ${tx.isCredit ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+                                                {tx.isCredit ? <CashIcon className="h-5 w-5"/> : <XCircleIcon className="h-5 w-5"/>}
+                                            </div>
+                                            <div>
+                                                <div className="text-sm font-black text-gray-900 group-hover:text-orange-600 transition-colors">
+                                                    {tx.orderId ? `Đơn hàng #${tx.orderId.substring(0, 8).toUpperCase()}` : tx.type}
+                                                </div>
+                                                <div className="text-[11px] text-gray-400 font-bold mt-0.5 line-clamp-1">{tx.description}</div>
+                                            </div>
+                                        </div>
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDate(order.date)}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">{formatCurrency(order.earnings)}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap"><StatusBadge status={order.status} /></td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                                        <button onClick={() => setSelectedOrder(order)} className="font-medium text-orange-600 hover:text-orange-800">
-                                            Xem chi tiết
-                                        </button>
+                                    <td className="px-8 py-6 whitespace-nowrap">
+                                        <div className="flex items-center text-xs font-bold text-gray-500">
+                                            <ClockIcon className="h-3.5 w-3.5 mr-1.5 text-gray-300" />
+                                            {formatDateTime(tx.createdAt)}
+                                        </div>
+                                    </td>
+                                    <td className="px-8 py-6 whitespace-nowrap">
+                                        <span className={`text-sm font-black ${tx.isCredit ? 'text-green-600' : 'text-red-600'}`}>
+                                            {tx.isCredit ? '+' : '-'}{formatCurrency(tx.amount)}
+                                        </span>
+                                    </td>
+                                    <td className="px-8 py-6 whitespace-nowrap text-sm font-bold text-gray-400 tracking-tight">
+                                        {formatCurrency(tx.balanceAfter)}
+                                    </td>
+                                    <td className="px-8 py-6 whitespace-nowrap">
+                                        <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-green-50 text-green-700 border border-green-100">
+                                            <CheckCircleIcon className="h-3 w-3 mr-1.5"/>
+                                            Thành công
+                                        </span>
                                     </td>
                                 </tr>
-                            ))}
+                            )) : (
+                                <tr>
+                                    <td colSpan={5} className="px-8 py-32 text-center">
+                                        <div className="flex flex-col items-center">
+                                            <div className="h-16 w-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                                                <ClipboardListIcon className="h-8 w-8 text-gray-200" />
+                                            </div>
+                                            <p className="text-gray-400 font-bold tracking-tight italic">Chưa có giao dịch nào được ghi nhận.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>
             </div>
-
-            {selectedOrder && (
-                <HistoryDetailModal
-                    isOpen={!!selectedOrder}
-                    onClose={() => setSelectedOrder(null)}
-                    order={selectedOrder}
-                />
+            
+            {error && (
+                <div className="mt-6 p-4 bg-red-50 text-red-600 rounded-2xl border border-red-100 text-sm font-bold">
+                    Lỗi: {error}
+                </div>
             )}
         </div>
     );

@@ -62,6 +62,19 @@ export interface TripsResponse {
   hasNextPage: boolean;
 }
 
+export interface Transaction {
+  id: string;
+  type: string;
+  amount: number;
+  balanceBefore: number;
+  balanceAfter: number;
+  orderId: string | null;
+  reference: string | null;
+  description: string;
+  createdAt: string;
+  isCredit: boolean;
+}
+
 export const shipperApiService = {
   async createDriverProfile(data: CreateDriverRequest) {
     const formData = new FormData();
@@ -219,5 +232,27 @@ export const shipperApiService = {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.detail || errorData.title || 'Hoàn tất chuyến đi thất bại.');
     }
+  },
+
+  async getWalletTransactions(driverId: string, page = 1, pageSize = 20): Promise<Transaction[]> {
+    const params = new URLSearchParams({
+      pageNumber: page.toString(),
+      pageSize: pageSize.toString(),
+    });
+    
+    const response = await fetch(`${SHIPPER_SERVICE_URL}/api/drivers/${driverId}/wallet/transactions?${params.toString()}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        ...apiService.getAuthHeaders('shipper'),
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || 'Không thể lấy lịch sử giao dịch ví.');
+    }
+
+    return await response.json();
   }
 };
