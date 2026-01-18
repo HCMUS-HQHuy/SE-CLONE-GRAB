@@ -56,7 +56,7 @@ const UserOrderDetailModal: React.FC<Props> = ({ orderId, onClose }) => {
             <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
                 <div className="bg-white rounded-3xl p-10 flex flex-col items-center">
                     <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500 mb-4"></div>
-                    <p className="text-gray-500">Đang chuẩn bị thông tin...</p>
+                    <p className="text-gray-500 font-bold">ĐANG TẢI THÔNG TIN...</p>
                 </div>
             </div>
         );
@@ -75,18 +75,28 @@ const UserOrderDetailModal: React.FC<Props> = ({ orderId, onClose }) => {
         );
     }
 
+    // Định nghĩa các bước theo đúng yêu cầu hình ảnh
     const steps = [
-        { key: 'PENDING', label: 'Chờ xác nhận', icon: <ClockIcon className="h-5 w-5"/> },
-        { key: 'CONFIRMED', label: 'Đã xác nhận', icon: <CheckCircleIcon className="h-5 w-5"/> },
-        { key: 'PREPARING', label: 'Đang chế biến', icon: <ClipboardListIcon className="h-5 w-5"/> },
-        { key: 'SHIPPING', label: 'Đang giao hàng', icon: <LocationMarkerIcon className="h-5 w-5"/> },
-        { key: 'DELIVERED', label: 'Đã hoàn tất', icon: <CheckCircleIcon className="h-5 w-5"/> }
+        { label: 'CHỜ XÁC NHẬN', icon: <ClockIcon className="h-5 w-5"/> },
+        { label: 'ĐÃ XÁC NHẬN', icon: <CheckCircleIcon className="h-5 w-5"/> },
+        { label: 'ĐANG CHẾ BIẾN', icon: <ClipboardListIcon className="h-5 w-5"/> },
+        { label: 'ĐANG GIAO HÀNG', icon: <LocationMarkerIcon className="h-5 w-5"/> },
+        { label: 'ĐÃ HOÀN TẤT', icon: <CheckCircleIcon className="h-5 w-5"/> }
     ];
 
-    const currentIdx = steps.findIndex(s => s.key === order.status.toUpperCase());
-    const isCancelled = order.status.toUpperCase() === 'CANCELLED' || order.status.toUpperCase() === 'REJECTED';
+    // Logic mapping trạng thái API sang index của progress bar
+    const getActiveStepIndex = (status: string) => {
+        const s = status.toLowerCase();
+        if (s === 'pending_restaurant' || s === 'pending') return 0;
+        if (s === 'restaurant_accepted') return 2; // Nhận đơn là nhảy thẳng đến đang chế biến (bước 2)
+        if (s === 'driver_accepted' || s === 'delivering' || s === 'shipping') return 3;
+        if (s === 'delivered') return 4;
+        return -1;
+    };
+
+    const currentIdx = getActiveStepIndex(order.status);
+    const isCancelled = order.status.toUpperCase() === 'CANCELLED' || order.status.toUpperCase() === 'REJECTED' || order.status.toLowerCase() === 'restaurant_rejected';
     
-    // Logic tính toán số tiền chuẩn xác: Tổng = Tạm tính + Phí ship - Giảm giá
     const subtotal = parseFloat(order.subtotal || '0');
     const deliveryFee = parseFloat(order.delivery_fee || '0');
     const discountAmount = parseFloat(order.discount || '0');
@@ -94,129 +104,144 @@ const UserOrderDetailModal: React.FC<Props> = ({ orderId, onClose }) => {
 
     return (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm overflow-y-auto" onClick={onClose}>
-            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                <div className="p-6 border-b sticky top-0 bg-white z-10 flex justify-between items-center">
+            <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-3xl max-h-[95vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                <div className="p-8 border-b sticky top-0 bg-white z-10 flex justify-between items-center">
                     <div>
-                        <h2 className="text-xl font-black text-gray-900">Chi tiết đơn #{order.id.substring(0, 8).toUpperCase()}</h2>
-                        <p className="text-sm text-gray-500 mt-0.5">Tự động cập nhật mỗi 5 giây</p>
+                        <h2 className="text-2xl font-black text-gray-900 tracking-tight">Đơn hàng #{order.id.substring(0, 8).toUpperCase()}</h2>
+                        <p className="text-xs text-gray-400 mt-1 font-bold uppercase tracking-widest flex items-center">
+                            <span className="h-1.5 w-1.5 bg-green-500 rounded-full mr-2 animate-pulse"></span>
+                            Tự động cập nhật trực tuyến
+                        </p>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                        <XIcon className="h-6 w-6 text-gray-400" />
+                    <button onClick={onClose} className="p-3 hover:bg-gray-100 rounded-full transition-colors">
+                        <XIcon className="h-7 w-7 text-gray-400" />
                     </button>
                 </div>
 
-                <div className="p-6 space-y-8">
-                    <div className="bg-gray-50 rounded-3xl p-6 border border-gray-100">
+                <div className="p-8 space-y-10">
+                    {/* TRẠNG THÁI TIẾN TRÌNH (PROGRESS BAR) */}
+                    <div className="py-6">
                         {isCancelled ? (
-                            <div className="flex items-center space-x-3 text-red-600 bg-red-50 p-4 rounded-2xl border border-red-100">
-                                <XCircleIcon className="h-6 w-6" />
-                                <span className="font-bold">Đơn hàng đã bị hủy hoặc bị từ chối</span>
+                            <div className="flex items-center justify-center space-x-3 text-red-600 bg-red-50 p-6 rounded-[2rem] border-2 border-dashed border-red-100">
+                                <XCircleIcon className="h-8 w-8" />
+                                <span className="text-lg font-black uppercase tracking-tight">Đơn hàng đã bị hủy hoặc bị từ chối</span>
                             </div>
                         ) : (
-                            <div className="flex items-center justify-between relative px-2">
-                                {steps.map((step, idx) => {
-                                    const isActive = idx <= currentIdx;
-                                    return (
-                                        <div key={step.key} className="flex flex-col items-center relative z-10 flex-1">
-                                            <div className={`h-10 w-10 rounded-full flex items-center justify-center shadow-sm transition-all duration-500 ${
-                                                isActive ? 'bg-orange-500 text-white' : 'bg-white text-gray-300'
-                                            }`}>
-                                                {step.icon}
-                                            </div>
-                                            <p className={`text-[10px] mt-2 font-bold text-center uppercase tracking-tight ${
-                                                isActive ? 'text-orange-600' : 'text-gray-300'
-                                            }`}>{step.label}</p>
-                                        </div>
-                                    );
-                                })}
-                                <div className="absolute top-5 left-0 w-full h-0.5 bg-gray-200 -z-0">
+                            <div className="relative">
+                                {/* Thanh nối giữa các bước */}
+                                <div className="absolute top-6 left-[10%] right-[10%] h-0.5 bg-gray-100 -z-0">
                                     <div 
-                                        className="h-full bg-orange-500 transition-all duration-700" 
-                                        style={{ width: `${(currentIdx / (steps.length - 1)) * 100}%` }}
+                                        className="h-full bg-orange-500 transition-all duration-1000 ease-out" 
+                                        style={{ width: `${currentIdx >= 0 ? (currentIdx / (steps.length - 1)) * 100 : 0}%` }}
                                     ></div>
+                                </div>
+
+                                {/* Các vòng tròn trạng thái */}
+                                <div className="flex justify-between relative z-10">
+                                    {steps.map((step, idx) => {
+                                        const isActive = idx <= currentIdx;
+                                        return (
+                                            <div key={idx} className="flex flex-col items-center flex-1">
+                                                <div className={`h-12 w-12 rounded-full flex items-center justify-center shadow-lg transition-all duration-500 ${
+                                                    isActive 
+                                                    ? 'bg-orange-500 text-white scale-110 ring-4 ring-orange-50' 
+                                                    : 'bg-white text-gray-300 border-2 border-gray-100'
+                                                }`}>
+                                                    {step.icon}
+                                                </div>
+                                                <p className={`text-[10px] mt-4 font-black text-center leading-tight tracking-tight px-1 ${
+                                                    isActive ? 'text-orange-600' : 'text-gray-300'
+                                                }`}>
+                                                    {step.label}
+                                                </p>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         )}
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                        <div className="space-y-8">
                             <div>
-                                <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Nhà hàng</h3>
+                                <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Thông tin đối tác</h3>
                                 {restaurant ? (
-                                    <div className="flex items-center space-x-3">
-                                        <div className="h-10 w-10 rounded-lg bg-orange-100 flex items-center justify-center font-bold text-orange-600">
+                                    <div className="flex items-center space-x-4 bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                                        <div className="h-12 w-12 rounded-xl bg-orange-500 flex items-center justify-center font-black text-white shadow-md">
                                             {restaurant.name.charAt(0)}
                                         </div>
                                         <div>
-                                            <p className="font-bold text-gray-800">{restaurant.name}</p>
-                                            <div className="flex items-center text-xs text-gray-500">
-                                                <StarIcon className="h-3 w-3 text-yellow-400 mr-1" />
-                                                <span>{restaurant.rating.toFixed(1)}</span>
+                                            <p className="font-black text-gray-900 text-lg leading-tight">{restaurant.name}</p>
+                                            <div className="flex items-center text-xs text-orange-500 mt-1 font-bold">
+                                                <StarIcon className="h-3 w-3 mr-1" />
+                                                <span>{restaurant.rating.toFixed(1)} đánh giá</span>
                                             </div>
                                         </div>
                                     </div>
                                 ) : (
-                                    <p className="text-sm text-gray-500">Đang tải thông tin quán...</p>
+                                    <div className="animate-pulse flex space-x-4">
+                                        <div className="rounded-xl bg-gray-200 h-12 w-12"></div>
+                                        <div className="flex-1 space-y-2 py-1">
+                                            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                                            <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                                        </div>
+                                    </div>
                                 )}
                             </div>
 
                             <div>
-                                <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Giao đến</h3>
-                                <div className="space-y-2 text-sm text-gray-600">
-                                    <p className="flex items-start">
-                                        <LocationMarkerIcon className="h-4 w-4 mr-2 text-orange-500 mt-0.5 flex-shrink-0"/>
-                                        <span>{order.delivery_address}</span>
-                                    </p>
-                                    <p className="flex items-center">
-                                        <PhoneIcon className="h-4 w-4 mr-2 text-orange-500 flex-shrink-0"/>
-                                        <span>Thông tin liên hệ được bảo mật</span>
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div>
-                                <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Thanh toán</h3>
-                                <div className="flex items-center space-x-2 text-sm text-gray-600 bg-gray-50 p-3 rounded-xl">
-                                    <CashIcon className="h-5 w-5 text-gray-400"/>
-                                    <span className="font-bold">{order.payment_method === 'CASH' ? 'Tiền mặt khi nhận hàng' : 'Đã thanh toán chuyển khoản'}</span>
+                                <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Địa điểm giao hàng</h3>
+                                <div className="space-y-4 p-5 bg-gray-50 rounded-2xl border border-gray-100">
+                                    <div className="flex items-start">
+                                        <div className="h-8 w-8 bg-white rounded-lg flex items-center justify-center mr-3 shadow-sm text-orange-500 flex-shrink-0">
+                                            <LocationMarkerIcon className="h-4 w-4"/>
+                                        </div>
+                                        <span className="text-sm text-gray-700 font-bold leading-relaxed">{order.delivery_address}</span>
+                                    </div>
+                                    <div className="flex items-center border-t border-gray-200/50 pt-3">
+                                        <div className="h-8 w-8 bg-white rounded-lg flex items-center justify-center mr-3 shadow-sm text-blue-500 flex-shrink-0">
+                                            <PhoneIcon className="h-4 w-4"/>
+                                        </div>
+                                        <span className="text-xs text-gray-500 font-bold uppercase tracking-wider">Thông tin liên hệ bảo mật</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
                         <div>
-                            <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Món ăn đã chọn</h3>
-                            <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
-                                <ul className="divide-y divide-gray-50 max-h-48 overflow-y-auto">
+                            <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 ml-1">Tóm tắt món ăn</h3>
+                            <div className="bg-white border-2 border-gray-50 rounded-[2rem] overflow-hidden shadow-sm">
+                                <ul className="divide-y divide-gray-50 max-h-56 overflow-y-auto px-2">
                                     {order.items.map((item: any, idx: number) => (
-                                        <li key={idx} className="p-3 flex justify-between items-center text-sm">
-                                            <div className="flex items-center">
-                                                <span className="h-6 w-6 rounded bg-orange-50 text-orange-600 font-bold flex items-center justify-center mr-3 text-xs">
-                                                    {item.quantity}
+                                        <li key={idx} className="p-4 flex justify-between items-center group transition-colors hover:bg-gray-50/50">
+                                            <div className="flex items-center min-w-0">
+                                                <span className="h-7 w-7 rounded-lg bg-orange-50 text-orange-600 font-black flex items-center justify-center mr-4 text-[10px] flex-shrink-0">
+                                                    {item.quantity}x
                                                 </span>
-                                                <span className="text-gray-700 font-medium">{item.product_name}</span>
+                                                <span className="text-gray-900 font-bold text-sm truncate">{item.product_name}</span>
                                             </div>
-                                            <span className="font-bold text-gray-900">{formatCurrency(item.unit_price * item.quantity)}</span>
+                                            <span className="font-black text-gray-900 text-sm ml-4">{formatCurrency(item.unit_price * item.quantity)}</span>
                                         </li>
                                     ))}
                                 </ul>
-                                <div className="bg-orange-50 p-4 space-y-2 border-t border-orange-100">
-                                    <div className="flex justify-between text-xs text-gray-600">
+                                <div className="bg-orange-50/50 p-6 space-y-3 border-t-2 border-orange-100/50">
+                                    <div className="flex justify-between text-xs font-bold text-gray-500 uppercase tracking-wider">
                                         <span>Tạm tính</span>
-                                        <span className="font-medium text-gray-700">{formatCurrency(subtotal)}</span>
+                                        <span>{formatCurrency(subtotal)}</span>
                                     </div>
-                                    <div className="flex justify-between text-xs text-gray-600">
+                                    <div className="flex justify-between text-xs font-bold text-gray-500 uppercase tracking-wider">
                                         <span>Phí giao hàng</span>
-                                        <span className="font-medium text-gray-700">{formatCurrency(deliveryFee)}</span>
+                                        <span>{formatCurrency(deliveryFee)}</span>
                                     </div>
                                     {discountAmount > 0 && (
-                                        <div className="flex justify-between text-xs text-green-700 font-black">
-                                            <span className="flex items-center"><TagIcon className="h-3 w-3 mr-1" /> Giảm giá</span>
+                                        <div className="flex justify-between text-xs text-green-600 font-black uppercase tracking-wider">
+                                            <span className="flex items-center"><TagIcon className="h-3.5 w-3.5 mr-1.5" /> Giảm giá</span>
                                             <span>-{formatCurrency(discountAmount)}</span>
                                         </div>
                                     )}
-                                    <div className="flex justify-between text-xl font-black text-orange-600 border-t border-orange-200/50 pt-3 mt-2">
-                                        <span>Tổng thanh toán</span>
+                                    <div className="flex justify-between text-2xl font-black text-orange-600 border-t border-orange-200/30 pt-4 mt-2">
+                                        <span className="tracking-tighter">TỔNG CỘNG</span>
                                         <span>{formatCurrency(finalTotal)}</span>
                                     </div>
                                 </div>
@@ -225,12 +250,12 @@ const UserOrderDetailModal: React.FC<Props> = ({ orderId, onClose }) => {
                     </div>
                 </div>
 
-                <div className="p-6 border-t bg-gray-50/50 flex justify-end">
+                <div className="p-8 border-t bg-gray-50/30 flex justify-end">
                     <button 
                         onClick={onClose}
-                        className="px-8 py-3 bg-gray-900 text-white font-black rounded-2xl hover:bg-gray-800 transition-all shadow-lg active:scale-95"
+                        className="px-10 py-4 bg-gray-900 text-white font-black rounded-2xl hover:bg-gray-800 transition-all shadow-xl active:scale-95 text-lg tracking-tight"
                     >
-                        Đóng chi tiết
+                        ĐÓNG CHI TIẾT
                     </button>
                 </div>
             </div>
