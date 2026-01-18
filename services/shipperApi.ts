@@ -183,5 +183,22 @@ export const shipperApiService = {
     }
 
     return await response.json();
+  },
+
+  async updateTripStatus(tripId: string, action: 'Accepted' | 'Rejected'): Promise<void> {
+    const response = await fetch(`${SHIPPER_SERVICE_URL}/api/Trips/${tripId}/status`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': '*/*',
+        ...apiService.getAuthHeaders('shipper'),
+      },
+      body: JSON.stringify({ action }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || errorData.title || 'Cập nhật trạng thái chuyến đi thất bại.');
+    }
   }
 };

@@ -13,6 +13,7 @@ const ShipperOrdersPage: React.FC = () => {
     const [activeTrip, setActiveTrip] = useState<TripItem | null>(null);
     const [timeLeft, setTimeLeft] = useState(30);
     const [driverId, setDriverId] = useState<string | null>(null);
+    const [isActionLoading, setIsActionLoading] = useState(false);
     const pollingIntervalRef = useRef<any>(null);
 
     // Lấy thông tin driverId khi mount
@@ -37,7 +38,7 @@ const ShipperOrdersPage: React.FC = () => {
 
         const pollTrips = async () => {
             try {
-                // Chỉ lấy các chuyến đi đang hoạt động (Assigned, Accepted, InTransit)
+                // Chỉ lấy các chuyến đi đang hoạt động
                 const data = await shipperApiService.getDriverTrips(driverId, true);
                 
                 // Tìm chuyến đi có trạng thái "Assigned" (Mới được gán, cần xác nhận)
@@ -75,20 +76,43 @@ const ShipperOrdersPage: React.FC = () => {
         }
     }, [pageState, timeLeft]);
 
-    const handleAccept = () => {
-        // Trong thực tế sẽ gọi API PUT /api/Trips/{id}/accept
-        // Hiện tại giả lập chuyển trạng thái UI
-        setPageState('delivery-in-progress');
+    const handleAccept = async () => {
+        if (!activeTrip) return;
+        
+        setIsActionLoading(true);
+        try {
+            await shipperApiService.updateTripStatus(activeTrip.id, 'Accepted');
+            setPageState('delivery-in-progress');
+        } catch (err: any) {
+            alert(err.message || "Không thể nhận đơn hàng này. Có thể đơn đã hết hạn hoặc được gán cho người khác.");
+            setPageState('waiting');
+            setActiveTrip(null);
+        } finally {
+            setIsActionLoading(false);
+        }
     };
 
-    const handleDecline = () => {
-        // Trong thực tế sẽ gọi API PUT /api/Trips/{id}/decline
-        setPageState('waiting');
-        setActiveTrip(null);
+    const handleDecline = async () => {
+        if (!activeTrip) {
+            setPageState('waiting');
+            return;
+        }
+
+        setIsActionLoading(true);
+        try {
+            await shipperApiService.updateTripStatus(activeTrip.id, 'Rejected');
+        } catch (err) {
+            console.error("Lỗi từ chối đơn hàng:", err);
+            // Vẫn cho phép quay lại trạng thái chờ dù API lỗi (ví dụ đơn đã tự động hủy)
+        } finally {
+            setIsActionLoading(false);
+            setPageState('waiting');
+            setActiveTrip(null);
+        }
     };
 
     const handleCompleteDelivery = () => {
-        // Trong thực tế sẽ gọi API PUT /api/Trips/{id}/complete
+        // Tương tự, sẽ có API hoàn thành chuyến đi ở bước sau
         alert('Giao hàng thành công!');
         setPageState('waiting');
         setActiveTrip(null);
@@ -104,7 +128,7 @@ const ShipperOrdersPage: React.FC = () => {
 
         return {
             id: activeTrip.orderId.substring(0, 8).toUpperCase(),
-            restaurantName: "Nhà hàng đối tác", // Trip API chưa trả về tên quán, tạm dùng placeholder hoặc pickupAddress
+            restaurantName: "Nhà hàng đối tác",
             restaurantAddress: activeTrip.pickupAddress,
             customerAddress: customerDisplay,
             shippingFee: activeTrip.fare,
@@ -155,7 +179,14 @@ const ShipperOrdersPage: React.FC = () => {
     }
 
     return (
-        <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+        <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 relative">
+            {/* Overlay loading khi thực hiện action */}
+            {isActionLoading && (
+                <div className="fixed inset-0 bg-white/50 backdrop-blur-[1px] z-50 flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500"></div>
+                </div>
+            )}
+            
             <div className="flex justify-between items-center mb-8">
                 <h1 className="text-3xl font-black text-gray-900 tracking-tight">Điều phối Đơn hàng</h1>
                 {driverId && (
