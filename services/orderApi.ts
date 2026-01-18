@@ -20,6 +20,14 @@ export interface CreateOrderRequest {
   items: OrderItemRequest[];
 }
 
+export interface OrderUpdateData {
+  status?: string;
+  payment_status?: string;
+  driver_id?: string;
+  delivery_address?: string;
+  delivery_note?: string;
+}
+
 export interface OrderResponseData {
   id: string;
   user_id: string;
@@ -86,6 +94,25 @@ export const orderApiService = {
     return { items: result.data, total: result.total || result.data.length };
   },
 
+  async getRestaurantOrders(restaurantId: string, skip = 0, limit = 100): Promise<{ items: OrderResponseData[], total: number }> {
+    const params = new URLSearchParams({ skip: skip.toString(), limit: limit.toString() });
+    const response = await fetch(`${ORDER_SERVICE_URL}/api/v1/orders/restaurant/${restaurantId}?${params.toString()}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        ...apiService.getAuthHeaders('seller'),
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || 'Không thể tải đơn hàng của nhà hàng.');
+    }
+
+    const result: ApiResponse<OrderResponseData[]> = await response.json();
+    return { items: result.data, total: result.total || result.data.length };
+  },
+
   async getOrderById(orderId: string): Promise<OrderResponseData> {
     const response = await fetch(`${ORDER_SERVICE_URL}/api/v1/orders/${orderId}`, {
       method: 'GET',
@@ -98,6 +125,26 @@ export const orderApiService = {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.detail || 'Không tìm thấy chi tiết đơn hàng.');
+    }
+
+    const result: ApiResponse<OrderResponseData> = await response.json();
+    return result.data;
+  },
+
+  async updateOrder(orderId: string, data: OrderUpdateData): Promise<OrderResponseData> {
+    const response = await fetch(`${ORDER_SERVICE_URL}/api/v1/orders/${orderId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        ...apiService.getAuthHeaders('seller'),
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail?.[0]?.msg || errorData.detail || 'Cập nhật đơn hàng thất bại.');
     }
 
     const result: ApiResponse<OrderResponseData> = await response.json();
