@@ -175,7 +175,7 @@ const CheckoutPage: React.FC = () => {
             user_id: userMe.id.toString(),
             restaurant_id: restaurant.id,
             delivery_address: `${deliveryInfo.name} | ${deliveryInfo.phone} | ${deliveryInfo.address}`,
-            discount: discountAmount, // Gửi giá trị giảm giá thực tế
+            discount: discountAmount,
             delivery_note: deliveryNote,
             payment_method: paymentMethod === 'cash' ? 'CASH' : 'BANK_TRANSFER',
             items: items.map(item => ({
@@ -191,13 +191,12 @@ const CheckoutPage: React.FC = () => {
         const orderResponse = await orderApiService.createOrder(orderPayload);
         const orderId = orderResponse.id;
 
-        // 2. Nếu có mã giảm giá, cập nhật để giảm số lượng khuyến mãi đi 1 (update usage_limit)
+        // 2. Nếu có mã giảm giá, cập nhật để TĂNG used_count lên 1
         if (appliedPromo) {
             try {
-                // Theo logic "giảm số lượng discount đi 1", nếu usage_limit hiện tại là X thì cập nhật thành X - 1
-                const currentLimit = appliedPromo.usage_limit ?? 999999;
+                // Sử dụng API Update Discount mới theo yêu cầu: Cộng used_count thêm 1
                 await promotionApiService.updatePromotion(appliedPromo.id, { 
-                    usage_limit: Math.max(0, currentLimit - 1)
+                    used_count: (appliedPromo.used_count || 0) + 1
                 });
             } catch (e) { 
                 console.error("Lỗi cập nhật lượt dùng khuyến mãi:", e); 
@@ -362,7 +361,7 @@ const CheckoutPage: React.FC = () => {
             </h2>
             
             {appliedPromo ? (
-                <div className="bg-orange-50 border border-orange-200 p-4 rounded-xl flex justify-between items-center animate-in fade-in">
+                <div className="bg-orange-50 border border-orange-200 p-4 rounded-xl flex justify-between lệnh-center animate-in fade-in">
                     <div className="flex items-center">
                         <div className="bg-orange-500 text-white p-2 rounded-lg mr-4">
                             <TagIcon className="h-5 w-5" />

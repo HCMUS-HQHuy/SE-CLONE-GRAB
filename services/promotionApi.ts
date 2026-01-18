@@ -40,6 +40,7 @@ export interface UpdatePromotionRequest {
     is_active?: boolean;
     end_date?: string;
     usage_limit?: number;
+    used_count?: number; // Thêm trường used_count để cập nhật lượt dùng
 }
 
 export const promotionApiService = {
@@ -80,12 +81,13 @@ export const promotionApiService = {
   },
 
   async updatePromotion(promotionId: number, data: UpdatePromotionRequest): Promise<Promotion> {
+    // Endpoint: /api/v1/promotions/promotions/{promotion_id}
     const response = await fetch(`${PROMOTION_SERVICE_URL}/promotions/${promotionId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        ...apiService.getAuthHeaders('seller'),
+        ...apiService.getAuthHeaders('user'), // Sử dụng quyền user khi khách hàng thực hiện order
       },
       body: JSON.stringify(data),
     });
