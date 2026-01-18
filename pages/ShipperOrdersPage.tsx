@@ -5,6 +5,7 @@ import DeliveryInProgress from '../components/DeliveryInProgress';
 import { ClockIcon } from '../components/Icons';
 import { shipperApiService, TripItem } from '../services/shipperApi';
 import { apiService } from '../services/api';
+import { orderApiService } from '../services/orderApi';
 
 type PageState = 'waiting' | 'new-order' | 'delivery-in-progress';
 
@@ -81,8 +82,15 @@ const ShipperOrdersPage: React.FC = () => {
         
         setIsActionLoading(true);
         try {
-            // Cập nhật trạng thái thành 'Accepted'
+            // 1. Chấp nhận Trip trên Shipper Service (8001)
             await shipperApiService.updateTripStatus(activeTrip.id, 'Accepted');
+            
+            // 2. Cập nhật trạng thái Order trên Order Service (8002) sang 'driver_accepted'
+            await orderApiService.updateOrder(activeTrip.orderId, { 
+                status: 'driver_accepted',
+                driver_id: driverId || undefined
+            });
+
             setPageState('delivery-in-progress');
         } catch (err: any) {
             alert(err.message || "Không thể nhận đơn hàng này. Có thể đơn đã hết hạn hoặc được gán cho người khác.");
@@ -101,7 +109,7 @@ const ShipperOrdersPage: React.FC = () => {
 
         setIsActionLoading(true);
         try {
-            // Cập nhật trạng thái thành 'Rejected'
+            // Cập nhật trạng thái Trip thành 'Rejected'
             await shipperApiService.updateTripStatus(activeTrip.id, 'Rejected');
         } catch (err) {
             console.error("Lỗi từ chối đơn hàng:", err);
@@ -112,12 +120,34 @@ const ShipperOrdersPage: React.FC = () => {
         }
     };
 
+    const handlePickup = async () => {
+        if (!activeTrip) return;
+
+        setIsActionLoading(true);
+        try {
+            // 1. Cập nhật Order sang 'delivering' (đang vận chuyển)
+            await orderApiService.updateOrder(activeTrip.orderId, { status: 'delivering' });
+            
+            // 2. Cập nhật Trip sang 'InTransit' (đang di chuyển)
+            await shipperApiService.updateTripStatus(activeTrip.id, 'InTransit');
+        } catch (err: any) {
+            alert(err.message || "Lỗi khi cập nhật trạng thái đã lấy hàng.");
+        } finally {
+            setIsActionLoading(false);
+        }
+    };
+
     const handleCompleteDelivery = async () => {
         if (!activeTrip) return;
 
         setIsActionLoading(true);
         try {
+            // 1. Cập nhật Order sang 'delivered' (hoàn thành)
+            await orderApiService.updateOrder(activeTrip.orderId, { status: 'delivered' });
+            
+            // 2. Cập nhật Trip sang 'Completed'
             await shipperApiService.updateTripStatus(activeTrip.id, 'Completed');
+
             alert('Giao hàng thành công!');
             setPageState('waiting');
             setActiveTrip(null);
@@ -132,7 +162,6 @@ const ShipperOrdersPage: React.FC = () => {
     const getFormattedOrderData = () => {
         if (!activeTrip) return null;
 
-        // Bóc tách địa chỉ giao hàng (Tên | SĐT | Địa chỉ)
         const addrParts = activeTrip.deliveryAddress.split('|');
         const customerDisplay = addrParts.length >= 3 ? addrParts[2].trim() : activeTrip.deliveryAddress;
 
@@ -180,6 +209,7 @@ const ShipperOrdersPage: React.FC = () => {
                 return orderData && (
                      <DeliveryInProgress
                         order={orderData}
+                        onPickup={handlePickup}
                         onCompleteDelivery={handleCompleteDelivery}
                     />
                 );
