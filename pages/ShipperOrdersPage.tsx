@@ -81,6 +81,7 @@ const ShipperOrdersPage: React.FC = () => {
         
         setIsActionLoading(true);
         try {
+            // Cập nhật trạng thái thành 'Accepted'
             await shipperApiService.updateTripStatus(activeTrip.id, 'Accepted');
             setPageState('delivery-in-progress');
         } catch (err: any) {
@@ -100,10 +101,10 @@ const ShipperOrdersPage: React.FC = () => {
 
         setIsActionLoading(true);
         try {
+            // Cập nhật trạng thái thành 'Rejected'
             await shipperApiService.updateTripStatus(activeTrip.id, 'Rejected');
         } catch (err) {
             console.error("Lỗi từ chối đơn hàng:", err);
-            // Vẫn cho phép quay lại trạng thái chờ dù API lỗi (ví dụ đơn đã tự động hủy)
         } finally {
             setIsActionLoading(false);
             setPageState('waiting');
@@ -111,11 +112,20 @@ const ShipperOrdersPage: React.FC = () => {
         }
     };
 
-    const handleCompleteDelivery = () => {
-        // Tương tự, sẽ có API hoàn thành chuyến đi ở bước sau
-        alert('Giao hàng thành công!');
-        setPageState('waiting');
-        setActiveTrip(null);
+    const handleCompleteDelivery = async () => {
+        if (!activeTrip) return;
+
+        setIsActionLoading(true);
+        try {
+            await shipperApiService.updateTripStatus(activeTrip.id, 'Completed');
+            alert('Giao hàng thành công!');
+            setPageState('waiting');
+            setActiveTrip(null);
+        } catch (err: any) {
+            alert(err.message || 'Lỗi khi hoàn thành chuyến đi.');
+        } finally {
+            setIsActionLoading(false);
+        }
     };
 
     // Hàm format thông tin hiển thị từ dữ liệu Trip

@@ -185,7 +185,7 @@ export const shipperApiService = {
     return await response.json();
   },
 
-  async updateTripStatus(tripId: string, action: 'Accepted' | 'Rejected'): Promise<void> {
+  async updateTripStatus(tripId: string, status: 'Accepted' | 'Rejected' | 'InTransit' | 'Completed'): Promise<void> {
     const response = await fetch(`${SHIPPER_SERVICE_URL}/api/Trips/${tripId}/status`, {
       method: 'PATCH',
       headers: {
@@ -193,7 +193,7 @@ export const shipperApiService = {
         'Accept': '*/*',
         ...apiService.getAuthHeaders('shipper'),
       },
-      body: JSON.stringify({ action }),
+      body: JSON.stringify({ status }), // Sử dụng field 'status' thay vì 'action'
     });
 
     if (!response.ok) {
