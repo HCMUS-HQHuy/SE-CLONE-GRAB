@@ -18,18 +18,40 @@ export interface Driver {
   id: string;
   fullName: string;
   phoneNumber: string;
-  email: string; // Thêm email vào đây để phục vụ update profile
-  status: string; // Online, Offline, etc.
+  email: string;
+  status: string;
   verificationStatus: 'Pending' | 'Approved' | 'Rejected';
   profileImageUrl: string | null;
   citizenIdImageUrl: string;
   driverLicenseImageUrl: string;
   driverRegistrationImageUrl: string;
-  licenseNumber?: string; // Số bằng lái
+  licenseNumber?: string;
 }
 
 export interface DriversResponse {
   items: Driver[];
+  pageNumber: number;
+  totalPages: number;
+  totalCount: number;
+  pageSize: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
+}
+
+export interface TripItem {
+  id: string;
+  orderId: string;
+  status: string; // "Assigned", "Accepted", "InTransit", "Completed", "Cancelled"
+  pickupAddress: string;
+  deliveryAddress: string;
+  fare: number;
+  assignedAt: string;
+  deliveredAt: string | null;
+  distanceKm: number | null;
+}
+
+export interface TripsResponse {
+  items: TripItem[];
   pageNumber: number;
   totalPages: number;
   totalCount: number;
@@ -138,5 +160,28 @@ export const shipperApiService = {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.detail || 'Xác thực tài xế trên Shipper Service thất bại.');
     }
+  },
+
+  async getDriverTrips(driverId: string, activeOnly = false, page = 1, pageSize = 20): Promise<TripsResponse> {
+    const params = new URLSearchParams({
+      activeOnly: activeOnly.toString(),
+      pageNumber: page.toString(),
+      pageSize: pageSize.toString(),
+    });
+    
+    const response = await fetch(`${SHIPPER_SERVICE_URL}/api/Trips/driver/${driverId}?${params.toString()}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        ...apiService.getAuthHeaders('shipper'),
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || 'Không thể lấy danh sách chuyến đi.');
+    }
+
+    return await response.json();
   }
 };
