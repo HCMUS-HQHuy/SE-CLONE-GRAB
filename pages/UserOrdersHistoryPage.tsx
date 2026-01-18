@@ -106,7 +106,12 @@ const UserOrdersHistoryPage: React.FC = () => {
             {orders.length > 0 ? (
                 <div className="space-y-4">
                     {orders.map(order => {
+                        const subtotal = parseFloat(order.subtotal || '0');
+                        const deliveryFee = parseFloat(order.delivery_fee || '0');
                         const discountVal = parseFloat(order.discount || '0');
+                        // Tính toán tổng theo công thức yêu cầu
+                        const calculatedTotal = Math.max(0, subtotal + deliveryFee - discountVal);
+
                         return (
                             <div 
                                 key={order.id}
@@ -133,7 +138,7 @@ const UserOrdersHistoryPage: React.FC = () => {
                                     </div>
                                     <div className="flex items-center justify-between sm:justify-end sm:space-x-6">
                                         <div className="text-right">
-                                            <p className="text-lg font-black text-gray-900">{formatCurrency(order.total_amount)}</p>
+                                            <p className="text-lg font-black text-gray-900">{formatCurrency(calculatedTotal)}</p>
                                             <span className={`inline-block px-2.5 py-0.5 mt-1 rounded-full text-[10px] font-black uppercase border ${getStatusColor(order.status)}`}>
                                                 {order.status}
                                             </span>

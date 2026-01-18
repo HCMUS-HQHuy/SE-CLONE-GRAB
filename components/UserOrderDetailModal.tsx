@@ -85,7 +85,12 @@ const UserOrderDetailModal: React.FC<Props> = ({ orderId, onClose }) => {
 
     const currentIdx = steps.findIndex(s => s.key === order.status.toUpperCase());
     const isCancelled = order.status.toUpperCase() === 'CANCELLED' || order.status.toUpperCase() === 'REJECTED';
+    
+    // Logic tính toán số tiền chuẩn xác
+    const subtotal = parseFloat(order.subtotal || '0');
+    const deliveryFee = parseFloat(order.delivery_fee || '0');
     const discountAmount = parseFloat(order.discount || '0');
+    const finalTotal = Math.max(0, subtotal + deliveryFee - discountAmount);
 
     return (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm overflow-y-auto" onClick={onClose}>
@@ -195,14 +200,14 @@ const UserOrderDetailModal: React.FC<Props> = ({ orderId, onClose }) => {
                                         </li>
                                     ))}
                                 </ul>
-                                <div className="bg-orange-50 p-4 space-y-2">
+                                <div className="bg-orange-50 p-4 space-y-2 border-t border-orange-100">
                                     <div className="flex justify-between text-xs text-gray-600">
                                         <span>Tạm tính</span>
-                                        <span>{formatCurrency(order.subtotal)}</span>
+                                        <span className="font-medium text-gray-700">{formatCurrency(subtotal)}</span>
                                     </div>
                                     <div className="flex justify-between text-xs text-gray-600">
                                         <span>Phí giao hàng</span>
-                                        <span>{formatCurrency(order.delivery_fee)}</span>
+                                        <span className="font-medium text-gray-700">{formatCurrency(deliveryFee)}</span>
                                     </div>
                                     {discountAmount > 0 && (
                                         <div className="flex justify-between text-xs text-green-700 font-black">
@@ -210,9 +215,9 @@ const UserOrderDetailModal: React.FC<Props> = ({ orderId, onClose }) => {
                                             <span>-{formatCurrency(discountAmount)}</span>
                                         </div>
                                     )}
-                                    <div className="flex justify-between text-lg font-black text-orange-600 border-t border-orange-100 pt-2 mt-2">
+                                    <div className="flex justify-between text-xl font-black text-orange-600 border-t border-orange-200/50 pt-3 mt-2">
                                         <span>Tổng thanh toán</span>
-                                        <span>{formatCurrency(order.total_amount)}</span>
+                                        <span>{formatCurrency(finalTotal)}</span>
                                     </div>
                                 </div>
                             </div>
