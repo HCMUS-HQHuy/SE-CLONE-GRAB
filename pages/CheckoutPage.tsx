@@ -113,7 +113,7 @@ const CheckoutPage: React.FC = () => {
                 setPromoError('Mã giảm giá này chưa đến thời gian sử dụng.');
             } else if (now > end) {
                 setPromoError('Mã giảm giá này đã hết hạn.');
-            } else if (promo.usage_limit && promo.used_count >= promo.usage_limit) {
+            } else if (promo.usage_limit !== undefined && promo.used_count >= promo.usage_limit) {
                 setPromoError('Mã giảm giá này đã hết lượt sử dụng.');
             } else {
                 setAppliedPromo(promo);
@@ -170,11 +170,12 @@ const CheckoutPage: React.FC = () => {
     try {
         const userMe = await apiService.getMe('user');
         
-        // Chuẩn bị dữ liệu cho API
+        // Chuẩn bị dữ liệu cho API Order
         const orderPayload: CreateOrderRequest = {
             user_id: userMe.id.toString(),
             restaurant_id: restaurant.id,
             delivery_address: `${deliveryInfo.name} | ${deliveryInfo.phone} | ${deliveryInfo.address}`,
+            discount: discountAmount, // Gửi giá trị giảm giá thực tế
             delivery_note: deliveryNote,
             payment_method: paymentMethod === 'cash' ? 'CASH' : 'BANK_TRANSFER',
             items: items.map(item => ({
@@ -186,17 +187,21 @@ const CheckoutPage: React.FC = () => {
             }))
         };
 
-        // Gọi API tạo đơn hàng
+        // 1. Gọi API tạo đơn hàng
         const orderResponse = await orderApiService.createOrder(orderPayload);
         const orderId = orderResponse.id;
 
-        // Nếu có mã giảm giá, ta có thể gọi API cập nhật số lần xài ở đây (nếu backend chưa tự động xử lý)
+        // 2. Nếu có mã giảm giá, cập nhật để giảm số lượng khuyến mãi đi 1 (update usage_limit)
         if (appliedPromo) {
             try {
+                // Theo logic "giảm số lượng discount đi 1", nếu usage_limit hiện tại là X thì cập nhật thành X - 1
+                const currentLimit = appliedPromo.usage_limit ?? 999999;
                 await promotionApiService.updatePromotion(appliedPromo.id, { 
-                    used_count: (appliedPromo.used_count || 0) + 1 
-                } as any);
-            } catch (e) { console.error("Lỗi cập nhật số lần dùng promo:", e); }
+                    usage_limit: Math.max(0, currentLimit - 1)
+                });
+            } catch (e) { 
+                console.error("Lỗi cập nhật lượt dùng khuyến mãi:", e); 
+            }
         }
 
         const orderState = { 

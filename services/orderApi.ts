@@ -15,6 +15,7 @@ export interface CreateOrderRequest {
   user_id: string;
   restaurant_id: string;
   delivery_address: string;
+  discount: number; // Trường mới theo yêu cầu
   delivery_note: string;
   payment_method: string;
   items: OrderItemRequest[];
@@ -40,7 +41,7 @@ export interface OrderResponseData {
   delivery_note: string;
   subtotal: string;
   delivery_fee: string;
-  discount: string;
+  discount: string; // Trả về string theo schema mới
   total_amount: string;
   items: any[];
   created_at: string;
