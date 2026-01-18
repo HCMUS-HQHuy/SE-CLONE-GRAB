@@ -109,7 +109,7 @@ const UserOrdersHistoryPage: React.FC = () => {
                         const subtotal = parseFloat(order.subtotal || '0');
                         const deliveryFee = parseFloat(order.delivery_fee || '0');
                         const discountVal = parseFloat(order.discount || '0');
-                        // Tính toán tổng theo công thức yêu cầu
+                        // Tổng thanh toán = Tạm tính + Phí ship - Giảm giá
                         const calculatedTotal = Math.max(0, subtotal + deliveryFee - discountVal);
 
                         return (

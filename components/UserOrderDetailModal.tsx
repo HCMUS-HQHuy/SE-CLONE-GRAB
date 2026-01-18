@@ -86,7 +86,7 @@ const UserOrderDetailModal: React.FC<Props> = ({ orderId, onClose }) => {
     const currentIdx = steps.findIndex(s => s.key === order.status.toUpperCase());
     const isCancelled = order.status.toUpperCase() === 'CANCELLED' || order.status.toUpperCase() === 'REJECTED';
     
-    // Logic tính toán số tiền chuẩn xác
+    // Logic tính toán số tiền chuẩn xác: Tổng = Tạm tính + Phí ship - Giảm giá
     const subtotal = parseFloat(order.subtotal || '0');
     const deliveryFee = parseFloat(order.delivery_fee || '0');
     const discountAmount = parseFloat(order.discount || '0');

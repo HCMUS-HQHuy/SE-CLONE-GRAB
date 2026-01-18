@@ -208,10 +208,11 @@ export const shipperApiService = {
     const response = await fetch(`${SHIPPER_SERVICE_URL}/api/Trips/${tripId}/complete`, {
       method: 'POST',
       headers: {
+        'Content-Type': 'application/json',
         'Accept': '*/*',
         ...apiService.getAuthHeaders('shipper'),
       },
-      body: '',
+      body: JSON.stringify({}),
     });
 
     if (!response.ok) {
