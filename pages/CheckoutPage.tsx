@@ -1,11 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useStore } from 'zustand';
 import { useCart } from '../contexts/CartContext';
-import { HomeIcon, PencilIcon, CashIcon, CreditCardIcon, UserIcon, PhoneIcon, CheckCircleIcon } from '../components/Icons';
+import { HomeIcon, PencilIcon, CashIcon, CreditCardIcon, UserIcon, PhoneIcon, CheckCircleIcon, TagIcon, XIcon } from '../components/Icons';
 import { apiService } from '../services/api';
 import { profileApiService } from '../services/profileApi';
 import { orderApiService, CreateOrderRequest } from '../services/orderApi';
+import { promotionApiService, Promotion } from '../services/promotionApi';
 
 type PaymentMethod = 'cash' | 'bank_transfer';
 
@@ -26,13 +28,36 @@ const CheckoutPage: React.FC = () => {
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
 
+  // Trạng thái khuyến mãi
+  const [promoCode, setPromoCode] = useState('');
+  const [appliedPromo, setAppliedPromo] = useState<Promotion | null>(null);
+  const [promoError, setPromoError] = useState<string | null>(null);
+  const [isValidatingPromo, setIsValidatingPromo] = useState(false);
+
   const subtotal = items.reduce((sum, item) => {
     const price = parseFloat((item.newPrice || item.price || '0').replace(/\D/g, ''));
     return sum + price * item.quantity;
   }, 0);
 
   const deliveryFee = subtotal > 0 ? 15000 : 0;
-  const total = subtotal + deliveryFee;
+
+  // Tính toán giảm giá
+  const calculateDiscount = () => {
+    if (!appliedPromo) return 0;
+    
+    if (appliedPromo.discount_type === 'fixed_amount') {
+      return appliedPromo.discount_value;
+    } else {
+      let discount = (subtotal * appliedPromo.discount_value) / 100;
+      if (appliedPromo.max_discount_value > 0 && discount > appliedPromo.max_discount_value) {
+        discount = appliedPromo.max_discount_value;
+      }
+      return discount;
+    }
+  };
+
+  const discountAmount = calculateDiscount();
+  const total = Math.max(0, subtotal + deliveryFee - discountAmount);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
@@ -57,6 +82,54 @@ const CheckoutPage: React.FC = () => {
     } finally {
       setIsLoadingProfile(false);
     }
+  };
+
+  const handleApplyPromo = async () => {
+    if (!promoCode.trim() || !restaurant) return;
+    
+    setIsValidatingPromo(true);
+    setPromoError(null);
+    try {
+        const promotions = await promotionApiService.getRestaurantPromotions(restaurant.id);
+        const promo = promotions.find(p => p.code.toUpperCase() === promoCode.toUpperCase());
+        
+        if (!promo) {
+            setPromoError('Mã giảm giá không tồn tại.');
+            setAppliedPromo(null);
+        } else if (!promo.is_active) {
+            setPromoError('Mã giảm giá này hiện không khả dụng.');
+            setAppliedPromo(null);
+        } else if (subtotal < promo.min_order_value) {
+            setPromoError(`Đơn hàng tối thiểu ${formatCurrency(promo.min_order_value)} để dùng mã này.`);
+            setAppliedPromo(null);
+        } else {
+            // Kiểm tra ngày
+            const now = new Date();
+            const start = new Date(promo.start_date);
+            const end = new Date(promo.end_date);
+            end.setHours(23, 59, 59, 999);
+            
+            if (now < start) {
+                setPromoError('Mã giảm giá này chưa đến thời gian sử dụng.');
+            } else if (now > end) {
+                setPromoError('Mã giảm giá này đã hết hạn.');
+            } else if (promo.usage_limit && promo.used_count >= promo.usage_limit) {
+                setPromoError('Mã giảm giá này đã hết lượt sử dụng.');
+            } else {
+                setAppliedPromo(promo);
+                setPromoCode('');
+            }
+        }
+    } catch (err) {
+        setPromoError('Lỗi khi kiểm tra mã giảm giá.');
+    } finally {
+        setIsValidatingPromo(false);
+    }
+  };
+
+  const handleRemovePromo = () => {
+    setAppliedPromo(null);
+    setPromoError(null);
   };
 
   const handleSaveAddress = async () => {
@@ -109,13 +182,22 @@ const CheckoutPage: React.FC = () => {
                 product_name: item.name,
                 quantity: item.quantity,
                 unit_price: parseFloat((item.newPrice || item.price || '0').replace(/\D/g, '')),
-                note: "" // Note cho từng món nếu có
+                note: "" 
             }))
         };
 
         // Gọi API tạo đơn hàng
         const orderResponse = await orderApiService.createOrder(orderPayload);
         const orderId = orderResponse.id;
+
+        // Nếu có mã giảm giá, ta có thể gọi API cập nhật số lần xài ở đây (nếu backend chưa tự động xử lý)
+        if (appliedPromo) {
+            try {
+                await promotionApiService.updatePromotion(appliedPromo.id, { 
+                    used_count: (appliedPromo.used_count || 0) + 1 
+                } as any);
+            } catch (e) { console.error("Lỗi cập nhật số lần dùng promo:", e); }
+        }
 
         const orderState = { 
             restaurant, 
@@ -126,10 +208,8 @@ const CheckoutPage: React.FC = () => {
         };
 
         if (paymentMethod === 'bank_transfer') {
-            // Chuyển tới trang thanh toán, truyền Order ID thật
             navigate(`/user/payment/${orderId}`, { state: orderState });
         } else {
-            // Thanh toán tiền mặt: Xóa giỏ và đi tới trang Lịch sử đơn hàng để mở Modal
             clearCart();
             navigate(`/user/orders?newOrder=${orderId}`);
         }
@@ -268,6 +348,55 @@ const CheckoutPage: React.FC = () => {
                 />
             </div>
           </div>
+
+          {/* Promotion Section */}
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
+                 <TagIcon className="h-6 w-6 text-orange-500 mr-2" />
+                 Mã giảm giá
+            </h2>
+            
+            {appliedPromo ? (
+                <div className="bg-orange-50 border border-orange-200 p-4 rounded-xl flex justify-between items-center animate-in fade-in">
+                    <div className="flex items-center">
+                        <div className="bg-orange-500 text-white p-2 rounded-lg mr-4">
+                            <TagIcon className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-black text-orange-700 uppercase tracking-wider">{appliedPromo.code}</p>
+                            <p className="text-xs text-orange-600">{appliedPromo.name} - Giảm {formatCurrency(discountAmount)}</p>
+                        </div>
+                    </div>
+                    <button onClick={handleRemovePromo} className="p-2 text-orange-400 hover:text-orange-600">
+                        <XIcon className="h-5 w-5" />
+                    </button>
+                </div>
+            ) : (
+                <div className="space-y-4">
+                    <div className="flex space-x-2">
+                        <input 
+                            type="text" 
+                            value={promoCode}
+                            onChange={e => setPromoCode(e.target.value)}
+                            placeholder="Nhập mã khuyến mãi..."
+                            className="flex-grow p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none uppercase font-bold"
+                        />
+                        <button 
+                            onClick={handleApplyPromo}
+                            disabled={isValidatingPromo || !promoCode.trim()}
+                            className="bg-orange-500 text-white px-6 py-3 rounded-xl font-bold hover:bg-orange-600 disabled:opacity-50 transition-all"
+                        >
+                            {isValidatingPromo ? '...' : 'ÁP DỤNG'}
+                        </button>
+                    </div>
+                    {promoError && (
+                        <p className="text-xs font-bold text-red-500 flex items-center">
+                           <XIcon className="h-3 w-3 mr-1" /> {promoError}
+                        </p>
+                    )}
+                </div>
+            )}
+          </div>
           
            {/* Payment Method Selection */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
@@ -292,7 +421,7 @@ const CheckoutPage: React.FC = () => {
                     <CreditCardIcon className="h-8 w-8 text-blue-500 mr-3"/>
                     <div className="text-left">
                         <span className="block text-sm font-bold text-gray-900">Chuyển khoản</span>
-                        <span className="block text-xs text-gray-500">Techcombank / MOMO</span>
+                        <span className="block text-xs text-gray-500">Nội dung: Mã Đơn Hàng</span>
                     </div>
                 </span>
               </label>
@@ -346,10 +475,12 @@ const CheckoutPage: React.FC = () => {
                       <span className="text-gray-500">Phí giao hàng</span>
                       <span className="font-bold text-gray-800">{formatCurrency(deliveryFee)}</span>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Giảm giá</span>
-                      <span className="font-bold text-green-600">- {formatCurrency(0)}</span>
-                    </div>
+                    {discountAmount > 0 && (
+                        <div className="flex justify-between text-sm">
+                            <span className="text-green-600 font-bold">Khuyến mãi ({appliedPromo?.code})</span>
+                            <span className="font-bold text-green-600">- {formatCurrency(discountAmount)}</span>
+                        </div>
+                    )}
                      <div className="flex justify-between text-2xl font-black border-t pt-4 mt-4">
                       <span className="text-gray-900">Tổng</span>
                       <span className="text-orange-500">{formatCurrency(total)}</span>
