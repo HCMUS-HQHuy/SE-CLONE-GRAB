@@ -35,6 +35,13 @@ export interface CreatePromotionRequest {
   usage_limit?: number;
 }
 
+export interface UpdatePromotionRequest {
+    description?: string;
+    is_active?: boolean;
+    end_date?: string;
+    usage_limit?: number;
+}
+
 export const promotionApiService = {
   async getRestaurantPromotions(restaurantId: string | number): Promise<Promotion[]> {
     const response = await fetch(`${PROMOTION_SERVICE_URL}/restaurants/${restaurantId}/promotions`, {
@@ -72,7 +79,7 @@ export const promotionApiService = {
     return await response.json();
   },
 
-  async updatePromotion(promotionId: number, data: Partial<CreatePromotionRequest> & { is_active?: boolean }): Promise<Promotion> {
+  async updatePromotion(promotionId: number, data: UpdatePromotionRequest): Promise<Promotion> {
     const response = await fetch(`${PROMOTION_SERVICE_URL}/promotions/${promotionId}`, {
       method: 'PUT',
       headers: {

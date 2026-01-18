@@ -202,5 +202,21 @@ export const shipperApiService = {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.detail || errorData.title || 'Cập nhật trạng thái chuyến đi thất bại.');
     }
+  },
+
+  async completeTrip(tripId: string): Promise<void> {
+    const response = await fetch(`${SHIPPER_SERVICE_URL}/api/Trips/${tripId}/complete`, {
+      method: 'POST',
+      headers: {
+        'Accept': '*/*',
+        ...apiService.getAuthHeaders('shipper'),
+      },
+      body: '',
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || errorData.title || 'Hoàn tất chuyến đi thất bại.');
+    }
   }
 };

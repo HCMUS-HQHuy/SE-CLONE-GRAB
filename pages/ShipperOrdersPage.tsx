@@ -152,10 +152,10 @@ const ShipperOrdersPage: React.FC = () => {
 
         setIsActionLoading(true);
         try {
-            // 1. Cập nhật Trip sang 'Delivered'
-            await shipperApiService.updateTripStatus(activeTrip.id, 'Delivered');
+            // SỬ DỤNG API COMPLETE MỚI THEO YÊU CẦU
+            await shipperApiService.completeTrip(activeTrip.id);
 
-            // 2. Cập nhật Order sang 'delivered'
+            // Cập nhật Order sang 'delivered' trên Order Service
             await orderApiService.updateOrder(activeTrip.orderId, { status: 'delivered' });
 
             alert('Giao hàng thành công!');
