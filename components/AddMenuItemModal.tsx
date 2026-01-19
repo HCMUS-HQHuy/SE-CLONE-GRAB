@@ -7,7 +7,7 @@ type AddMenuItemModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onSave: (newItem: any) => void;
-  itemToEdit?: (FoodItem & { category?: string }) | null;
+  itemToEdit?: (FoodItem & { category?: string; stock_quantity?: number; category_id?: number }) | null;
   categories: string[];
 };
 
@@ -33,16 +33,10 @@ const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({ isOpen, onClose, on
 
   useEffect(() => {
     const handleEsc = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose();
-      }
+      if (event.key === 'Escape') onClose();
     };
-    if (isOpen) {
-      window.addEventListener('keydown', handleEsc);
-    }
-    return () => {
-      window.removeEventListener('keydown', handleEsc);
-    };
+    if (isOpen) window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
   }, [isOpen, onClose]);
 
   useEffect(() => {
@@ -51,7 +45,7 @@ const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({ isOpen, onClose, on
         const parsePrice = (priceStr?: string) => priceStr ? priceStr.replace(/\D/g, '') : '';
         
         setName(itemToEdit.name);
-        setDescription(itemToEdit.description);
+        setDescription(itemToEdit.description || '');
         
         if (itemToEdit.newPrice && itemToEdit.oldPrice) {
             setPrice(parsePrice(itemToEdit.oldPrice));
@@ -64,8 +58,8 @@ const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({ isOpen, onClose, on
         setCategory(itemToEdit.category || categories[0] || 'Đại hạ giá');
         setIsBestseller(itemToEdit.bestseller);
         setImagePreview(itemToEdit.image || null);
-        setImageFile(null);
-        setStock(''); 
+        setImageFile(null); // Reset file input khi edit item mới
+        setStock(itemToEdit.stock_quantity?.toString() || ''); 
       } else {
         setName('');
         setDescription('');
@@ -96,11 +90,11 @@ const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({ isOpen, onClose, on
   
   const handleSave = () => {
       if (!name || !price || !category) {
-          alert('Vui lòng điền các trường bắt buộc: Tên món, Giá, và Phân loại.');
+          alert('Vui lòng điền các trường bắt buộc (*).');
           return;
       }
       onSave({ 
-        ...(itemToEdit || {}),
+        id: itemToEdit?.id,
         name, 
         description, 
         price, 
@@ -109,122 +103,106 @@ const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({ isOpen, onClose, on
         categoryId: CATEGORY_MAP[category] || 1,
         stock, 
         bestseller: isBestseller,
-        image: imagePreview,
-        imageFile: imageFile // Gửi kèm file thực tế để upload
+        imageFile: imageFile // File thực tế để upload
       });
   };
 
   return (
     <div 
-      className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4"
+      className="fixed inset-0 bg-black/60 z-50 flex justify-center items-center p-4 backdrop-blur-sm"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
-      aria-labelledby="add-item-title"
     >
       <div 
-        className="relative bg-white p-6 rounded-lg shadow-xl w-full max-w-3xl max-h-[95vh] overflow-y-auto"
+        className="relative bg-white p-8 rounded-[2.5rem] shadow-2xl w-full max-w-2xl max-h-[95vh] overflow-y-auto border border-gray-100"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center border-b pb-4 mb-6">
-            <h2 id="add-item-title" className="text-xl font-bold text-gray-800">
-              {itemToEdit ? 'Chỉnh sửa món ăn' : 'Thêm món ăn mới'}
+        <div className="flex justify-between items-center mb-8">
+            <h2 className="text-xl font-semibold text-gray-800 tracking-tight">
+              {itemToEdit ? 'Cập nhật món ăn' : 'Thêm món ăn mới'}
             </h2>
             <button 
               onClick={onClose} 
-              className="text-gray-400 hover:text-gray-600 transition-colors duration-300"
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400"
               aria-label="Close"
             >
               <XIcon className="h-6 w-6" />
             </button>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Image Uploader */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
             <div className="md:col-span-1">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Hình ảnh món ăn</label>
+                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 ml-1">Hình ảnh</label>
                 <div 
-                    className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md cursor-pointer hover:border-orange-400 transition-colors"
+                    className="mt-1 aspect-square flex justify-center items-center border-2 border-gray-100 border-dashed rounded-3xl cursor-pointer hover:border-orange-200 hover:bg-orange-50/30 transition-all overflow-hidden relative group"
                     onClick={() => fileInputRef.current?.click()}
                 >
-                    <div className="space-y-1 text-center">
-                        {imagePreview ? (
-                            <img src={imagePreview} alt="Preview" className="mx-auto h-32 w-32 object-cover rounded-md"/>
-                        ) : (
-                            <>
-                                <ImageIcon className="mx-auto h-12 w-12 text-gray-400" />
-                                <div className="flex text-sm text-gray-600">
-                                    <p className="pl-1">Nhấn để tải ảnh lên</p>
-                                </div>
-                                <p className="text-xs text-gray-500">PNG, JPG, GIF</p>
-                            </>
-                        )}
-                    </div>
+                    {imagePreview ? (
+                        <>
+                            <img src={imagePreview.startsWith('data:') || imagePreview.startsWith('http') ? imagePreview : `http://localhost:8004/${imagePreview}`} alt="Preview" className="h-full w-full object-cover"/>
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <UploadIcon className="h-8 w-8 text-white" />
+                            </div>
+                        </>
+                    ) : (
+                        <div className="text-center p-4">
+                            <ImageIcon className="mx-auto h-8 w-8 text-gray-300" />
+                            <p className="text-[10px] text-gray-400 font-bold uppercase mt-3">Tải ảnh</p>
+                        </div>
+                    )}
                 </div>
-                <input ref={fileInputRef} id="file-upload" name="file-upload" type="file" className="sr-only" onChange={handleImageChange} accept="image/*" />
+                <input ref={fileInputRef} type="file" className="sr-only" onChange={handleImageChange} accept="image/*" />
             </div>
 
-            {/* Form Fields */}
-            <div className="md:col-span-2 space-y-4">
+            <div className="md:col-span-2 space-y-6">
                 <div>
-                    <label htmlFor="item-name" className="block text-sm font-medium text-gray-700">Tên món ăn <span className="text-red-500">*</span></label>
-                    <input type="text" id="item-name" value={name} onChange={e => setName(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm" placeholder="VD: Cơm tấm sườn bì chả" />
+                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Tên món *</label>
+                    <input type="text" value={name} onChange={e => setName(e.target.value)} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-orange-100 focus:bg-white outline-none transition-all text-sm font-medium" placeholder="VD: Bún đậu mắm tôm" />
                 </div>
                 
                 <div>
-                    <label htmlFor="item-description" className="block text-sm font-medium text-gray-700">Mô tả</label>
-                    <textarea id="item-description" value={description} onChange={e => setDescription(e.target.value)} rows={3} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm" placeholder="Mô tả ngắn về món ăn..."></textarea>
+                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Mô tả</label>
+                    <textarea value={description} onChange={e => setDescription(e.target.value)} rows={2} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-orange-100 focus:bg-white outline-none transition-all text-sm font-medium" placeholder="Thành phần, hương vị..."></textarea>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                     <div>
-                        <label htmlFor="item-price" className="block text-sm font-medium text-gray-700">Giá (VNĐ) <span className="text-red-500">*</span></label>
-                        <input type="number" id="item-price" value={price} onChange={e => setPrice(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm" placeholder="VD: 55000" />
+                        <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Giá bán *</label>
+                        <input type="number" value={price} onChange={e => setPrice(e.target.value)} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-orange-100 focus:bg-white outline-none transition-all text-sm font-medium" placeholder="VNĐ" />
                     </div>
                      <div>
-                        <label htmlFor="item-discount-price" className="block text-sm font-medium text-gray-700">Giá khuyến mãi (VNĐ)</label>
-                        <input type="number" id="item-discount-price" value={discountPrice} onChange={e => setDiscountPrice(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm" placeholder="Để trống nếu không có" />
+                        <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Giảm còn</label>
+                        <input type="number" value={discountPrice} onChange={e => setDiscountPrice(e.target.value)} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-orange-100 focus:bg-white outline-none transition-all text-sm font-medium" placeholder="VNĐ" />
                     </div>
                 </div>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                     <div>
-                        <label htmlFor="item-category" className="block text-sm font-medium text-gray-700">Phân loại <span className="text-red-500">*</span></label>
-                        <select id="item-category" value={category} onChange={e => setCategory(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm">
-                             {/* Luôn đảm bảo có các categories cơ bản từ backend */}
+                        <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Danh mục *</label>
+                        <select value={category} onChange={e => setCategory(e.target.value)} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-orange-100 focus:bg-white outline-none transition-all text-sm font-medium">
                             {['Đại hạ giá', 'Ăn vặt', 'Ăn trưa', 'Đồ uống'].map(cat => (
                                 <option key={cat} value={cat}>{cat}</option>
                             ))}
                         </select>
                     </div>
                     <div>
-                        <label htmlFor="item-stock" className="block text-sm font-medium text-gray-700">Số lượng trong kho</label>
-                        <input type="number" id="item-stock" value={stock} onChange={e => setStock(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm" placeholder="Để trống nếu không giới hạn"/>
+                        <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Số lượng kho</label>
+                        <input type="number" value={stock} onChange={e => setStock(e.target.value)} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-orange-100 focus:bg-white outline-none transition-all text-sm font-medium" placeholder="Không giới hạn"/>
                     </div>
                 </div>
 
                 <div className="flex items-center pt-2">
-                    <input id="bestseller" name="bestseller" type="checkbox" checked={isBestseller} onChange={e => setIsBestseller(e.target.checked)} className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded" />
-                    <label htmlFor="bestseller" className="ml-2 block text-sm text-gray-900">Đánh dấu là món bán chạy</label>
+                    <input id="bestseller" type="checkbox" checked={isBestseller} onChange={e => setIsBestseller(e.target.checked)} className="h-4 w-4 text-orange-500 focus:ring-orange-200 border-gray-200 rounded cursor-pointer" />
+                    <label htmlFor="bestseller" className="ml-3 text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer">Đánh dấu bán chạy</label>
                 </div>
             </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="mt-8 pt-5 border-t flex justify-end space-x-3">
-            <button 
-                type="button" 
-                onClick={onClose}
-                className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-                Hủy
-            </button>
-            <button 
-                type="button" 
-                onClick={handleSave}
-                className="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-orange-500 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
-            >
-                {itemToEdit ? 'Lưu thay đổi' : 'Lưu món ăn'}
+        <div className="mt-10 pt-6 border-t border-gray-50 flex justify-end space-x-3">
+            <button type="button" onClick={onClose} className="px-6 py-2.5 text-xs font-semibold text-gray-400 hover:text-gray-600 transition-colors uppercase tracking-widest">Hủy bỏ</button>
+            <button type="button" onClick={handleSave} className="px-10 py-2.5 bg-orange-500 text-white font-semibold text-xs rounded-full hover:bg-orange-600 shadow-lg shadow-orange-100 transition-all active:scale-[0.98] uppercase tracking-widest">
+                {itemToEdit ? 'Cập nhật ngay' : 'Thêm vào menu'}
             </button>
         </div>
       </div>

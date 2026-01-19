@@ -70,7 +70,7 @@ const RestaurantAuthPage: React.FC = () => {
     setSuccessMsg(null);
 
     if (!validatePassword(signupPassword)) {
-      setError('Mật khẩu quá yếu. Vui lòng làm theo hướng dẫn bên dưới.');
+      setError('Mật khẩu yếu: Yêu cầu 8+ ký tự, bao gồm chữ hoa, thường, số và ký tự đặc biệt.');
       return;
     }
 
@@ -82,7 +82,7 @@ const RestaurantAuthPage: React.FC = () => {
     setIsLoading(true);
     try {
       await apiService.register({ email: signupEmail, password: signupPassword, role: 'seller' });
-      setSuccessMsg('Đăng ký thành công! Vui lòng đăng nhập để hoàn tất hồ sơ.');
+      setSuccessMsg('Đăng ký thành công! Hãy đăng nhập để tiếp tục.');
       toggleTab(true);
     } catch (err: any) {
       setError(err.message);
@@ -92,12 +92,12 @@ const RestaurantAuthPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 bg-cover bg-center" style={{backgroundImage: "url('https://picsum.photos/1920/1080?restaurant,interior')"}}>
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 bg-cover bg-center" style={{backgroundImage: "url('https://picsum.photos/1920/1080?restaurant,kitchen')"}}>
         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
         <div className="relative w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl p-10 space-y-8">
             <div className="text-center">
               <h1 className="text-2xl font-semibold text-gray-800 tracking-tight">Đối tác <span className="text-orange-500">Nhà hàng</span></h1>
-              <p className="text-gray-400 text-sm mt-2 font-medium">{isLogin ? 'Đăng nhập để quản lý cửa hàng' : 'Đăng ký mở rộng kinh doanh cùng chúng tôi'}</p>
+              <p className="text-gray-400 text-sm mt-2 font-medium">{isLogin ? 'Đăng nhập vào trang quản trị' : 'Đăng ký kinh doanh cùng chúng tôi'}</p>
             </div>
             
             <div className="flex bg-gray-50 p-1.5 rounded-2xl border border-gray-100">
@@ -112,39 +112,36 @@ const RestaurantAuthPage: React.FC = () => {
                 <form className="space-y-5" onSubmit={handleLogin}>
                     <div className="relative">
                       <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400"><MailIcon className="h-4 w-4" /></span>
-                      <input type="email" required value={loginEmail} onChange={e => setLoginEmail(e.target.value)} autoComplete="username" className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-orange-100 focus:bg-white outline-none transition-all text-sm font-medium" placeholder="Email quản trị"/>
+                      <input type="email" required value={loginEmail} onChange={e => setLoginEmail(e.target.value)} autoComplete="off" className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-orange-100 focus:bg-white outline-none transition-all text-sm font-medium" placeholder="Email quản trị"/>
                     </div>
                     <div className="relative">
                       <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400"><LockIcon className="h-4 w-4" /></span>
-                      <input type="password" required value={loginPassword} onChange={e => setLoginPassword(e.target.value)} autoComplete="current-password" className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-orange-100 focus:bg-white outline-none transition-all text-sm font-medium" placeholder="Mật khẩu" />
+                      <input type="password" required value={loginPassword} onChange={e => setLoginPassword(e.target.value)} autoComplete="off" className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-orange-100 focus:bg-white outline-none transition-all text-sm font-medium" placeholder="Mật khẩu" />
                     </div>
-                    <button type="submit" disabled={isLoading} className="w-full py-4 rounded-2xl text-white bg-orange-500 hover:bg-orange-600 font-semibold text-sm shadow-lg shadow-orange-100 transition-all active:scale-[0.98] disabled:opacity-50">{isLoading ? 'Đang xử lý...' : 'Vào hệ thống'}</button>
+                    <button type="submit" disabled={isLoading} className="w-full py-3.5 rounded-2xl text-white bg-orange-500 hover:bg-orange-600 font-semibold text-sm shadow-lg shadow-orange-100 transition-all active:scale-[0.98] disabled:opacity-50">{isLoading ? 'Đang xử lý...' : 'Vào hệ thống'}</button>
                 </form>
             ) : (
                 <form className="space-y-5" onSubmit={handleSignup}>
                     <div className="relative">
                         <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400"><MailIcon className="h-4 w-4" /></span>
-                        <input type="email" required value={signupEmail} onChange={e => setSignupEmail(e.target.value)} autoComplete="off" className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-orange-100 focus:bg-white outline-none transition-all text-sm font-medium" placeholder="Email đăng ký đối tác" />
+                        <input type="email" required value={signupEmail} onChange={e => setSignupEmail(e.target.value)} autoComplete="off" className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-orange-100 focus:bg-white outline-none transition-all text-sm font-medium" placeholder="Email đăng ký" />
                     </div>
                     <div>
                         <div className="relative">
                             <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400"><LockIcon className="h-4 w-4" /></span>
-                            <input type="password" required value={signupPassword} onChange={e => setSignupPassword(e.target.value)} autoComplete="new-password" className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-orange-100 focus:bg-white outline-none transition-all text-sm font-medium" placeholder="Mật khẩu mới" />
+                            <input type="password" required value={signupPassword} onChange={e => setSignupPassword(e.target.value)} autoComplete="off" className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-orange-100 focus:bg-white outline-none transition-all text-sm font-medium" placeholder="Mật khẩu mới" />
                         </div>
-                        <p className="text-[10px] text-gray-400 mt-2 ml-1 leading-relaxed">Quy định: 8+ ký tự, bao gồm chữ hoa, thường, số và ký tự (@$!%*?&).</p>
+                        <p className="text-[10px] text-gray-400 mt-2 ml-1 leading-relaxed">Mật khẩu: 8+ ký tự, có chữ hoa, thường, số và ký tự lạ.</p>
                     </div>
                     <div className="relative">
                         <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400"><LockIcon className="h-4 w-4" /></span>
-                        <input type="password" required value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} autoComplete="new-password" className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-orange-100 focus:bg-white outline-none transition-all text-sm font-medium" placeholder="Xác nhận mật khẩu" />
+                        <input type="password" required value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} autoComplete="off" className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-orange-100 focus:bg-white outline-none transition-all text-sm font-medium" placeholder="Xác nhận mật khẩu" />
                     </div>
-                    <button type="submit" disabled={isLoading} className="w-full py-4 rounded-2xl text-white bg-orange-500 hover:bg-orange-600 font-semibold text-sm shadow-lg shadow-orange-100 transition-all active:scale-[0.98] disabled:opacity-50">
-                        {isLoading ? 'Đang đăng ký...' : 'Trở thành đối tác ngay'}
+                    <button type="submit" disabled={isLoading} className="w-full py-3.5 rounded-2xl text-white bg-orange-500 hover:bg-orange-600 font-semibold text-sm shadow-lg shadow-orange-100 transition-all active:scale-[0.98] disabled:opacity-50">
+                        {isLoading ? 'Đang đăng ký...' : 'Đăng ký đối tác'}
                     </button>
                 </form>
             )}
-            <div className="pt-4 text-center">
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Hotline hỗ trợ đối tác: 1900 xxxx</p>
-            </div>
         </div>
     </div>
   );
