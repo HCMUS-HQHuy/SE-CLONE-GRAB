@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { ClockIcon, CheckCircleIcon, XCircleIcon, TruckIcon, ChevronLeftIcon, ChevronRightIcon, ClipboardListIcon, UserIcon, HomeIcon } from '../components/Icons';
+import { ClockIcon, CheckCircleIcon, XCircleIcon, TruckIcon, ChevronLeftIcon, ChevronRightIcon, ClipboardListIcon, UserIcon, HomeIcon, CheckBadgeIcon } from '../components/Icons';
 import OrderDetailModal from '../components/OrderDetailModal';
 import { orderApiService, OrderResponseData } from '../services/orderApi';
 import { restaurantApiService } from '../services/restaurantApi';
@@ -34,12 +34,6 @@ export type Order = {
         price: number;
     }[];
 };
-
-export const mockOrders = [
-    { id: '1', status: 'Hoàn thành' },
-    { id: '2', status: 'Hoàn thành' },
-    { id: '3', status: 'Mới' }
-];
 
 export const getStatusStyles = (status: string) => {
     const s = status.toLowerCase();
@@ -78,51 +72,35 @@ const OrderCard: React.FC<{
         const s = order.status.toLowerCase();
         const isLoading = isUpdating === order.id;
 
+        // Chỉ hiện nút khi trạng thái là Chờ xác nhận
         if (s === 'pending_restaurant') {
             return (
                 <div className="flex space-x-2">
                     <button 
                         disabled={isLoading}
                         onClick={(e) => handleActionClick(e, 'restaurant_rejected')} 
-                        className="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition-colors border border-transparent hover:border-rose-100"
+                        className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors border border-gray-100 hover:border-rose-200"
+                        title="Từ chối"
                     >
-                        <XCircleIcon className="h-5 w-5" />
+                        <XCircleIcon className="h-6 w-6" />
                     </button>
                     <button 
                         disabled={isLoading}
                         onClick={(e) => handleActionClick(e, 'restaurant_accepted')} 
-                        className="flex items-center text-xs font-semibold text-white bg-orange-500 hover:bg-orange-600 px-4 py-2 rounded-xl shadow-lg shadow-orange-100 transition-all active:scale-95"
+                        className="p-2 text-white bg-orange-500 hover:bg-orange-600 rounded-lg shadow-sm transition-all active:scale-90"
+                        title="Nhận đơn"
                     >
-                        {isLoading ? '...' : 'Nhận đơn'}
+                        {isLoading ? (
+                             <div className="h-6 w-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        ) : (
+                            <CheckCircleIcon className="h-6 w-6" />
+                        )}
                     </button>
                 </div>
             );
         }
         
-        if (s === 'restaurant_accepted') {
-            return (
-                <button 
-                    disabled={isLoading}
-                    onClick={(e) => handleActionClick(e, 'preparing')} 
-                    className="flex items-center text-xs font-semibold text-white bg-sky-500 hover:bg-sky-600 px-5 py-2 rounded-xl shadow-lg shadow-sky-100 transition-all active:scale-95"
-                >
-                    {isLoading ? '...' : 'Nấu xong'}
-                </button>
-            );
-        }
-
-        if (s === 'preparing') {
-            return (
-                <button 
-                    disabled={isLoading}
-                    onClick={(e) => handleActionClick(e, 'ready')} 
-                    className="flex items-center text-xs font-semibold text-white bg-indigo-500 hover:bg-indigo-600 px-5 py-2 rounded-xl shadow-lg shadow-indigo-100 transition-all active:scale-95"
-                >
-                    {isLoading ? '...' : 'Giao cho tài xế'}
-                </button>
-            );
-        }
-
+        // Sau khi nhận hoặc từ chối, không hiện thêm nút hành động (nấu xong, v.v.)
         return null;
     }
 
@@ -141,13 +119,13 @@ const OrderCard: React.FC<{
     };
 
     return (
-        <div onClick={() => onCardClick(mappedForModal)} className="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-50 cursor-pointer transition-all hover:shadow-md hover:border-orange-100 group">
+        <div onClick={() => onCardClick(mappedForModal)} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 cursor-pointer transition-all hover:shadow-md hover:border-orange-200 group">
             <div className="flex justify-between items-start mb-5">
                 <div className="min-w-0">
                     <span className="text-[10px] font-bold text-orange-400 uppercase tracking-widest">#{order.id.substring(0, 8)}</span>
                     <h3 className="font-semibold text-gray-800 mt-1 truncate text-base">{mappedForModal.customerName}</h3>
                 </div>
-                <span className={`text-[10px] font-bold px-3 py-1 rounded-full border uppercase tracking-tight ${getStatusStyles(order.status)}`}>
+                <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-md border uppercase tracking-tight ${getStatusStyles(order.status)}`}>
                     {STATUS_MAP[order.status.toLowerCase()] || order.status}
                 </span>
             </div>
@@ -155,7 +133,7 @@ const OrderCard: React.FC<{
             <div className="space-y-2 mb-6">
                 {order.items.slice(0, 2).map((item, idx) => (
                     <div key={idx} className="flex justify-between text-sm text-gray-500">
-                        <span className="truncate mr-4"><span className="font-semibold text-gray-700">{item.quantity}x</span> {item.product_name}</span>
+                        <span className="truncate mr-4"><span className="font-medium text-gray-700">{item.quantity}x</span> {item.product_name}</span>
                     </div>
                 ))}
                 {order.items.length > 2 && (
@@ -166,7 +144,7 @@ const OrderCard: React.FC<{
             <div className="flex justify-between items-end pt-4 border-t border-gray-50">
                 <div>
                     <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Thanh toán</p>
-                    <p className="font-bold text-gray-800 text-lg tracking-tight">{formatCurrency(order.total_amount)}</p>
+                    <p className="font-semibold text-gray-800 text-lg tracking-tight">{formatCurrency(order.total_amount)}</p>
                 </div>
                 <div onClick={e => e.stopPropagation()}>
                     <ActionButtons />
@@ -186,10 +164,10 @@ const RestaurantOrdersPage: React.FC = () => {
     
     const tabs = [
         { id: 'All', label: 'Tất cả' },
-        { id: 'pending_restaurant', label: 'Đơn mới' },
-        { id: 'preparing', label: 'Đang nấu' },
-        { id: 'ready', label: 'Chờ giao' },
-        { id: 'delivering', label: 'Đang giao' }
+        { id: 'pending_restaurant', label: 'Mới' },
+        { id: 'restaurant_accepted', label: 'Đã nhận' },
+        { id: 'delivering', label: 'Đang giao' },
+        { id: 'delivered', label: 'Lịch sử' }
     ];
 
     useEffect(() => {
@@ -213,7 +191,7 @@ const RestaurantOrdersPage: React.FC = () => {
             } catch (err) { console.error(err); } finally { if (initial) setIsLoading(false); }
         };
         fetchOrders(true);
-        const interval = setInterval(() => fetchOrders(false), 10000);
+        const interval = setInterval(() => fetchOrders(false), 15000);
         return () => clearInterval(interval);
     }, [restaurantId]);
 
@@ -234,7 +212,7 @@ const RestaurantOrdersPage: React.FC = () => {
         return (
             <div className="min-h-[60vh] flex flex-col items-center justify-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mb-4"></div>
-                <p className="text-gray-400 font-medium text-sm">Đang đồng bộ đơn hàng...</p>
+                <p className="text-gray-400 font-medium text-sm">Đang đồng bộ...</p>
             </div>
         );
     }
@@ -243,17 +221,17 @@ const RestaurantOrdersPage: React.FC = () => {
         <div className="max-w-7xl mx-auto p-6 lg:p-10 space-y-10">
             <div className="flex flex-col md:flex-row justify-between md:items-end gap-6">
                 <div>
-                    <h1 className="text-3xl font-semibold text-gray-800 tracking-tight">Đơn hàng</h1>
-                    <p className="text-gray-400 text-sm mt-1 font-medium">Quản lý quy trình phục vụ và giao nhận khách hàng.</p>
+                    <h1 className="text-2xl font-semibold text-gray-800 tracking-tight">Đơn hàng</h1>
+                    <p className="text-gray-400 text-sm mt-1 font-medium">Theo dõi và phản hồi nhanh các yêu cầu của khách.</p>
                 </div>
-                <div className="inline-flex p-1.5 bg-white border border-gray-100 rounded-2xl shadow-sm">
+                <div className="inline-flex p-1 bg-gray-100 rounded-xl">
                     {tabs.map(tab => (
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
-                            className={`px-5 py-2 rounded-xl text-xs font-semibold transition-all ${
+                            className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                                 activeTab === tab.id 
-                                ? 'bg-orange-500 text-white shadow-lg shadow-orange-100' 
+                                ? 'bg-white text-orange-600 shadow-sm' 
                                 : 'text-gray-400 hover:text-gray-600'
                             }`}
                         >
@@ -264,7 +242,7 @@ const RestaurantOrdersPage: React.FC = () => {
             </div>
             
             {filteredOrders.length > 0 ? (
-                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredOrders.map(order => (
                         <OrderCard 
                           key={order.id} 
@@ -276,12 +254,10 @@ const RestaurantOrdersPage: React.FC = () => {
                     ))}
                 </div>
             ) : (
-                <div className="text-center py-32 bg-white rounded-[3rem] border border-dashed border-gray-100">
-                    <div className="h-16 w-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <ClipboardListIcon className="h-8 w-8 text-gray-200" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-700">Chưa có đơn hàng nào</h3>
-                    <p className="text-gray-400 text-sm mt-1 font-medium">Đơn hàng mới sẽ tự động hiển thị tại đây.</p>
+                <div className="text-center py-24 bg-white rounded-2xl border border-dashed border-gray-200">
+                    <ClipboardListIcon className="h-8 w-8 text-gray-200 mx-auto mb-4" />
+                    <h3 className="text-base font-semibold text-gray-700">Chưa có đơn hàng</h3>
+                    <p className="text-gray-400 text-xs mt-1 font-medium">Các đơn mới sẽ xuất hiện ở đây.</p>
                 </div>
             )}
 

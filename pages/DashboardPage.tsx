@@ -1,9 +1,26 @@
 import React, { useState, useMemo } from 'react';
 import { CashIcon, ClockIcon, ClipboardListIcon, DownloadIcon, StarIcon, ImageIcon } from '../components/Icons';
-import { mockOrders } from './RestaurantOrdersPage';
+// FIX: Removed incorrect import of mockOrders as it is not exported from RestaurantOrdersPage.
+// Defined mockOrders locally to support the dashboard statistics visualization.
 import { foodCategories, FoodItem } from './HomePage';
 
 // --- MOCK DATA & HELPERS ---
+
+// FIX: Locally defined mockOrders since it's not provided by any external module and is used for visualization in this component.
+const mockOrders = [
+    { id: '1', status: 'Hoàn thành' },
+    { id: '2', status: 'Hoàn thành' },
+    { id: '3', status: 'Mới' },
+    { id: '4', status: 'Đang chuẩn bị' },
+    { id: '5', status: 'Sẵn sàng giao' },
+    { id: '6', status: 'Đã hủy' },
+    { id: '7', status: 'Hoàn thành' },
+    { id: '8', status: 'Mới' },
+    { id: '9', status: 'Đang chuẩn bị' },
+    { id: '10', status: 'Hoàn thành' },
+    { id: '11', status: 'Hoàn thành' },
+    { id: '12', status: 'Sẵn sàng giao' },
+];
 
 const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
