@@ -120,14 +120,14 @@ const RestaurantNavbar: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-8">
-            <Link to="/restaurant/store" className="flex-shrink-0 text-xl font-black text-gray-800 tracking-tighter">
-              REST<span className="text-orange-500">MGT</span>
+            <Link to="/restaurant/store" className="flex-shrink-0 text-xl font-bold text-gray-800">
+              Restaurant <span className="text-orange-500">Management</span>
             </Link>
             <nav className="hidden md:flex space-x-6">
-              <NavLink to="/restaurant/dashboard" className="text-gray-500 hover:text-orange-500 px-1 py-5 text-xs font-black uppercase tracking-widest transition-all" style={({ isActive }) => isActive ? activeLinkStyle : undefined}>Tổng quan</NavLink>
-              <NavLink to="/restaurant/store" className="text-gray-500 hover:text-orange-500 px-1 py-5 text-xs font-black uppercase tracking-widest transition-all" style={({ isActive }) => isActive ? activeLinkStyle : undefined}>Cửa hàng</NavLink>
-              <NavLink to="/restaurant/orders" className="text-gray-500 hover:text-orange-500 px-1 py-5 text-xs font-black uppercase tracking-widest transition-all" style={({ isActive }) => isActive ? activeLinkStyle : undefined}>Đơn hàng</NavLink>
-              <NavLink to="/restaurant/promotions" className="text-gray-500 hover:text-orange-500 px-1 py-5 text-xs font-black uppercase tracking-widest transition-all" style={({ isActive }) => isActive ? activeLinkStyle : undefined}>Ưu đãi</NavLink>
+              <NavLink to="/restaurant/dashboard" className="text-gray-500 hover:text-orange-500 px-3 py-2 rounded-md text-sm font-medium transition" style={({ isActive }) => isActive ? activeLinkStyle : undefined}>Tổng quan</NavLink>
+              <NavLink to="/restaurant/store" className="text-gray-500 hover:text-orange-500 px-3 py-2 rounded-md text-sm font-medium transition" style={({ isActive }) => isActive ? activeLinkStyle : undefined}>Cửa hàng</NavLink>
+              <NavLink to="/restaurant/orders" className="text-gray-500 hover:text-orange-500 px-3 py-2 rounded-md text-sm font-medium transition" style={({ isActive }) => isActive ? activeLinkStyle : undefined}>Đơn hàng</NavLink>
+              <NavLink to="/restaurant/promotions" className="text-gray-500 hover:text-orange-500 px-3 py-2 rounded-md text-sm font-medium transition" style={({ isActive }) => isActive ? activeLinkStyle : undefined}>Ưu đãi</NavLink>
             </nav>
           </div>
 

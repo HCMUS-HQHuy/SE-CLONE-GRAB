@@ -184,6 +184,8 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
   }, []);
 
   const handleLogout = () => {
+    localStorage.removeItem(NOTI_STORAGE_KEY);
+    localStorage.removeItem(STATUS_TRACKER_KEY);
     apiService.logout('user');
     navigate('/');
   };

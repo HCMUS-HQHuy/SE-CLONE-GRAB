@@ -76,7 +76,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOpen, onC
   return (
     <div
       ref={dropdownRef}
-      className="absolute top-full right-0 mt-4 w-80 sm:w-[420px] bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-300"
+      className="absolute top-full right-0 mt-4 w-80 sm:w-[420px] bg-white rounded-[0.5rem] shadow-2xl border border-gray-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-300"
       role="dialog"
       aria-modal="true"
     >
