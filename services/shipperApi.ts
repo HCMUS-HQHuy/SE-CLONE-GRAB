@@ -19,8 +19,8 @@ export interface Driver {
   fullName: string;
   phoneNumber: string;
   email: string;
-  status: string;
-  verificationStatus: 'Pending' | 'Approved' | 'Rejected';
+  status: 'Online' | 'Offline' | string; // Trạng thái hoạt động
+  verificationStatus: 'Verified' | 'Pending' | 'Rejected' | string; // Trạng thái hồ sơ
   profileImageUrl: string | null;
   citizenIdImageUrl: string;
   driverLicenseImageUrl: string;
@@ -102,12 +102,13 @@ export const shipperApiService = {
     return await response.text();
   },
 
-  async getDrivers(page = 1, pageSize = 20, verificationStatus?: string, searchTerm?: string): Promise<DriversResponse> {
+  async getDrivers(pageNumber = 1, pageSize = 20, verificationStatus?: string, searchTerm?: string, status?: string): Promise<DriversResponse> {
     const params = new URLSearchParams({
-      pageNumber: page.toString(),
+      pageNumber: pageNumber.toString(),
       pageSize: pageSize.toString(),
     });
     if (verificationStatus && verificationStatus !== 'All') params.append('verificationStatus', verificationStatus);
+    if (status && status !== 'All') params.append('status', status);
     if (searchTerm) params.append('searchTerm', searchTerm);
 
     const response = await fetch(`${SHIPPER_SERVICE_URL}/api/Drivers?${params.toString()}`, {
