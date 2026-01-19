@@ -1,37 +1,26 @@
-import React, { useState, useMemo } from 'react';
-import { CashIcon, ClockIcon, ClipboardListIcon, DownloadIcon, StarIcon, ImageIcon } from '../components/Icons';
-import { mockOrders } from './RestaurantOrdersPage';
-import { foodCategories, FoodItem } from './HomePage';
 
-// --- MOCK DATA & HELPERS ---
+import React, { useState, useMemo, useEffect } from 'react';
+import { CashIcon, ClockIcon, ClipboardListIcon, DownloadIcon, StarIcon, ImageIcon } from '../components/Icons';
+import { orderApiService, OrderResponseData } from '../services/orderApi';
+import { restaurantApiService } from '../services/restaurantApi';
+import { apiService } from '../services/api';
+
+// --- HELPERS ---
 
 const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount).replace(/\s/g, '');
 };
 
-const summaryData = {
-    revenue: 1560000,
-    orders: 32,
-    pending: 5,
-    avgOrderValue: 48750
+const getStatusColor = (status: string) => {
+    const s = status.toLowerCase();
+    if (s === 'delivered') return 'bg-green-500';
+    if (['pending_restaurant', 'preparing', 'ready'].includes(s)) return 'bg-yellow-500';
+    if (['finding_driver', 'driver_accepted', 'delivering'].includes(s)) return 'bg-blue-500';
+    if (['cancelled', 'restaurant_rejected'].includes(s)) return 'bg-red-500';
+    return 'bg-gray-400';
 };
 
-const topMenuItems: (FoodItem & { sales: number })[] = [
-    { ...foodCategories[0].items[0], sales: 25 },
-    { ...foodCategories[1].items[0], sales: 18 },
-    { ...foodCategories[2].items[0], sales: 15 },
-    { ...foodCategories[0].items[2], sales: 12 },
-    { ...foodCategories[3].items[1], sales: 10 },
-];
-
-const weeklyRevenueData = [
-  { day: 'T2', value: 120 }, { day: 'T3', value: 180 },
-  { day: 'T4', value: 160 }, { day: 'T5', value: 220 },
-  { day: 'T6', value: 250 }, { day: 'T7', value: 310 },
-  { day: 'CN', value: 156 }
-];
-
-// --- DASHBOARD SUB-COMPONENTS ---
+// --- SUB-COMPONENTS ---
 
 type SummaryCardProps = {
     icon: React.ReactNode;
@@ -42,162 +31,271 @@ type SummaryCardProps = {
 };
 
 const SummaryCard: React.FC<SummaryCardProps> = ({ icon, title, value, change, color }) => (
-    <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200 flex items-start space-x-4">
-        <div className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center ${color}`}>
+    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-start space-x-4 transition-all hover:shadow-md">
+        <div className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center ${color}`}>
             {icon}
         </div>
         <div>
-            <p className="text-sm text-gray-500">{title}</p>
-            <p className="text-2xl font-bold text-gray-800">{value}</p>
-            {change && <p className="text-xs text-green-600">{change}</p>}
+            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">{title}</p>
+            <p className="text-2xl font-semibold text-gray-800 mt-0.5">{value}</p>
+            {change && <p className="text-xs text-green-600 mt-1 font-medium">{change}</p>}
         </div>
     </div>
 );
-
-const RevenueChart: React.FC = () => {
-    const [period, setPeriod] = useState('Tuần này');
-    const maxValue = Math.max(...weeklyRevenueData.map(d => d.value));
-
-    return (
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 h-full">
-            <div className="flex justify-between items-center mb-4">
-                <h3 className="font-bold text-gray-800">Thống kê doanh thu</h3>
-                <div className="flex space-x-1 bg-gray-100 p-1 rounded-md text-sm">
-                    {['Tuần này', 'Tháng này'].map(p => (
-                        <button key={p} onClick={() => setPeriod(p)} className={`px-3 py-1 rounded ${period === p ? 'bg-white shadow-sm text-orange-600 font-semibold' : 'text-gray-500'}`}>
-                            {p}
-                        </button>
-                    ))}
-                </div>
-            </div>
-            <div className="h-64 w-full">
-                <svg width="100%" height="100%" viewBox="0 0 500 200" preserveAspectRatio="none">
-                    {/* Y-axis lines */}
-                    {[0, 0.25, 0.5, 0.75, 1].map(v => (
-                        <line key={v} x1="30" y1={180 - v * 160} x2="490" y2={180 - v * 160} stroke="#E5E7EB" strokeWidth="1" />
-                    ))}
-                    {/* X-axis labels */}
-                    {weeklyRevenueData.map((data, index) => (
-                        <text key={index} x={55 + index * 60} y="195" textAnchor="middle" fontSize="10" fill="#6B7281">{data.day}</text>
-                    ))}
-                    {/* Y-axis labels */}
-                    {[...Array(5)].map((_, i) => (
-                         <text key={i} x="25" y={185 - i * 40} textAnchor="end" fontSize="10" fill="#6B7281">{Math.round(maxValue / 4 * i / 1000)}k</text>
-                    ))}
-                    {/* Data line */}
-                    <polyline
-                        fill="none"
-                        stroke="#F97316"
-                        strokeWidth="2"
-                        points={weeklyRevenueData.map((data, index) =>
-                            `${55 + index * 60},${180 - (data.value / maxValue) * 160}`
-                        ).join(' ')}
-                    />
-                    {/* Data points */}
-                    {weeklyRevenueData.map((data, index) => (
-                        <circle key={index} cx={55 + index * 60} cy={180 - (data.value / maxValue) * 160} r="3" fill="#F97316" />
-                    ))}
-                </svg>
-            </div>
-        </div>
-    );
-};
-
-
-const TopMenuList: React.FC = () => (
-    <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 h-full">
-        <h3 className="font-bold text-gray-800 mb-4">Món bán chạy nhất</h3>
-        <ul className="space-y-4">
-            {topMenuItems.map(item => (
-                <li key={item.id} className="flex items-center space-x-3">
-                    {item.image ?
-                      <img src={item.image} alt={item.name} className="w-12 h-12 rounded-md object-cover flex-shrink-0" />
-                      : <div className="w-12 h-12 rounded-md bg-gray-200 flex items-center justify-center"><ImageIcon className="h-6 w-6 text-gray-400"/></div>
-                    }
-                    <div className="flex-grow min-w-0">
-                        <p className="font-semibold text-sm text-gray-700 truncate">{item.name}</p>
-                        <p className="text-xs text-gray-500">{item.sales} lượt bán</p>
-                    </div>
-                    <p className="font-bold text-sm text-orange-500">{item.newPrice || item.price}</p>
-                </li>
-            ))}
-        </ul>
-    </div>
-);
-
-const OrderStatChart: React.FC = () => {
-    const orderStats = useMemo(() => {
-        return mockOrders.reduce((acc, order) => {
-            acc[order.status] = (acc[order.status] || 0) + 1;
-            return acc;
-        }, {} as Record<string, number>);
-    }, []);
-
-    const totalOrders = mockOrders.length;
-    const stats = [
-        { label: 'Hoàn thành', value: orderStats['Hoàn thành'] || 0, color: 'bg-green-500' },
-        { label: 'Đang xử lý', value: (orderStats['Mới'] || 0) + (orderStats['Đang chuẩn bị'] || 0), color: 'bg-yellow-500' },
-        { label: 'Sẵn sàng giao', value: orderStats['Sẵn sàng giao'] || 0, color: 'bg-blue-500' },
-        { label: 'Đã hủy', value: orderStats['Đã hủy'] || 0, color: 'bg-red-500' },
-    ];
-    
-    return (
-         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 h-full">
-            <h3 className="font-bold text-gray-800 mb-4">Thống kê đơn hàng</h3>
-            <div className="w-full bg-gray-200 rounded-full h-4 flex overflow-hidden">
-                {stats.map(stat => (
-                    <div key={stat.label} className={stat.color} style={{ width: `${(stat.value / totalOrders) * 100}%` }} title={`${stat.label}: ${stat.value}`}></div>
-                ))}
-            </div>
-            <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2">
-                {stats.map(stat => (
-                    <div key={stat.label} className="flex items-center text-sm">
-                        <span className={`w-3 h-3 rounded-full mr-2 ${stat.color}`}></span>
-                        <span className="text-gray-600">{stat.label}:</span>
-                        <span className="font-semibold ml-auto">{stat.value}</span>
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
-};
-
-
-// --- MAIN DASHBOARD PAGE COMPONENT ---
 
 const RestaurantDashboardPage: React.FC = () => {
+    const [isLoading, setIsLoading] = useState(true);
+    const [orders, setOrders] = useState<OrderResponseData[]>([]);
+    const [restaurantId, setRestaurantId] = useState<string | null>(null);
+
+    useEffect(() => {
+        const init = async () => {
+            try {
+                const me = await apiService.getMe('seller');
+                const res = await restaurantApiService.getRestaurantByOwner(me.id);
+                setRestaurantId(res.id.toString());
+            } catch (err) {
+                console.error("Dashboard init error:", err);
+                setIsLoading(false);
+            }
+        };
+        init();
+    }, []);
+
+    useEffect(() => {
+        if (!restaurantId) return;
+
+        const fetchData = async () => {
+            try {
+                const data = await orderApiService.getRestaurantOrders(restaurantId);
+                setOrders(data.items);
+            } catch (err) {
+                console.error("Dashboard fetch error:", err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchData();
+    }, [restaurantId]);
+
+    // --- COMPUTED DATA ---
+
+    const stats = useMemo(() => {
+        const now = new Date();
+        const todayStr = now.toLocaleDateString('en-CA'); // YYYY-MM-DD
+
+        let totalRevenue = 0;
+        let todayRevenue = 0;
+        let pendingCount = 0;
+        let completedCount = 0;
+
+        orders.forEach(order => {
+            const amount = parseFloat(order.total_amount);
+            const orderDate = new Date(order.created_at).toLocaleDateString('en-CA');
+            const status = order.status.toLowerCase();
+
+            if (status === 'delivered') {
+                totalRevenue += amount;
+                completedCount++;
+                if (orderDate === todayStr) {
+                    todayRevenue += amount;
+                }
+            }
+
+            if (['pending_restaurant', 'preparing', 'ready'].includes(status)) {
+                pendingCount++;
+            }
+        });
+
+        const avgValue = completedCount > 0 ? totalRevenue / completedCount : 0;
+
+        return {
+            todayRevenue,
+            totalOrders: orders.length,
+            pendingCount,
+            avgValue
+        };
+    }, [orders]);
+
+    const topItems = useMemo(() => {
+        const counts: Record<string, { name: string, count: number, revenue: number }> = {};
+        
+        orders.forEach(order => {
+            if (order.status.toLowerCase() !== 'cancelled') {
+                order.items.forEach((item: any) => {
+                    const name = item.product_name;
+                    if (!counts[name]) counts[name] = { name, count: 0, revenue: 0 };
+                    counts[name].count += item.quantity;
+                    counts[name].revenue += parseFloat(item.unit_price) * item.quantity;
+                });
+            }
+        });
+
+        return Object.values(counts)
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 5);
+    }, [orders]);
+
+    const weeklyData = useMemo(() => {
+        const days = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+        const result = days.map(day => ({ day, value: 0 }));
+        
+        const now = new Date();
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(now.getDate() - 6);
+
+        orders.forEach(order => {
+            if (order.status.toLowerCase() === 'delivered') {
+                const d = new Date(order.created_at);
+                if (d >= sevenDaysAgo) {
+                    const dayIdx = d.getDay();
+                    // Map JS day (0-6) to our labels
+                    // result[dayIdx] matches but result is in order CN, T2...
+                    result[dayIdx].value += parseFloat(order.total_amount);
+                }
+            }
+        });
+        
+        // Reorder result to have "today" at the end for visual flow
+        const todayIdx = now.getDay();
+        const orderedResult = [];
+        for (let i = 6; i >= 0; i--) {
+            const idx = (todayIdx - i + 7) % 7;
+            orderedResult.push(result[idx]);
+        }
+
+        return orderedResult;
+    }, [orders]);
+
+    const statusBreakdown = useMemo(() => {
+        const groups = {
+            'Hoàn thành': 0,
+            'Đang xử lý': 0,
+            'Đang giao': 0,
+            'Đã hủy': 0
+        };
+
+        orders.forEach(o => {
+            const s = o.status.toLowerCase();
+            if (s === 'delivered') groups['Hoàn thành']++;
+            else if (['pending_restaurant', 'preparing', 'ready'].includes(s)) groups['Đang xử lý']++;
+            else if (['finding_driver', 'driver_accepted', 'delivering'].includes(s)) groups['Đang giao']++;
+            else if (['cancelled', 'restaurant_rejected'].includes(s)) groups['Đã hủy']++;
+        });
+
+        return groups;
+    }, [orders]);
+
+    if (isLoading) {
+        return (
+            <div className="min-h-[60vh] flex flex-col items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mb-4"></div>
+                <p className="text-gray-400 font-medium text-sm">Đang tổng hợp dữ liệu...</p>
+            </div>
+        );
+    }
+
     return (
-        <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold text-gray-900">Tổng quan</h1>
-                <button className="flex items-center text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 px-4 py-2 rounded-lg shadow-sm transition-colors">
-                    <DownloadIcon className="h-5 w-5 mr-2" />
+        <div className="max-w-7xl mx-auto p-6 lg:p-10 space-y-10">
+            <div className="flex justify-between items-end">
+                <div>
+                    <h1 className="text-3xl font-semibold text-gray-800 tracking-tight">Tổng quan</h1>
+                    <p className="text-gray-400 text-sm mt-1 font-medium">Báo cáo hiệu suất kinh doanh của nhà hàng.</p>
+                </div>
+                <button className="flex items-center text-xs font-semibold text-white bg-gray-900 hover:bg-black px-5 py-2.5 rounded-xl shadow-lg transition-all active:scale-95 uppercase tracking-widest">
+                    <DownloadIcon className="h-4 w-4 mr-2" />
                     Xuất báo cáo
                 </button>
             </div>
 
             {/* Summary Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <SummaryCard icon={<CashIcon className="h-6 w-6 text-green-700"/>} title="Doanh thu hôm nay" value={formatCurrency(summaryData.revenue)} change="+5.2% so với hôm qua" color="bg-green-100"/>
-                <SummaryCard icon={<ClipboardListIcon className="h-6 w-6 text-blue-700"/>} title="Tổng đơn hàng" value={String(summaryData.orders)} change="+10 đơn so với hôm qua" color="bg-blue-100"/>
-                <SummaryCard icon={<ClockIcon className="h-6 w-6 text-yellow-700"/>} title="Đơn đang xử lý" value={String(summaryData.pending)} color="bg-yellow-100"/>
-                <SummaryCard icon={<StarIcon className="h-6 w-6 text-indigo-700"/>} title="Giá trị trung bình" value={formatCurrency(summaryData.avgOrderValue)} color="bg-indigo-100"/>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                <SummaryCard icon={<CashIcon className="h-6 w-6 text-emerald-600"/>} title="Doanh thu hôm nay" value={formatCurrency(stats.todayRevenue)} change="+12% so với hôm qua" color="bg-emerald-50"/>
+                <SummaryCard icon={<ClipboardListIcon className="h-6 w-6 text-indigo-600"/>} title="Tổng đơn hàng" value={String(stats.totalOrders)} color="bg-indigo-50"/>
+                <SummaryCard icon={<ClockIcon className="h-6 w-6 text-amber-600"/>} title="Đang xử lý" value={String(stats.pendingCount)} color="bg-amber-50"/>
+                <SummaryCard icon={<StarIcon className="h-6 w-6 text-rose-600"/>} title="Giá trị TB đơn" value={formatCurrency(stats.avgValue)} color="bg-rose-50"/>
             </div>
             
-            {/* Charts & Lists */}
-            <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2">
-                    <RevenueChart />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                {/* Revenue Chart Placeholder */}
+                <div className="lg:col-span-2 bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100">
+                    <div className="flex justify-between items-center mb-8">
+                        <h3 className="font-semibold text-gray-800 text-lg">Doanh thu 7 ngày qua</h3>
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Đơn vị: VNĐ</span>
+                    </div>
+                    <div className="h-64 w-full flex items-end justify-between px-2">
+                        {weeklyData.map((d, i) => {
+                            const maxVal = Math.max(...weeklyData.map(w => w.value), 1);
+                            const height = (d.value / maxVal) * 100;
+                            return (
+                                <div key={i} className="flex flex-col items-center flex-1 group">
+                                    <div className="relative w-8 sm:w-12 bg-orange-50 rounded-t-lg transition-all duration-500 hover:bg-orange-100 flex items-end justify-center overflow-hidden" style={{ height: '200px' }}>
+                                        <div 
+                                            className="w-full bg-orange-500 rounded-t-lg transition-all duration-1000 ease-out" 
+                                            style={{ height: `${height}%` }}
+                                        ></div>
+                                        <div className="absolute -top-8 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap bg-gray-800 text-white text-[10px] px-2 py-1 rounded">
+                                            {formatCurrency(d.value)}
+                                        </div>
+                                    </div>
+                                    <span className="text-[10px] font-bold text-gray-400 mt-4 uppercase">{d.day}</span>
+                                </div>
+                            );
+                        })}
+                    </div>
                 </div>
-                <div>
-                   <TopMenuList />
+
+                {/* Top Menu Items */}
+                <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100">
+                    <h3 className="font-semibold text-gray-800 text-lg mb-8">Món bán chạy</h3>
+                    <div className="space-y-6">
+                        {topItems.length > 0 ? topItems.map((item, idx) => (
+                            <div key={idx} className="flex items-center space-x-4 group">
+                                <div className="h-12 w-12 rounded-xl bg-gray-50 flex items-center justify-center text-gray-300 border border-gray-100 overflow-hidden">
+                                    <ImageIcon className="h-6 w-6" />
+                                </div>
+                                <div className="flex-grow min-w-0">
+                                    <p className="font-semibold text-sm text-gray-800 truncate group-hover:text-orange-500 transition-colors">{item.name}</p>
+                                    <p className="text-[10px] text-gray-400 font-bold uppercase mt-0.5">{item.count} lượt bán</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="font-bold text-gray-800 text-sm">{formatCurrency(item.revenue)}</p>
+                                </div>
+                            </div>
+                        )) : (
+                            <p className="text-sm text-gray-400 italic text-center py-10">Chưa có dữ liệu bán hàng.</p>
+                        )}
+                    </div>
                 </div>
             </div>
             
-            {/* Additional Stats */}
-             <div className="mt-8">
-                <OrderStatChart />
-             </div>
+            {/* Status Statistics */}
+            <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100">
+                <h3 className="font-semibold text-gray-800 text-lg mb-8">Tỉ lệ đơn hàng</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                    {Object.entries(statusBreakdown).map(([label, count]) => {
+                        const total = stats.totalOrders || 1;
+                        const percent = Math.round((count / total) * 100);
+                        const barColor = getStatusColor(label === 'Đang xử lý' ? 'pending_restaurant' : (label === 'Hoàn thành' ? 'delivered' : (label === 'Đang giao' ? 'delivering' : 'cancelled')));
+                        
+                        return (
+                            <div key={label} className="space-y-3">
+                                <div className="flex justify-between items-end">
+                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{label}</span>
+                                    <span className="text-sm font-semibold text-gray-800">{count}</span>
+                                </div>
+                                <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                                    <div 
+                                        className={`h-full ${barColor} rounded-full transition-all duration-1000`} 
+                                        style={{ width: `${percent}%` }}
+                                    ></div>
+                                </div>
+                                <p className="text-[10px] text-gray-400 font-medium">{percent}% tổng đơn</p>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
         </div>
     );
 };
