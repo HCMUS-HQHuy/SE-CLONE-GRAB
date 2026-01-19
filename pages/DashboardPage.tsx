@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { CashIcon, ClockIcon, ClipboardListIcon, DownloadIcon, StarIcon, ImageIcon, TrendingUpIcon } from '../components/Icons';
+import { CashIcon, ClockIcon, ClipboardListIcon, DownloadIcon, StarIcon, ImageIcon, TrendingUpIcon, TrendingDownIcon } from '../components/Icons';
 import { orderApiService, OrderResponseData } from '../services/orderApi';
 import { restaurantApiService, DishResponse } from '../services/restaurantApi';
 import { apiService } from '../services/api';
@@ -27,10 +27,11 @@ type SummaryCardProps = {
     title: string;
     value: string;
     change?: string;
+    isPositiveChange?: boolean;
     color: string;
 };
 
-const SummaryCard: React.FC<SummaryCardProps> = ({ icon, title, value, change, color }) => (
+const SummaryCard: React.FC<SummaryCardProps> = ({ icon, title, value, change, isPositiveChange = true, color }) => (
     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-start space-x-4 transition-all hover:shadow-md">
         <div className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center ${color}`}>
             {icon}
@@ -38,9 +39,12 @@ const SummaryCard: React.FC<SummaryCardProps> = ({ icon, title, value, change, c
         <div>
             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{title}</p>
             <p className="text-2xl font-semibold text-gray-800 mt-1">{value}</p>
-            {change && <p className="text-xs text-emerald-600 mt-1.5 font-medium flex items-center">
-                <TrendingUpIcon className="w-3 h-3 mr-1"/> {change}
-            </p>}
+            {change && (
+                <p className={`text-xs mt-1.5 font-medium flex items-center ${isPositiveChange ? 'text-emerald-600' : 'text-rose-600'}`}>
+                    {isPositiveChange ? <TrendingUpIcon className="w-3 h-3 mr-1"/> : <TrendingDownIcon className="w-3 h-3 mr-1"/>}
+                    {change}
+                </p>
+            )}
         </div>
     </div>
 );
@@ -102,7 +106,6 @@ const RevenueLineChart: React.FC<{ data: { day: string; value: number }[] }> = (
                                 <circle cx={x} cy={y} r="5" fill="#F97316" className="transition-all group-hover:r-7" />
                                 <circle cx={x} cy={y} r="10" fill="#F97316" fillOpacity="0.1" className="opacity-0 group-hover:opacity-100 transition-opacity" />
                                 <text x={x} y={height - 15} textAnchor="middle" className="text-[10px] fill-gray-400 font-bold uppercase">{d.day}</text>
-                                {/* Tooltip giả lập bằng SVG */}
                                 <g className="opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                                     <rect x={x - 40} y={y - 35} width="80" height="25" rx="4" fill="#1F2937" />
                                     <text x={x} y={y - 18} textAnchor="middle" fill="white" fontSize="10" fontWeight="bold">{formatCurrency(d.value)}</text>
@@ -190,14 +193,17 @@ const RestaurantDashboardPage: React.FC = () => {
         });
 
         const avgValue = deliveredCount > 0 ? totalRevenue / deliveredCount : 0;
-        const growth = yesterdayRevenue > 0 ? ((todayRevenue - yesterdayRevenue) / yesterdayRevenue * 100).toFixed(1) : '0';
+        const rawGrowth = yesterdayRevenue > 0 ? ((todayRevenue - yesterdayRevenue) / yesterdayRevenue * 100) : 0;
+        const isPositiveChange = rawGrowth >= 0;
+        const growthText = `${isPositiveChange ? '+' : ''}${rawGrowth.toFixed(1)}%`;
 
         return {
             todayRevenue,
             totalOrders: orders.length,
             pendingCount,
             avgValue,
-            growth: parseFloat(growth) >= 0 ? `+${growth}%` : `${growth}%`
+            growth: growthText,
+            isPositiveChange
         };
     }, [orders]);
 
@@ -270,6 +276,38 @@ const RestaurantDashboardPage: React.FC = () => {
         return groups;
     }, [orders]);
 
+    // --- REPORT EXPORT ---
+    const handleDownloadReport = () => {
+        const reportContent = {
+            generatedAt: new Date().toLocaleString('vi-VN'),
+            restaurantId: restaurantId,
+            summary: {
+                todayRevenue: stats.todayRevenue,
+                totalOrders: stats.totalOrders,
+                pendingOrders: stats.pendingCount,
+                avgOrderValue: stats.avgValue,
+                growthRate: stats.growth
+            },
+            weeklyRevenue: weeklyData,
+            statusDistribution: statusBreakdown,
+            bestSellingDishes: topItems.map(item => ({
+                dishName: item.name,
+                salesCount: item.count,
+                totalRevenue: item.revenue
+            }))
+        };
+
+        const blob = new Blob([JSON.stringify(reportContent, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `baocao_nha_hang_${new Date().toLocaleDateString('en-CA')}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
+
     if (isLoading) {
         return (
             <div className="min-h-[60vh] flex flex-col items-center justify-center">
@@ -286,7 +324,10 @@ const RestaurantDashboardPage: React.FC = () => {
                     <h1 className="text-3xl font-semibold text-gray-800 tracking-tight">Chào buổi sáng!</h1>
                     <p className="text-gray-400 text-sm mt-1 font-medium">Dưới đây là tóm tắt hoạt động của nhà hàng hôm nay.</p>
                 </div>
-                <button className="flex items-center text-xs font-semibold text-white bg-gray-900 hover:bg-black px-6 py-3 rounded-xl shadow-lg transition-all active:scale-95 uppercase tracking-widest">
+                <button 
+                    onClick={handleDownloadReport}
+                    className="flex items-center text-xs font-semibold text-white bg-gray-900 hover:bg-black px-6 py-3 rounded-xl shadow-lg transition-all active:scale-95 uppercase tracking-widest"
+                >
                     <DownloadIcon className="h-4 w-4 mr-2" />
                     Tải báo cáo
                 </button>
@@ -294,7 +335,14 @@ const RestaurantDashboardPage: React.FC = () => {
 
             {/* Summary Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                <SummaryCard icon={<CashIcon className="h-6 w-6 text-emerald-600"/>} title="Doanh thu hôm nay" value={formatCurrency(stats.todayRevenue)} change={`${stats.growth} so với hôm qua`} color="bg-emerald-50"/>
+                <SummaryCard 
+                    icon={<CashIcon className="h-6 w-6 text-emerald-600"/>} 
+                    title="Doanh thu hôm nay" 
+                    value={formatCurrency(stats.todayRevenue)} 
+                    change={`${stats.growth} so với hôm qua`} 
+                    isPositiveChange={stats.isPositiveChange}
+                    color="bg-emerald-50"
+                />
                 <SummaryCard icon={<ClipboardListIcon className="h-6 w-6 text-indigo-600"/>} title="Tổng đơn hàng" value={String(stats.totalOrders)} color="bg-indigo-50"/>
                 <SummaryCard icon={<ClockIcon className="h-6 w-6 text-amber-600"/>} title="Đang xử lý" value={String(stats.pendingCount)} color="bg-amber-50"/>
                 <SummaryCard icon={<StarIcon className="h-6 w-6 text-rose-600"/>} title="Giá trị TB đơn" value={formatCurrency(stats.avgValue)} color="bg-rose-50"/>

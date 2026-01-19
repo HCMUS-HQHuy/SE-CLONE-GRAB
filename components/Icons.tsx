@@ -183,7 +183,7 @@ export const ClipboardListIcon: React.FC<IconProps> = ({ className }) => (
 
 export const MotorcycleIcon: React.FC<IconProps> = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M21 16.5c0 1.933-1.567 3.5-3.5 3.5s-3.5-1.567-3.5-3.5 1.567-3.5 3.5-3.5 3.5 1.567 3.5 3.5zM7.5 16.5c0 1.933-1.567 3.5-3.5 3.5S.5 18.433.5 16.5 2.067 13 4 13s3.5 1.567 3.5 3.5z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M21 16.5c0 1.933-1.567 3.5-3.5 3.5s-3.5-1.567-3.5-3.5 1.567-3.5 3.5-3.5 3.5 1.567 3.5 3.5zM7.5 16.5c0 1.933-1.567 3.5-3.5 3.5S.5 18.433.5 16.5 2.067 13 4 13s3.5 1.567 3.5 3.5zM7.5 16.5c0 1.933-1.567 3.5-3.5 3.5S.5 18.433.5 16.5 2.067 13 4 13s3.5 1.567 3.5 3.5z" />
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 13.5h3.5m0 0L19 9l-2.5-3-3.5 3.5" />
         <path strokeLinecap="round" strokeLinejoin="round" d="M4 13L2.5 9l4-3 1.5 3L4 13z" />
         <path strokeLinecap="round" strokeLinejoin="round" d="M8 9.5h8" />
@@ -293,6 +293,12 @@ export const MailOpenIcon: React.FC<IconProps> = ({ className }) => (
 export const TrendingUpIcon: React.FC<IconProps> = ({ className }) => (
   <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+  </svg>
+);
+
+export const TrendingDownIcon: React.FC<IconProps> = ({ className }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
   </svg>
 );
 
