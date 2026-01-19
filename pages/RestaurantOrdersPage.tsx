@@ -21,6 +21,15 @@ const STATUS_MAP: Record<string, string> = {
     'confirmed': 'Xác nhận'
 };
 
+export const mockOrders = [
+    { id: '1', status: 'Hoàn thành' },
+    { id: '2', status: 'Hoàn thành' },
+    { id: '3', status: 'Mới' },
+    { id: '4', status: 'Đang chuẩn bị' },
+    { id: '5', status: 'Sẵn sàng giao' },
+    { id: '6', status: 'Đã hủy' }
+];
+
 export type Order = {
     id: string;
     customerName: string;
