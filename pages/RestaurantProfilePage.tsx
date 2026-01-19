@@ -4,7 +4,7 @@ import { restaurants, FoodItem as BaseFoodItem, Restaurant } from './HomePage';
 import { PencilIcon, LocationMarkerIcon, PhoneIcon, ClockIcon, StarIcon, ImageIcon, PlusIcon, ChatAltIcon, ClipboardListIcon, TrashIcon, ExclamationIcon, DocumentTextIcon } from '../components/Icons';
 import AddMenuItemModal from '../components/AddMenuItemModal';
 import EditRestaurantProfileModal from '../components/EditRestaurantProfileModal';
-import { restaurantApiService, RestaurantListItem, DishResponse, UpdateDishRequest } from '../services/restaurantApi';
+import { restaurantApiService, RestaurantListItem, DishResponse, UpdateDishRequest, UpdateRestaurantRequest } from '../services/restaurantApi';
 import { apiService } from '../services/api';
 
 // Extend FoodItem type for management
@@ -55,7 +55,7 @@ const MenuItemCard: React.FC<{ item: FoodItem; onEdit: () => void; onDelete: () 
             )}
              {!item.isAvailable && (
                 <div className="absolute inset-0 bg-white bg-opacity-50 flex items-center justify-center">
-                    <span className="border border-red-500 text-red-500 font-semibold uppercase px-3 py-1.5 rounded transform -rotate-12 text-sm">
+                    <span className="border border-red-500 text-red-500 font-medium uppercase px-3 py-1.5 rounded transform -rotate-12 text-sm">
                         Hết hàng
                     </span>
                 </div>
@@ -75,11 +75,11 @@ const MenuItemCard: React.FC<{ item: FoodItem; onEdit: () => void; onDelete: () 
             <div className="mt-auto pt-2 flex justify-between items-end">
                 {item.newPrice ? (
                     <div className="flex items-baseline gap-1.5">
-                        <p className="text-md font-bold text-orange-500">{item.newPrice}</p>
+                        <p className="text-md font-semibold text-orange-500">{item.newPrice}</p>
                         <p className="text-xs text-gray-400 line-through">{item.oldPrice}</p>
                     </div>
                 ) : (
-                    <p className="text-md font-bold text-orange-500">{item.price}</p>
+                    <p className="text-md font-semibold text-orange-500">{item.price}</p>
                 )}
                 <div className="flex space-x-1.5">
                     <button onClick={onEdit} className="p-1.5 text-gray-400 hover:text-blue-500 transition-colors"><PencilIcon className="h-4 w-4" /></button>
@@ -219,7 +219,7 @@ const StorePage: React.FC = () => {
                     category_id: itemData.categoryId,
                     stock_quantity: itemData.stock ? parseInt(itemData.stock, 10) : undefined,
                     is_available: true,
-                    image: itemData.imageFile || undefined // Quan trọng: Truyền file ảnh mới nếu có
+                    image: itemData.imageFile || undefined 
                 };
                 await restaurantApiService.updateDish(itemData.id, updatePayload);
                 alert('Cập nhật món ăn thành công!');
@@ -247,8 +247,19 @@ const StorePage: React.FC = () => {
         }
     };
 
-    const handleSaveProfile = (updatedData: Partial<Restaurant>) => {
-        setIsProfileModalOpen(false);
+    const handleSaveProfile = async (updatedData: UpdateRestaurantRequest) => {
+        if (!restaurantData) return;
+        setIsLoading(true);
+        try {
+            const result = await restaurantApiService.updateRestaurant(restaurantData.id, updatedData);
+            setRestaurantData(result);
+            setIsProfileModalOpen(false);
+            alert('Cập nhật hồ sơ thành công!');
+        } catch (err: any) {
+            alert('Cập nhật hồ sơ thất bại: ' + err.message);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     if (isLoading && !restaurantData) {
