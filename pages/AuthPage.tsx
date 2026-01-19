@@ -11,6 +11,15 @@ const AuthPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  
+  // State riêng biệt cho từng form để không bị "copy" dữ liệu khi chuyển tab
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  
+  const [signupEmail, setSignupEmail] = useState('');
+  const [signupPassword, setSignupPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -19,27 +28,37 @@ const AuthPage: React.FC = () => {
     }
   }, [navigate]);
 
+  // Hàm xóa dữ liệu khi chuyển tab
+  const toggleTab = (loginTab: boolean) => {
+    setIsLogin(loginTab);
+    setError(null);
+    setSuccessMsg(null);
+    // Reset toàn bộ input
+    setLoginEmail('');
+    setLoginPassword('');
+    setSignupEmail('');
+    setSignupPassword('');
+    setConfirmPassword('');
+  };
+
+  const validatePassword = (pw: string) => {
+    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    return regex.test(pw);
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setSuccessMsg(null);
     setIsLoading(true);
 
-    const formData = new FormData(e.currentTarget as HTMLFormElement);
-    const email = formData.get('email') as string;
-    const password = formData.get('password') as string;
-
     try {
-      await apiService.login({ email, password }, 'user');
+      await apiService.login({ email: loginEmail, password: loginPassword }, 'user');
       const userProfile = await apiService.getMe('user');
       
       if (userProfile.status === 'pending') {
         navigate('/user/profile');
       } else if (userProfile.status === 'inactive') {
-        setError('Tài khoản đã bị vô hiệu hóa. Vui lòng liên hệ hỗ trợ.');
-        apiService.logout('user');
-      } else if (userProfile.status === 'banned') {
-        setError('Tài khoản này đã bị cấm vĩnh viễn.');
+        setError('Tài khoản đã bị vô hiệu hóa.');
         apiService.logout('user');
       } else {
         navigate('/user/home');
@@ -55,23 +74,22 @@ const AuthPage: React.FC = () => {
     e.preventDefault();
     setError(null);
     setSuccessMsg(null);
-    setIsLoading(true);
 
-    const formData = new FormData(e.currentTarget as HTMLFormElement);
-    const email = formData.get('email') as string;
-    const password = formData.get('password') as string;
-    const confirmPassword = formData.get('confirm-password') as string;
-
-    if (password !== confirmPassword) {
-      setError('Mật khẩu xác nhận không khớp.');
-      setIsLoading(false);
+    if (!validatePassword(signupPassword)) {
+      setError('Mật khẩu cần ít nhất 8 ký tự, 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt.');
       return;
     }
 
+    if (signupPassword !== confirmPassword) {
+      setError('Mật khẩu xác nhận không khớp.');
+      return;
+    }
+
+    setIsLoading(true);
     try {
-      await apiService.register({ email, password, role: 'user' });
-      setSuccessMsg('Đăng ký thành công! Vui lòng đăng nhập.');
-      setIsLogin(true);
+      await apiService.register({ email: signupEmail, password: signupPassword, role: 'user' });
+      setSuccessMsg('Đăng ký thành công! Hãy đăng nhập ngay.');
+      toggleTab(true); // Chuyển về tab login và đã xóa sạch dữ liệu cũ
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -79,106 +97,71 @@ const AuthPage: React.FC = () => {
     }
   };
 
-  const LoginForm: React.FC = () => (
-    <form className="space-y-6" onSubmit={handleLogin}>
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
-          {error}
-        </div>
-      )}
-      {successMsg && (
-        <div className="bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-md text-sm">
-          {successMsg}
-        </div>
-      )}
-      <div>
-        <div className="relative">
-          <span className="absolute inset-y-0 left-0 flex items-center pl-3">
-            <MailIcon className="h-5 w-5 text-gray-400" />
-          </span>
-          <input id="email" name="email" type="email" required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 sm:text-sm" placeholder="Email đăng nhập" />
-        </div>
-      </div>
-      <div>
-        <div className="relative">
-          <span className="absolute inset-y-0 left-0 flex items-center pl-3">
-            <LockIcon className="h-5 w-5 text-gray-400" />
-          </span>
-          <input id="password" name="password" type="password" required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 sm:text-sm" placeholder="Mật khẩu" />
-        </div>
-      </div>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center">
-          <input id="remember-me" name="remember-me" type="checkbox" className="h-4 w-4 text-orange-600 border-gray-300 rounded" />
-          <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">Ghi nhớ tôi</label>
-        </div>
-        <button type="button" onClick={() => setIsForgotPasswordOpen(true)} className="text-sm font-medium text-orange-600 hover:text-orange-500">Quên mật khẩu?</button>
-      </div>
-      <button type="submit" disabled={isLoading} className="w-full py-3 px-4 rounded-md text-white bg-orange-500 hover:bg-orange-600 font-medium transition-all disabled:opacity-70">
-        {isLoading ? 'Đang xử lý...' : 'Đăng nhập'}
-      </button>
-    </form>
-  );
-
-  const SignupForm: React.FC = () => (
-    <form className="space-y-4" onSubmit={handleSignup}>
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
-          {error}
-        </div>
-      )}
-      <div>
-        <div className="relative">
-          <span className="absolute inset-y-0 left-0 flex items-center pl-3">
-            <MailIcon className="h-5 w-5 text-gray-400" />
-          </span>
-          <input name="email" type="email" required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 sm:text-sm" placeholder="Email đăng ký" />
-        </div>
-      </div>
-      <div>
-        <div className="relative">
-          <span className="absolute inset-y-0 left-0 flex items-center pl-3">
-            <LockIcon className="h-5 w-5 text-gray-400" />
-          </span>
-          <input name="password" type="password" required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 sm:text-sm" placeholder="Mật khẩu" />
-        </div>
-      </div>
-       <div>
-        <div className="relative">
-          <span className="absolute inset-y-0 left-0 flex items-center pl-3">
-            <LockIcon className="h-5 w-5 text-gray-400" />
-          </span>
-          <input name="confirm-password" type="password" required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 sm:text-sm" placeholder="Xác nhận mật khẩu" />
-        </div>
-      </div>
-      <button type="submit" disabled={isLoading} className="w-full py-3 px-4 rounded-md text-white bg-orange-500 hover:bg-orange-600 font-medium transition-all disabled:opacity-70">
-        {isLoading ? 'Đang tạo tài khoản...' : 'Tạo tài khoản'}
-      </button>
-    </form>
-  );
-  
   return (
     <>
       <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 bg-cover bg-center" style={{backgroundImage: "url('https://picsum.photos/1920/1080?food,delivery')"}}>
-        <div className="absolute inset-0 bg-black opacity-50"></div>
-        <div className="relative w-full max-w-md bg-slate-50 rounded-xl shadow-2xl p-8 space-y-8">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-800">Món Ngon Giao Tận Nơi</h1>
-            <p className="text-gray-500 mt-2">{isLogin ? 'Chào mừng trở lại!' : 'Tạo tài khoản mới'}</p>
+        <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"></div>
+        <div className="relative w-full max-w-md bg-white/95 backdrop-blur-md rounded-[2.5rem] shadow-2xl p-10 space-y-8 border border-white/20">
+          <div className="text-center">
+            <h1 className="text-2xl font-semibold text-gray-800 tracking-tight">Food<span className="text-orange-500">Delivery</span></h1>
+            <p className="text-gray-400 text-sm mt-2 font-medium">{isLogin ? 'Chào mừng bạn quay trở lại!' : 'Bắt đầu hành trình ẩm thực của bạn'}</p>
           </div>
-          <div className="flex rounded-md shadow-sm mb-6">
-            <button onClick={() => { setIsLogin(true); setError(null); setSuccessMsg(null); }} className={`w-1/2 p-3 text-sm font-medium rounded-l-md transition-colors ${isLogin ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}>Đăng nhập</button>
-            <button onClick={() => { setIsLogin(false); setError(null); setSuccessMsg(null); }} className={`w-1/2 p-3 text-sm font-medium rounded-r-md transition-colors ${!isLogin ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-600'}`}>Đăng ký</button>
+
+          <div className="flex bg-gray-100/50 p-1.5 rounded-2xl">
+            <button onClick={() => toggleTab(true)} className={`flex-1 py-2.5 text-xs font-semibold rounded-xl transition-all ${isLogin ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>ĐĂNG NHẬP</button>
+            <button onClick={() => toggleTab(false)} className={`flex-1 py-2.5 text-xs font-semibold rounded-xl transition-all ${!isLogin ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>ĐĂNG KÝ</button>
           </div>
-          {isLogin ? <LoginForm /> : <SignupForm />}
-          
-          <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-300"></div></div>
-              <div className="relative flex justify-center text-sm"><span className="px-2 bg-slate-50 text-gray-500">Hoặc</span></div>
+
+          {error && <div className="bg-red-50 text-red-500 p-4 rounded-2xl text-xs font-medium border border-red-100 animate-in fade-in zoom-in-95 duration-300">{error}</div>}
+          {successMsg && <div className="bg-green-50 text-green-600 p-4 rounded-2xl text-xs font-medium border border-green-100 animate-in fade-in zoom-in-95 duration-300">{successMsg}</div>}
+
+          {isLogin ? (
+            <form className="space-y-5" onSubmit={handleLogin}>
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400"><MailIcon className="h-4 w-4" /></span>
+                <input type="email" required value={loginEmail} onChange={e => setLoginEmail(e.target.value)} autoComplete="username" className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-orange-100 focus:bg-white outline-none transition-all text-sm font-medium" placeholder="Email" />
+              </div>
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400"><LockIcon className="h-4 w-4" /></span>
+                <input type="password" required value={loginPassword} onChange={e => setLoginPassword(e.target.value)} autoComplete="current-password" className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-orange-100 focus:bg-white outline-none transition-all text-sm font-medium" placeholder="Mật khẩu" />
+              </div>
+              <div className="flex justify-end">
+                <button type="button" onClick={() => setIsForgotPasswordOpen(true)} className="text-xs font-semibold text-orange-600 hover:text-orange-700">Quên mật khẩu?</button>
+              </div>
+              <button type="submit" disabled={isLoading} className="w-full py-4 rounded-2xl text-white bg-orange-500 hover:bg-orange-600 font-semibold text-sm shadow-lg shadow-orange-100 transition-all active:scale-[0.98] disabled:opacity-50">
+                {isLoading ? 'Đang xử lý...' : 'Đăng nhập ngay'}
+              </button>
+            </form>
+          ) : (
+            <form className="space-y-5" onSubmit={handleSignup}>
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400"><MailIcon className="h-4 w-4" /></span>
+                <input type="email" required value={signupEmail} onChange={e => setSignupEmail(e.target.value)} autoComplete="off" className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-orange-100 focus:bg-white outline-none transition-all text-sm font-medium" placeholder="Email đăng ký" />
+              </div>
+              <div>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400"><LockIcon className="h-4 w-4" /></span>
+                  <input type="password" required value={signupPassword} onChange={e => setSignupPassword(e.target.value)} autoComplete="new-password" className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-orange-100 focus:bg-white outline-none transition-all text-sm font-medium" placeholder="Mật khẩu mới" />
+                </div>
+                <p className="text-[10px] text-gray-400 mt-2 ml-1 leading-relaxed">Ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số & ký tự đặc biệt.</p>
+              </div>
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400"><LockIcon className="h-4 w-4" /></span>
+                <input type="password" required value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} autoComplete="new-password" className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-orange-100 focus:bg-white outline-none transition-all text-sm font-medium" placeholder="Xác nhận mật khẩu" />
+              </div>
+              <button type="submit" disabled={isLoading} className="w-full py-4 rounded-2xl text-white bg-orange-500 hover:bg-orange-600 font-semibold text-sm shadow-lg shadow-orange-100 transition-all active:scale-[0.98] disabled:opacity-50">
+                {isLoading ? 'Đang tạo tài khoản...' : 'Đăng ký thành viên'}
+              </button>
+            </form>
+          )}
+
+          <div className="relative">
+              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-100"></div></div>
+              <div className="relative flex justify-center text-[10px]"><span className="px-3 bg-white text-gray-400 font-bold uppercase tracking-widest">Hoặc tiếp tục với</span></div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-              <button className="w-full inline-flex justify-center py-2 border border-gray-300 rounded-md bg-white hover:bg-gray-50"><GoogleIcon className="w-5 h-5" /></button>
-              <button className="w-full inline-flex justify-center py-2 border border-gray-300 rounded-md bg-white hover:bg-gray-50"><FacebookIcon className="w-5 h-5" /></button>
+          <div className="grid grid-cols-2 gap-4">
+              <button className="flex justify-center items-center py-3 border border-gray-100 rounded-2xl bg-gray-50/50 hover:bg-white transition-all"><GoogleIcon className="w-5 h-5" /></button>
+              <button className="flex justify-center items-center py-3 border border-gray-100 rounded-2xl bg-gray-50/50 hover:bg-white transition-all"><FacebookIcon className="w-5 h-5" /></button>
           </div>
         </div>
       </div>
