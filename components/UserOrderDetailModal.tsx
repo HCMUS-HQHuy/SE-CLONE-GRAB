@@ -34,7 +34,7 @@ const UserOrderDetailModal: React.FC<Props> = ({ orderId, onClose }) => {
                     setRestaurant(resData);
                 }
 
-                const finishedStatus = ['DELIVERED', 'CANCELLED', 'REJECTED'];
+                const finishedStatus = ['DELIVERED', 'CANCELLED', 'REJECTED', 'DRIVER_REJECTED'];
                 if (finishedStatus.includes(orderData.status.toUpperCase())) {
                     clearInterval(interval);
                 }
@@ -75,7 +75,6 @@ const UserOrderDetailModal: React.FC<Props> = ({ orderId, onClose }) => {
         );
     }
 
-    // Định nghĩa các bước theo đúng yêu cầu hình ảnh
     const steps = [
         { label: 'CHỜ XÁC NHẬN', icon: <ClockIcon className="h-5 w-5"/> },
         { label: 'ĐÃ XÁC NHẬN', icon: <CheckCircleIcon className="h-5 w-5"/> },
@@ -84,18 +83,21 @@ const UserOrderDetailModal: React.FC<Props> = ({ orderId, onClose }) => {
         { label: 'ĐÃ HOÀN TẤT', icon: <CheckCircleIcon className="h-5 w-5"/> }
     ];
 
-    // Logic mapping trạng thái API sang index của progress bar
     const getActiveStepIndex = (status: string) => {
         const s = status.toLowerCase();
         if (s === 'pending_restaurant' || s === 'pending') return 0;
-        if (s === 'restaurant_accepted') return 2; // Nhận đơn là nhảy thẳng đến đang chế biến (bước 2)
+        if (s === 'restaurant_accepted') return 2;
         if (s === 'driver_accepted' || s === 'delivering' || s === 'shipping') return 3;
         if (s === 'delivered') return 4;
         return -1;
     };
 
     const currentIdx = getActiveStepIndex(order.status);
-    const isCancelled = order.status.toUpperCase() === 'CANCELLED' || order.status.toUpperCase() === 'REJECTED' || order.status.toLowerCase() === 'restaurant_rejected';
+    const isRejectedOrCancelled = 
+        order.status.toUpperCase() === 'CANCELLED' || 
+        order.status.toUpperCase() === 'REJECTED' || 
+        order.status.toLowerCase() === 'restaurant_rejected' ||
+        order.status.toLowerCase() === 'driver_rejected';
     
     const subtotal = parseFloat(order.subtotal || '0');
     const deliveryFee = parseFloat(order.delivery_fee || '0');
@@ -119,16 +121,18 @@ const UserOrderDetailModal: React.FC<Props> = ({ orderId, onClose }) => {
                 </div>
 
                 <div className="p-8 space-y-10">
-                    {/* TRẠNG THÁI TIẾN TRÌNH (PROGRESS BAR) */}
                     <div className="py-6">
-                        {isCancelled ? (
-                            <div className="flex items-center justify-center space-x-3 text-red-600 bg-red-50 p-6 rounded-[2rem] border-2 border-dashed border-red-100">
+                        {isRejectedOrCancelled ? (
+                            <div className="flex items-center justify-center space-x-3 text-red-600 bg-red-50 p-6 rounded-[2rem] border-2 border-dashed border-red-100 animate-in fade-in zoom-in-95 duration-300">
                                 <XCircleIcon className="h-8 w-8" />
-                                <span className="text-lg font-black uppercase tracking-tight">Đơn hàng đã bị hủy hoặc bị từ chối</span>
+                                <span className="text-lg font-black uppercase tracking-tight">
+                                    {order.status.toLowerCase() === 'driver_rejected' 
+                                        ? 'Tài xế đã từ chối đơn hàng này' 
+                                        : (order.status.toLowerCase() === 'restaurant_rejected' ? 'Nhà hàng đã từ chối đơn hàng này' : 'Đơn hàng đã bị hủy')}
+                                </span>
                             </div>
                         ) : (
                             <div className="relative">
-                                {/* Thanh nối giữa các bước */}
                                 <div className="absolute top-6 left-[10%] right-[10%] h-0.5 bg-gray-100 -z-0">
                                     <div 
                                         className="h-full bg-orange-500 transition-all duration-1000 ease-out" 
@@ -136,7 +140,6 @@ const UserOrderDetailModal: React.FC<Props> = ({ orderId, onClose }) => {
                                     ></div>
                                 </div>
 
-                                {/* Các vòng tròn trạng thái */}
                                 <div className="flex justify-between relative z-10">
                                     {steps.map((step, idx) => {
                                         const isActive = idx <= currentIdx;
