@@ -8,6 +8,8 @@ type CartSidebarProps = {
   onClose: () => void;
 };
 
+const BASE_IMG_URL = 'http://localhost:8004/';
+
 const CartSidebar: React.FC<CartSidebarProps> = ({ isOpen, onClose }) => {
   const { items, restaurant, updateQuantity, removeItem, clearCart } = useCart();
 
@@ -65,7 +67,7 @@ const CartSidebar: React.FC<CartSidebarProps> = ({ isOpen, onClose }) => {
               {/* Items List */}
               {items.map(item => (
                 <div key={item.id} className="flex items-start space-x-4">
-                  <img src={item.image} alt={item.name} className="h-20 w-20 rounded-md object-cover flex-shrink-0"/>
+                  <img src={BASE_IMG_URL + item.image} alt={item.name} className="h-20 w-20 rounded-md object-cover flex-shrink-0"/>
                   <div className="flex-grow">
                     <p className="font-semibold text-gray-800">{item.name}</p>
                     <p className="text-sm text-orange-500 font-bold mt-1">

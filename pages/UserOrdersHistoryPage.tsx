@@ -142,7 +142,7 @@ const UserOrdersHistoryPage: React.FC = () => {
                                         <div className="text-right">
                                             <p className="text-lg font-black text-gray-900">{formatCurrency(calculatedTotal)}</p>
                                             <span className={`inline-block px-2.5 py-0.5 mt-1 rounded-full text-[10px] font-black uppercase border ${getStatusColor(order.status)}`}>
-                                                {order.status === 'driver_rejected' ? 'TÀI XẾ TỪ CHỐI' : order.status}
+                                                {order.status === 'driver_rejected' ? 'SHIPPER IS UNAVAILABLE' : order.status}
                                             </span>
                                         </div>
                                         <ChevronRightIcon className="h-5 w-5 text-gray-300 group-hover:text-orange-500 transition-colors hidden sm:block" />

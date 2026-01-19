@@ -127,7 +127,7 @@ const UserOrderDetailModal: React.FC<Props> = ({ orderId, onClose }) => {
                                 <XCircleIcon className="h-8 w-8" />
                                 <span className="text-lg font-black uppercase tracking-tight">
                                     {order.status.toLowerCase() === 'driver_rejected' 
-                                        ? 'Tài xế đã từ chối đơn hàng này' 
+                                        ? 'Không tìm thấy tài xế' 
                                         : (order.status.toLowerCase() === 'restaurant_rejected' ? 'Nhà hàng đã từ chối đơn hàng này' : 'Đơn hàng đã bị hủy')}
                                 </span>
                             </div>

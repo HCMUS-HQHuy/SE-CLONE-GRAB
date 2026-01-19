@@ -26,7 +26,7 @@ const STATUS_TEXT_MAP: Record<string, { title: string, desc: string, icon: any }
     'delivered': { title: 'Giao thành công', desc: 'Chúc bạn ngon miệng!', icon: 'success' },
     'cancelled': { title: 'Đơn hàng đã hủy', desc: 'Đơn hàng của bạn đã bị hủy.', icon: 'error' },
     'restaurant_rejected': { title: 'Nhà hàng từ chối', desc: 'Nhà hàng không thể thực hiện đơn này.', icon: 'error' },
-    'driver_rejected': { title: 'Tài xế từ chối', desc: 'Tài xế đã từ chối đơn hàng của bạn.', icon: 'error' },
+    'driver_rejected': { title: 'Đơn hàng hủy', desc: 'Không tìm thấy tài xế.', icon: 'error' },
 };
 
 type NavbarProps = {
