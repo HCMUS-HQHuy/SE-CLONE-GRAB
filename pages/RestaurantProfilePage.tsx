@@ -222,7 +222,6 @@ const StorePage: React.FC = () => {
                     image: itemData.imageFile || undefined // Quan trọng: Truyền file ảnh mới nếu có
                 };
                 await restaurantApiService.updateDish(itemData.id, updatePayload);
-                alert('Cập nhật món ăn thành công!');
             } else {
                 const dishPayload = {
                     name: itemData.name,
@@ -235,7 +234,6 @@ const StorePage: React.FC = () => {
                     stock_quantity: itemData.stock ? parseInt(itemData.stock, 10) : undefined
                 };
                 await restaurantApiService.createDish(restaurantData.id, dishPayload);
-                alert('Món ăn đã được tạo thành công!');
             }
             const dishes = await restaurantApiService.getDishes(restaurantData.id);
             setMenuByCategories(mapApiDishesToMenuData(dishes, restaurantData.id.toString()));
