@@ -12,6 +12,20 @@ const ShipperNavbar: React.FC = () => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
+  // FIX: Notification type uses iconType instead of icon. Added state to handle marking as read.
+  const mockShipperNotifications: Notification[] = [
+    { id: 'shipper-1', iconType: 'order', title: 'Yêu cầu giao hàng mới', description: 'Đơn hàng #12345 từ Quán Ăn Gỗ. Nhận ngay!', time: '1 phút trước', isRead: false, link: '/shipper/orders' },
+    { id: 'shipper-2', iconType: 'error', title: 'Đơn hàng đã bị hủy', description: 'Khách hàng đã hủy đơn #12340. Bạn sẽ không bị ảnh hưởng.', time: '10 phút trước', isRead: false },
+  ];
+
+  const [notifications, setNotifications] = useState<Notification[]>(mockShipperNotifications);
+
+  // FIX: Implemented handleMarkRead to satisfy NotificationDropdown requirement
+  const handleMarkRead = (id: string) => {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+    setIsNotificationOpen(false);
+  };
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
         if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
@@ -28,11 +42,6 @@ const ShipperNavbar: React.FC = () => {
   };
 
   const activeLinkStyle = { color: '#F97316', borderBottom: '2px solid #F97316' };
-
-  const mockShipperNotifications: Notification[] = [
-    { id: 'shipper-1', icon: <PackageIcon className="h-5 w-5 text-blue-500" />, title: 'Yêu cầu giao hàng mới', description: 'Đơn hàng #12345 từ Quán Ăn Gỗ. Nhận ngay!', time: '1 phút trước', isRead: false, link: '/shipper/orders' },
-    { id: 'shipper-2', icon: <XCircleIcon className="h-5 w-5 text-red-500" />, title: 'Đơn hàng đã bị hủy', description: 'Khách hàng đã hủy đơn #12340. Bạn sẽ không bị ảnh hưởng.', time: '10 phút trước', isRead: false },
-  ];
 
   return (
     <header className="bg-white shadow-sm sticky top-0 z-10">
@@ -53,9 +62,16 @@ const ShipperNavbar: React.FC = () => {
             <div className="relative">
                 <button onClick={() => setIsNotificationOpen(prev => !prev)} className="relative p-2 rounded-full text-gray-500 hover:text-orange-500 hover:bg-orange-50 focus:outline-none focus:bg-orange-100 transition">
                     <BellIcon className="h-6 w-6" />
-                    {mockShipperNotifications.some(n => !n.isRead) && <span className="absolute top-1.5 right-1.5 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white"></span>}
+                    {/* FIX: Check unread state from local state notifications */}
+                    {notifications.some(n => !n.isRead) && <span className="absolute top-1.5 right-1.5 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white"></span>}
                 </button>
-                <NotificationDropdown isOpen={isNotificationOpen} onClose={() => setIsNotificationOpen(false)} notifications={mockShipperNotifications} />
+                {/* FIX: Passed notifications state and onMarkRead handler */}
+                <NotificationDropdown 
+                  isOpen={isNotificationOpen} 
+                  onClose={() => setIsNotificationOpen(false)} 
+                  notifications={notifications} 
+                  onMarkRead={handleMarkRead}
+                />
              </div>
             <div className="ml-3 relative" ref={userMenuRef}>
               <button 

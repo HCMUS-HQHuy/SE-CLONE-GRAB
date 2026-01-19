@@ -3,14 +3,31 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { UserIcon, SearchIcon, ShoppingCartIcon, BellIcon, DocumentTextIcon, MenuIcon, PackageIcon, CheckCircleIcon, ImageIcon, LogoutIcon } from './Icons';
 import { useCart } from '../contexts/CartContext';
-import NotificationDropdown from './NotificationDropdown';
-import type { Notification } from './NotificationDropdown';
+import NotificationDropdown, { Notification } from './NotificationDropdown';
 import { apiService } from '../services/api';
 import { restaurantApiService, RestaurantListItem, DishResponse } from '../services/restaurantApi';
+import { orderApiService } from '../services/orderApi';
 import ProductDetailModal from './ProductDetailModal';
 import { FoodItem } from '../pages/HomePage';
 
 const BASE_IMG_URL = 'http://localhost:8004/';
+
+// Key lưu trữ LocalStorage
+const NOTI_STORAGE_KEY = 'user_notifications_history';
+const STATUS_TRACKER_KEY = 'known_order_statuses';
+
+const STATUS_TEXT_MAP: Record<string, { title: string, desc: string, icon: any }> = {
+    'pending_restaurant': { title: 'Đơn hàng mới', desc: 'Nhà hàng đã nhận yêu cầu của bạn.', icon: 'order' },
+    'restaurant_accepted': { title: 'Đã xác nhận', desc: 'Nhà hàng đã đồng ý chuẩn bị món ăn.', icon: 'order' },
+    'preparing': { title: 'Đang chế biến', desc: 'Đầu bếp đang thực hiện món ăn của bạn.', icon: 'preparing' },
+    'ready': { title: 'Sẵn sàng giao', desc: 'Món ăn đã xong, đang chờ tài xế đến lấy.', icon: 'preparing' },
+    'driver_accepted': { title: 'Tài xế đã nhận', desc: 'Tài xế đang đến nhà hàng lấy hàng.', icon: 'shipping' },
+    'delivering': { title: 'Đang giao hàng', desc: 'Shipper đang trên đường đến chỗ bạn.', icon: 'shipping' },
+    'delivered': { title: 'Giao thành công', desc: 'Chúc bạn ngon miệng!', icon: 'success' },
+    'cancelled': { title: 'Đơn hàng đã hủy', desc: 'Đơn hàng của bạn đã bị hủy.', icon: 'error' },
+    'restaurant_rejected': { title: 'Nhà hàng từ chối', desc: 'Nhà hàng không thể thực hiện đơn này.', icon: 'error' },
+    'driver_rejected': { title: 'Tài xế từ chối', desc: 'Tài xế đã từ chối đơn hàng của bạn.', icon: 'error' },
+};
 
 type NavbarProps = {
   onCartClick: () => void;
@@ -20,8 +37,10 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
   const { items } = useCart();
   const navigate = useNavigate();
   const cartItemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+  
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<{ dishes: (DishResponse & { restaurantName: string })[], restaurants: RestaurantListItem[] }>({ dishes: [], restaurants: [] });
@@ -34,7 +53,13 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
+  // 1. Tải thông báo từ LocalStorage khi mount
   useEffect(() => {
+    const savedNotis = localStorage.getItem(NOTI_STORAGE_KEY);
+    if (savedNotis) {
+        setNotifications(JSON.parse(savedNotis));
+    }
+
     const fetchSearchData = async () => {
       try {
         const [resList, dishList] = await Promise.all([
@@ -49,6 +74,79 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
     };
     fetchSearchData();
   }, []);
+
+  // 2. Cơ chế Polling cập nhật trạng thái đơn hàng
+  useEffect(() => {
+    let pollingInterval: any;
+
+    const checkOrderUpdates = async () => {
+        try {
+            const me = await apiService.getMe('user');
+            const ordersData = await orderApiService.getUserOrders(me.id.toString());
+            
+            const savedStatuses = JSON.parse(localStorage.getItem(STATUS_TRACKER_KEY) || '{}');
+            const newStatusMap: Record<string, string> = { ...savedStatuses };
+            const newNotis: Notification[] = [];
+
+            ordersData.items.forEach(order => {
+                const prevStatus = savedStatuses[order.id];
+                // Nếu là đơn hàng mới hoàn toàn hoặc trạng thái đã thay đổi
+                if (order.status !== prevStatus) {
+                    // Cập nhật trạng thái mới
+                    newStatusMap[order.id] = order.status;
+
+                    // Chỉ tạo thông báo nếu đây không phải là lần đầu tiên chạy (để tránh spam thông báo cũ khi reset cache)
+                    if (prevStatus !== undefined) {
+                        const info = STATUS_TEXT_MAP[order.status.toLowerCase()];
+                        if (info) {
+                            newNotis.push({
+                                id: `${order.id}-${Date.now()}`,
+                                iconType: info.icon,
+                                title: info.title,
+                                description: `${info.desc} (Đơn #${order.id.substring(0, 8)})`,
+                                time: 'Vừa xong',
+                                isRead: false,
+                                link: `/user/orders?newOrder=${order.id}`
+                            });
+                        }
+                    } else {
+                        // Nếu là lần đầu tiên thấy đơn này, chỉ lưu status, không bắn noti
+                        newStatusMap[order.id] = order.status;
+                    }
+                }
+            });
+
+            // Nếu có thông báo mới, cập nhật state và localStorage
+            if (newNotis.length > 0) {
+                setNotifications(prev => {
+                    const updated = [...newNotis, ...prev].slice(0, 50); // Giữ tối đa 50 thông báo
+                    localStorage.setItem(NOTI_STORAGE_KEY, JSON.stringify(updated));
+                    return updated;
+                });
+            }
+            localStorage.setItem(STATUS_TRACKER_KEY, JSON.stringify(newStatusMap));
+
+        } catch (err) {
+            console.error("Polling Order Error:", err);
+        }
+    };
+
+    // Kiểm tra ngay lập tức
+    checkOrderUpdates();
+    // Sau đó chạy mỗi 10 giây
+    pollingInterval = setInterval(checkOrderUpdates, 10000);
+
+    return () => clearInterval(pollingInterval);
+  }, []);
+
+  const handleMarkRead = (id: string) => {
+    setNotifications(prev => {
+        const updated = prev.map(n => n.id === id ? { ...n, isRead: true } : n);
+        localStorage.setItem(NOTI_STORAGE_KEY, JSON.stringify(updated));
+        return updated;
+    });
+    setIsNotificationOpen(false);
+  };
 
   useEffect(() => {
     const performSearch = () => {
@@ -126,11 +224,7 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
   };
 
   const hasResults = searchResults.dishes.length > 0 || searchResults.restaurants.length > 0;
-
-  const mockUserNotifications: Notification[] = [
-    { id: 'user-1', icon: <PackageIcon className="h-5 w-5 text-blue-500" />, title: 'Đơn hàng #12345 đã được xác nhận', description: 'Nhà hàng đang chuẩn bị món ăn của bạn.', time: '2 phút trước', isRead: false, link: '/user/order/12345' },
-    { id: 'user-2', icon: <CheckCircleIcon className="h-5 w-5 text-green-500" />, title: 'Giao hàng thành công!', description: 'Đơn hàng #12344 của bạn đã được giao. Hãy đánh giá nhé!', time: '1 giờ trước', isRead: true },
-  ];
+  const unreadCount = notifications.filter(n => !n.isRead).length;
 
   return (
     <>
@@ -253,9 +347,18 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
                     className="p-2.5 rounded-full text-gray-400 hover:text-orange-500 hover:bg-orange-50 transition-all"
                 >
                     <BellIcon className="h-6 w-6" />
-                    {mockUserNotifications.some(n => !n.isRead) && <span className="absolute top-2 right-2 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white"></span>}
+                    {unreadCount > 0 && (
+                        <span className="absolute top-1 right-1 block h-5 w-5 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center ring-2 ring-white animate-bounce">
+                            {unreadCount > 9 ? '9+' : unreadCount}
+                        </span>
+                    )}
                 </button>
-                 <NotificationDropdown isOpen={isNotificationOpen} onClose={() => setIsNotificationOpen(false)} notifications={mockUserNotifications} />
+                 <NotificationDropdown 
+                    isOpen={isNotificationOpen} 
+                    onClose={() => setIsNotificationOpen(false)} 
+                    notifications={notifications}
+                    onMarkRead={handleMarkRead}
+                 />
             </div>
             
             <div className="ml-3 relative" ref={userMenuRef}>
