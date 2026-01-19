@@ -30,7 +30,7 @@ export interface UpdateDishRequest {
   description?: string;
   price?: number;
   discounted_price?: number;
-  image_url?: string;
+  image?: File; // Đổi từ image_url sang file thực tế để upload
   category_id?: number;
   is_available?: boolean;
   stock_quantity?: number;
@@ -217,15 +217,24 @@ export const restaurantApiService = {
   },
 
   async updateDish(dishId: number, data: UpdateDishRequest): Promise<DishResponse> {
+    const formData = new FormData();
+    if (data.name) formData.append('name', data.name);
+    if (data.description) formData.append('description', data.description);
+    if (data.price !== undefined) formData.append('price', data.price.toString());
+    if (data.discounted_price !== undefined) formData.append('discounted_price', data.discounted_price.toString());
+    if (data.category_id !== undefined) formData.append('category_id', data.category_id.toString());
+    if (data.is_available !== undefined) formData.append('is_available', data.is_available.toString());
+    if (data.stock_quantity !== undefined) formData.append('stock_quantity', data.stock_quantity.toString());
+    if (data.image) formData.append('image', data.image);
+
     const headers = apiService.getAuthHeaders('seller');
     const response = await fetch(`${RESTAURANT_SERVICE_URL}/api/v1/menu/dishes/${dishId}`, {
       method: 'PUT',
       headers: {
         ...headers,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
+        // Không set Content-Type JSON khi dùng FormData
       },
-      body: JSON.stringify(data),
+      body: formData,
     });
 
     if (!response.ok) {
