@@ -18,7 +18,6 @@ import PromotionsPage from './pages/PromotionsPage';
 import ShipperLayout from './layouts/ShipperLayout';
 import ShipperProfilePage from './pages/ShipperProfilePage';
 import ShipperOrdersPage from './pages/ShipperOrdersPage';
-import ShipperNotificationsPage from './pages/ShipperNotificationsPage';
 import ShipperHistoryPage from './pages/ShipperHistoryPage';
 import SupportPage from './pages/SupportPage';
 import BankTransferPage from './pages/BankTransferPage';
@@ -82,7 +81,6 @@ const App: React.FC = () => {
           <Route path="profile" element={<ShipperProfilePage />} />
           <Route path="orders" element={<ShipperOrdersPage />} />
           <Route path="history" element={<ShipperHistoryPage />} />
-          <Route path="notifications" element={<ShipperNotificationsPage />} />
         </Route>
       </Route>
       
