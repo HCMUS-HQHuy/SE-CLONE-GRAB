@@ -14,6 +14,18 @@ export interface CreateRestaurantRequest {
   food_safety_certificate_image: File;
 }
 
+export interface UpdateRestaurantRequest {
+  name?: string;
+  address?: string;
+  phone?: string;
+  description?: string;
+  is_open?: boolean;
+  opening_hours?: string;
+  business_license_image?: string;
+  food_safety_certificate_image?: string;
+  status?: string;
+}
+
 export interface CreateDishRequest {
   name: string;
   price: string;
@@ -30,7 +42,7 @@ export interface UpdateDishRequest {
   description?: string;
   price?: number;
   discounted_price?: number;
-  image?: File; // Đổi từ image_url sang file thực tế để upload
+  image?: File;
   category_id?: number;
   is_available?: boolean;
   stock_quantity?: number;
@@ -90,6 +102,24 @@ export const restaurantApiService = {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.detail?.[0]?.msg || errorData.detail || 'Không thể tạo hồ sơ nhà hàng.');
+    }
+
+    return await response.json();
+  },
+
+  async updateRestaurant(id: number, data: UpdateRestaurantRequest): Promise<RestaurantListItem> {
+    const response = await fetch(`${RESTAURANT_SERVICE_URL}/api/v1/restaurants/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...apiService.getAuthHeaders('seller'),
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail?.[0]?.msg || errorData.detail || 'Cập nhật hồ sơ nhà hàng thất bại.');
     }
 
     return await response.json();
@@ -219,7 +249,7 @@ export const restaurantApiService = {
   async updateDish(dishId: number, data: UpdateDishRequest): Promise<DishResponse> {
     const formData = new FormData();
     if (data.name) formData.append('name', data.name);
-    if (data.description) formData.append('description', data.description);
+    if (data.description !== undefined) formData.append('description', data.description);
     if (data.price !== undefined) formData.append('price', data.price.toString());
     if (data.discounted_price !== undefined) formData.append('discounted_price', data.discounted_price.toString());
     if (data.category_id !== undefined) formData.append('category_id', data.category_id.toString());
@@ -232,7 +262,6 @@ export const restaurantApiService = {
       method: 'PUT',
       headers: {
         ...headers,
-        // Không set Content-Type JSON khi dùng FormData
       },
       body: formData,
     });
