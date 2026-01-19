@@ -90,12 +90,8 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
 
             ordersData.items.forEach(order => {
                 const prevStatus = savedStatuses[order.id];
-                // Nếu là đơn hàng mới hoàn toàn hoặc trạng thái đã thay đổi
                 if (order.status !== prevStatus) {
-                    // Cập nhật trạng thái mới
                     newStatusMap[order.id] = order.status;
-
-                    // Chỉ tạo thông báo nếu đây không phải là lần đầu tiên chạy (để tránh spam thông báo cũ khi reset cache)
                     if (prevStatus !== undefined) {
                         const info = STATUS_TEXT_MAP[order.status.toLowerCase()];
                         if (info) {
@@ -110,16 +106,14 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
                             });
                         }
                     } else {
-                        // Nếu là lần đầu tiên thấy đơn này, chỉ lưu status, không bắn noti
                         newStatusMap[order.id] = order.status;
                     }
                 }
             });
 
-            // Nếu có thông báo mới, cập nhật state và localStorage
             if (newNotis.length > 0) {
                 setNotifications(prev => {
-                    const updated = [...newNotis, ...prev].slice(0, 50); // Giữ tối đa 50 thông báo
+                    const updated = [...newNotis, ...prev].slice(0, 50);
                     localStorage.setItem(NOTI_STORAGE_KEY, JSON.stringify(updated));
                     return updated;
                 });
@@ -131,11 +125,8 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
         }
     };
 
-    // Kiểm tra ngay lập tức
     checkOrderUpdates();
-    // Sau đó chạy mỗi 10 giây
     pollingInterval = setInterval(checkOrderUpdates, 10000);
-
     return () => clearInterval(pollingInterval);
   }, []);
 
@@ -148,6 +139,14 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
     setIsNotificationOpen(false);
   };
 
+  const handleMarkAllRead = () => {
+    setNotifications(prev => {
+        const updated = prev.map(n => ({ ...n, isRead: true }));
+        localStorage.setItem(NOTI_STORAGE_KEY, JSON.stringify(updated));
+        return updated;
+    });
+  };
+
   useEffect(() => {
     const performSearch = () => {
         if (searchQuery.trim().length < 1) {
@@ -155,7 +154,6 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
             return;
         }
         const lowercasedQuery = searchQuery.toLowerCase();
-
         const foundDishes = sourceDishes
             .filter(d => d.name.toLowerCase().includes(lowercasedQuery))
             .slice(0, 5)
@@ -163,14 +161,11 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
               ...d,
               restaurantName: sourceRestaurants.find(r => r.id === d.restaurant_id)?.name || `Nhà hàng #${d.restaurant_id}`
             }));
-
         const foundRestaurants = sourceRestaurants
             .filter(r => r.name.toLowerCase().includes(lowercasedQuery))
             .slice(0, 3);
-
         setSearchResults({ dishes: foundDishes, restaurants: foundRestaurants });
     };
-
     const handler = setTimeout(() => { performSearch(); }, 200);
     return () => clearTimeout(handler);
   }, [searchQuery, sourceDishes, sourceRestaurants]);
@@ -210,20 +205,17 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
         isAvailable: dish.is_available,
         bestseller: false,
     };
-    // Map giá tiền
     if (dish.discounted_price && parseFloat(dish.discounted_price) > 0) {
         uiItem.oldPrice = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(parseFloat(dish.price)).replace(/\s/g, '');
         uiItem.newPrice = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(parseFloat(dish.discounted_price)).replace(/\s/g, '');
     } else {
         uiItem.price = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(parseFloat(dish.price)).replace(/\s/g, '');
     }
-
     setSelectedProduct(uiItem);
     setIsSearchFocused(false);
     setSearchQuery('');
   };
 
-  const hasResults = searchResults.dishes.length > 0 || searchResults.restaurants.length > 0;
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
   return (
@@ -261,7 +253,7 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
               
               {isSearchFocused && searchQuery.length > 0 && (
                 <div className="absolute top-full mt-2 w-full bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-30 animate-in fade-in slide-in-from-top-1">
-                  {hasResults ? (
+                  { (searchResults.dishes.length > 0 || searchResults.restaurants.length > 0) ? (
                     <div className="max-h-[70vh] overflow-y-auto">
                       {searchResults.dishes.length > 0 && (
                         <div className="p-5">
@@ -358,6 +350,7 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
                     onClose={() => setIsNotificationOpen(false)} 
                     notifications={notifications}
                     onMarkRead={handleMarkRead}
+                    onMarkAllRead={handleMarkAllRead}
                  />
             </div>
             
@@ -371,7 +364,7 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
               {isUserMenuOpen && (
                 <div className="absolute right-0 mt-3 w-56 bg-white rounded-2xl shadow-2xl py-2 ring-1 ring-black/5 z-30 border border-gray-50 overflow-hidden">
                   <div className="px-4 py-3 border-b border-gray-50 mb-1">
-                    <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Tài khoản</p>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Tài khoản</p>
                   </div>
                   <Link to="/user/profile" className="block px-4 py-2.5 text-sm text-gray-700 font-semibold hover:bg-orange-50 hover:text-orange-600 transition-colors">Hồ sơ của tôi</Link>
                   <Link to="/user/support" className="block px-4 py-2.5 text-sm text-gray-700 font-semibold hover:bg-orange-50 hover:text-orange-600 transition-colors">Trung tâm hỗ trợ</Link>

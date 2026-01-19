@@ -26,6 +26,11 @@ const ShipperNavbar: React.FC = () => {
     setIsNotificationOpen(false);
   };
 
+  // FIX: Implemented handleMarkAllRead to satisfy NotificationDropdown requirement
+  const handleMarkAllRead = () => {
+    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+  };
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
         if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
@@ -65,12 +70,13 @@ const ShipperNavbar: React.FC = () => {
                     {/* FIX: Check unread state from local state notifications */}
                     {notifications.some(n => !n.isRead) && <span className="absolute top-1.5 right-1.5 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white"></span>}
                 </button>
-                {/* FIX: Passed notifications state and onMarkRead handler */}
+                {/* FIX: Passed notifications state and onMarkRead/onMarkAllRead handlers */}
                 <NotificationDropdown 
                   isOpen={isNotificationOpen} 
                   onClose={() => setIsNotificationOpen(false)} 
                   notifications={notifications} 
                   onMarkRead={handleMarkRead}
+                  onMarkAllRead={handleMarkAllRead}
                 />
              </div>
             <div className="ml-3 relative" ref={userMenuRef}>
