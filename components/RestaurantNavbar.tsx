@@ -12,6 +12,20 @@ const RestaurantNavbar: React.FC = () => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
+  // FIX: Notification type uses iconType instead of icon. Added state to handle marking as read.
+  const mockRestaurantNotifications: Notification[] = [
+    { id: 'res-1', iconType: 'order', title: 'Bạn có đơn hàng mới!', description: 'Đơn hàng #12345 trị giá 105.000đ từ Nguyễn Văn A.', time: 'Vừa xong', isRead: false, link: '/restaurant/orders' },
+    { id: 'res-2', iconType: 'success', title: 'Đánh giá mới', description: 'Trần Thị B đã để lại đánh giá 5 sao cho quán của bạn.', time: '15 phút trước', isRead: false },
+  ];
+
+  const [notifications, setNotifications] = useState<Notification[]>(mockRestaurantNotifications);
+
+  // FIX: Implemented handleMarkRead to satisfy NotificationDropdown requirement
+  const handleMarkRead = (id: string) => {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+    setIsNotificationOpen(false);
+  };
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
         if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
@@ -28,11 +42,6 @@ const RestaurantNavbar: React.FC = () => {
   };
 
   const activeLinkStyle = { color: '#F97316', borderBottom: '2px solid #F97316' };
-
-  const mockRestaurantNotifications: Notification[] = [
-    { id: 'res-1', icon: <PackageIcon className="h-5 w-5 text-green-500" />, title: 'Bạn có đơn hàng mới!', description: 'Đơn hàng #12345 trị giá 105.000đ từ Nguyễn Văn A.', time: 'Vừa xong', isRead: false, link: '/restaurant/orders' },
-    { id: 'res-2', icon: <StarIcon className="h-5 w-5 text-yellow-500" />, title: 'Đánh giá mới', description: 'Trần Thị B đã để lại đánh giá 5 sao cho quán của bạn.', time: '15 phút trước', isRead: false },
-  ];
 
   return (
     <header className="bg-white shadow-sm sticky top-0 z-10">
@@ -54,9 +63,16 @@ const RestaurantNavbar: React.FC = () => {
              <div className="relative">
                 <button onClick={() => setIsNotificationOpen(prev => !prev)} className="relative p-2 rounded-full text-gray-500 hover:text-orange-500 hover:bg-orange-50 focus:outline-none focus:bg-orange-100 transition">
                     <BellIcon className="h-6 w-6" />
-                    {mockRestaurantNotifications.some(n => !n.isRead) && <span className="absolute top-1.5 right-1.5 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white"></span>}
+                    {/* FIX: Check unread state from local state notifications */}
+                    {notifications.some(n => !n.isRead) && <span className="absolute top-1.5 right-1.5 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white"></span>}
                 </button>
-                <NotificationDropdown isOpen={isNotificationOpen} onClose={() => setIsNotificationOpen(false)} notifications={mockRestaurantNotifications} />
+                {/* FIX: Passed notifications state and onMarkRead handler */}
+                <NotificationDropdown 
+                  isOpen={isNotificationOpen} 
+                  onClose={() => setIsNotificationOpen(false)} 
+                  notifications={notifications} 
+                  onMarkRead={handleMarkRead}
+                />
              </div>
             <div className="ml-3 relative" ref={userMenuRef}>
               <button 

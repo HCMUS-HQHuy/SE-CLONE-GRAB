@@ -1,9 +1,11 @@
+
 import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { PackageIcon, CheckCircleIcon, XCircleIcon, ClockIcon, BellIcon, ClipboardListIcon, TruckIcon } from './Icons';
 
 export type Notification = {
   id: string;
-  icon: React.ReactNode;
+  iconType: 'order' | 'success' | 'error' | 'warning' | 'shipping' | 'preparing';
   title: string;
   description: string;
   time: string;
@@ -15,24 +17,41 @@ type NotificationDropdownProps = {
   isOpen: boolean;
   onClose: () => void;
   notifications: Notification[];
+  onMarkRead: (id: string) => void;
 };
 
-const NotificationItem: React.FC<{ notification: Notification }> = ({ notification }) => (
-  <Link to={notification.link || '#'} className="flex items-start p-3 hover:bg-gray-50 rounded-lg transition-colors">
-    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mr-4">
-        {notification.icon}
+const getIcon = (type: Notification['iconType']) => {
+    switch (type) {
+        case 'order': return <ClipboardListIcon className="h-5 w-5 text-blue-500" />;
+        case 'success': return <CheckCircleIcon className="h-5 w-5 text-green-500" />;
+        case 'error': return <XCircleIcon className="h-5 w-5 text-red-500" />;
+        case 'warning': return <ClockIcon className="h-5 w-5 text-amber-500" />;
+        case 'shipping': return <TruckIcon className="h-5 w-5 text-indigo-500" />;
+        case 'preparing': return <PackageIcon className="h-5 w-5 text-orange-500" />;
+        default: return <BellIcon className="h-5 w-5 text-gray-500" />;
+    }
+};
+
+const NotificationItem: React.FC<{ notification: Notification, onMarkRead: (id: string) => void }> = ({ notification, onMarkRead }) => (
+  <Link 
+    to={notification.link || '#'} 
+    onClick={() => onMarkRead(notification.id)}
+    className={`flex items-start p-4 hover:bg-gray-50 transition-all border-b border-gray-50 last:border-0 ${!notification.isRead ? 'bg-orange-50/30' : 'bg-white'}`}
+  >
+    <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center mr-4 border border-gray-100">
+        {getIcon(notification.iconType)}
     </div>
-    <div className="flex-grow">
-        <p className={`font-semibold text-sm text-gray-800 ${!notification.isRead ? 'font-bold' : ''}`}>{notification.title}</p>
-        <p className="text-sm text-gray-600">{notification.description}</p>
-        <p className="text-xs text-gray-400 mt-1">{notification.time}</p>
+    <div className="flex-grow min-w-0">
+        <p className={`text-sm text-gray-800 line-clamp-1 ${!notification.isRead ? 'font-black' : 'font-semibold'}`}>{notification.title}</p>
+        <p className="text-xs text-gray-500 line-clamp-2 mt-0.5 font-medium leading-relaxed">{notification.description}</p>
+        <p className="text-[10px] text-gray-400 mt-1.5 font-bold uppercase tracking-tight">{notification.time}</p>
     </div>
-    {!notification.isRead && <div className="w-2.5 h-2.5 bg-orange-500 rounded-full ml-3 mt-1 flex-shrink-0"></div>}
+    {!notification.isRead && <div className="w-2 h-2 bg-orange-500 rounded-full ml-3 mt-2 flex-shrink-0 shadow-sm animate-pulse"></div>}
   </Link>
 );
 
 
-const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOpen, onClose, notifications }) => {
+const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOpen, onClose, notifications, onMarkRead }) => {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -51,47 +70,45 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOpen, onC
 
   if (!isOpen) return null;
 
-  const newNotifications = notifications.filter(n => !n.isRead);
-  const readNotifications = notifications.filter(n => n.isRead);
-
   return (
     <div
       ref={dropdownRef}
-      className="absolute top-full right-0 mt-2 w-80 sm:w-96 bg-white rounded-lg shadow-2xl border border-gray-200 z-20 overflow-hidden"
+      className="absolute top-full right-0 mt-3 w-80 sm:w-[400px] bg-white rounded-[2rem] shadow-2xl border border-gray-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-300"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="notification-heading"
     >
-      <div className="flex justify-between items-center p-4 border-b">
-        <h3 id="notification-heading" className="text-lg font-bold text-gray-800">Thông báo</h3>
-        <button className="text-sm font-medium text-orange-600 hover:underline">Đánh dấu đã đọc</button>
+      <div className="flex justify-between items-center p-6 border-b border-gray-50 bg-gray-50/30">
+        <div>
+            <h3 className="text-lg font-black text-gray-800 tracking-tight">Thông báo</h3>
+            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">Cập nhật đơn hàng của bạn</p>
+        </div>
+        {notifications.some(n => !n.isRead) && (
+            <button className="text-[10px] font-black text-orange-600 uppercase tracking-widest hover:text-orange-700 transition-colors">Đánh dấu tất cả</button>
+        )}
       </div>
       
-      <div className="max-h-96 overflow-y-auto">
-        {newNotifications.length > 0 && (
-          <div className="p-2">
-            <h4 className="px-3 py-1 text-xs font-semibold text-gray-500 uppercase">Mới</h4>
-            {newNotifications.map(n => <NotificationItem key={n.id} notification={n} />)}
-          </div>
-        )}
-        
-        {readNotifications.length > 0 && (
-          <div className="p-2">
-             <h4 className="px-3 py-1 text-xs font-semibold text-gray-500 uppercase">Trước đó</h4>
-             {readNotifications.map(n => <NotificationItem key={n.id} notification={n} />)}
-          </div>
-        )}
-
-         {notifications.length === 0 && (
-            <div className="text-center p-8">
-                <p className="text-sm text-gray-500">Bạn không có thông báo nào.</p>
+      <div className="max-h-[450px] overflow-y-auto custom-scrollbar">
+         {notifications.length === 0 ? (
+            <div className="text-center py-20 px-10">
+                <BellIcon className="h-12 w-12 text-gray-100 mx-auto mb-4"/>
+                <p className="text-sm text-gray-400 font-medium">Bạn chưa có thông báo mới nào.</p>
+            </div>
+         ) : (
+            <div className="divide-y divide-gray-50">
+                {notifications.map(n => <NotificationItem key={n.id} notification={n} onMarkRead={onMarkRead} />)}
             </div>
          )}
       </div>
 
-      <div className="p-2 bg-gray-50 border-t text-center">
-        <Link to="#" className="text-sm font-semibold text-orange-600 hover:underline">Xem tất cả</Link>
+      <div className="p-4 bg-gray-50/50 border-t border-gray-100 text-center">
+        <Link to="/user/orders" onClick={onClose} className="text-xs font-black text-gray-400 hover:text-orange-500 uppercase tracking-[0.2em] transition-all">Xem tất cả đơn hàng</Link>
       </div>
+      
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #F3F4F6; border-radius: 10px; }
+      `}</style>
     </div>
   );
 };
