@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { UserIcon, SearchIcon, ShoppingCartIcon, BellIcon, DocumentTextIcon, MenuIcon, LocationMarkerIcon, PackageIcon, CheckCircleIcon, ImageIcon, LogoutIcon } from './Icons';
+import { UserIcon, SearchIcon, ShoppingCartIcon, BellIcon, DocumentTextIcon, MenuIcon, PackageIcon, CheckCircleIcon, ImageIcon, LogoutIcon } from './Icons';
 import { useCart } from '../contexts/CartContext';
 import NotificationDropdown from './NotificationDropdown';
 import type { Notification } from './NotificationDropdown';
@@ -139,7 +139,7 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
         <div className="flex items-center justify-between h-20">
           
           <div className="flex items-center">
-            <Link to="/user/home" className="flex-shrink-0 text-2xl font-bold text-orange-500">
+            <Link to="/user/home" className="flex-shrink-0 text-2xl font-black text-orange-500 tracking-tighter">
               Food<span className="text-gray-800">Delivery</span>
             </Link>
           </div>
@@ -147,22 +147,14 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
           <div className="flex-1 flex justify-center px-2 lg:ml-6 lg:justify-center">
             <div ref={searchContainerRef} className="w-full max-w-3xl relative">
               <div className="flex items-center w-full bg-gray-100 rounded-full border border-gray-200 focus-within:ring-2 focus-within:ring-orange-400 focus-within:border-orange-400 focus-within:bg-white transition-all duration-300">
-                <div className="flex items-center pl-4 pr-2 py-1 flex-shrink-0 cursor-pointer group">
-                  <LocationMarkerIcon className="h-5 w-5 text-gray-500 mr-2 group-hover:text-orange-500 transition-colors" />
-                  <div className="hidden sm:block text-left">
-                    <span className="text-[10px] text-gray-500 font-bold uppercase">Giao đến</span>
-                    <p className="text-xs font-semibold text-gray-800 line-clamp-1 group-hover:text-orange-500 transition-colors">Địa chỉ của tôi</p>
-                  </div>
-                </div>
-                <div className="h-8 border-l border-gray-300 mx-2"></div>
                 <div className="relative flex-1">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
                     <SearchIcon className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
                     id="search"
                     autoComplete="off"
-                    className="block w-full bg-transparent py-3 pl-10 pr-4 border-none rounded-r-full leading-5 text-gray-900 placeholder-gray-500 focus:outline-none"
+                    className="block w-full bg-transparent py-3.5 pl-12 pr-4 border-none rounded-full leading-5 text-gray-900 placeholder-gray-500 focus:outline-none font-medium text-sm"
                     placeholder="Tìm món ăn, trà sữa, quán cơm..."
                     type="search" 
                     value={searchQuery} 
@@ -174,20 +166,20 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
               </div>
               
               {isSearchFocused && searchQuery.length > 0 && (
-                <div className="absolute top-full mt-2 w-full bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-30 animate-in fade-in slide-in-from-top-1">
+                <div className="absolute top-full mt-2 w-full bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-30 animate-in fade-in slide-in-from-top-1">
                   {hasResults ? (
                     <div className="max-h-[70vh] overflow-y-auto">
                       {searchResults.dishes.length > 0 && (
-                        <div className="p-4">
-                          <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 px-2">Món ăn gợi ý (Click để đặt)</h3>
+                        <div className="p-5">
+                          <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 px-2">Món ăn gợi ý</h3>
                           <ul className="space-y-1">
                             {searchResults.dishes.map(dish => (
                               <li key={`dish-${dish.id}`}>
                                 <button 
                                   onClick={() => openProductModal(dish)}
-                                  className="w-full text-left flex items-center p-2 rounded-lg hover:bg-orange-50 group transition-colors"
+                                  className="w-full text-left flex items-center p-3 rounded-xl hover:bg-orange-50 group transition-colors"
                                 >
-                                  <div className="h-12 w-12 rounded-lg bg-gray-100 overflow-hidden mr-3 flex-shrink-0 border border-gray-50">
+                                  <div className="h-12 w-12 rounded-xl bg-gray-100 overflow-hidden mr-4 flex-shrink-0 border border-gray-50 shadow-inner">
                                     {dish.image_url ? (
                                       <img src={dish.image_url.startsWith('http') ? dish.image_url : `${BASE_IMG_URL}${dish.image_url}`} alt={dish.name} className="h-full w-full object-cover"/>
                                     ) : (
@@ -195,8 +187,8 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
                                     )}
                                   </div>
                                   <div className="flex-grow min-w-0">
-                                    <p className="font-bold text-sm text-gray-800 group-hover:text-orange-600 transition-colors truncate">{dish.name}</p>
-                                    <p className="text-xs text-gray-500 truncate">{dish.restaurantName}</p>
+                                    <p className="font-black text-sm text-gray-800 group-hover:text-orange-600 transition-colors truncate">{dish.name}</p>
+                                    <p className="text-[11px] text-gray-400 font-bold uppercase tracking-tight mt-0.5">{dish.restaurantName}</p>
                                   </div>
                                   <div className="text-right ml-2">
                                      <p className="text-sm font-black text-orange-500">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(parseFloat(dish.price)).replace(/\s/g, '')}</p>
@@ -208,21 +200,21 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
                         </div>
                       )}
                       {searchResults.restaurants.length > 0 && (
-                        <div className="p-4 border-t border-gray-50">
-                           <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 px-2">Nhà hàng</h3>
+                        <div className="p-5 border-t border-gray-50 bg-gray-50/30">
+                           <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 px-2">Nhà hàng đối tác</h3>
                            <ul className="space-y-1">
                              {searchResults.restaurants.map(restaurant => (
                                 <li key={`res-${restaurant.id}`}>
-                                  <Link to={`/user/restaurant/${restaurant.id}`} onClick={() => setIsSearchFocused(false)} className="flex items-center p-2 rounded-lg hover:bg-orange-50 group transition-colors">
-                                    <div className="h-12 w-12 rounded-full bg-orange-100 flex items-center justify-center mr-3 flex-shrink-0 font-black text-orange-600 border-2 border-white shadow-sm overflow-hidden">
+                                  <Link to={`/user/restaurant/${restaurant.id}`} onClick={() => setIsSearchFocused(false)} className="flex items-center p-3 rounded-xl hover:bg-white hover:shadow-sm border border-transparent hover:border-gray-100 group transition-all">
+                                    <div className="h-12 w-12 rounded-xl bg-orange-100 flex items-center justify-center mr-4 flex-shrink-0 font-black text-orange-600 border-2 border-white shadow-sm">
                                         {restaurant.name.charAt(0)}
                                     </div>
                                     <div className="flex-grow min-w-0">
-                                        <p className="font-bold text-sm text-gray-800 group-hover:text-orange-600 transition-colors truncate">{restaurant.name}</p>
-                                        <p className="text-xs text-gray-500 truncate">{restaurant.address}</p>
+                                        <p className="font-black text-sm text-gray-800 group-hover:text-orange-600 transition-colors truncate">{restaurant.name}</p>
+                                        <p className="text-xs text-gray-500 truncate mt-0.5 font-medium">{restaurant.address}</p>
                                     </div>
-                                    <div className="ml-2 flex items-center bg-gray-50 px-2 py-1 rounded-md">
-                                        <span className="text-xs font-bold text-gray-700">{restaurant.rating.toFixed(1)}</span>
+                                    <div className="ml-3 flex items-center bg-white px-2.5 py-1 rounded-full shadow-sm border border-gray-50">
+                                        <span className="text-[11px] font-black text-gray-700">{restaurant.rating.toFixed(1)}</span>
                                         <svg className="w-3 h-3 text-yellow-400 ml-1" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
                                     </div>
                                   </Link>
@@ -233,9 +225,9 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
                       )}
                     </div>
                   ) : (
-                    <div className="p-8 text-center">
-                        <ImageIcon className="h-12 w-12 text-gray-200 mx-auto mb-2"/>
-                        <p className="text-sm text-gray-500">Không tìm thấy kết quả cho "<span className="font-bold text-gray-800">{searchQuery}</span>"</p>
+                    <div className="p-10 text-center">
+                        <ImageIcon className="h-16 w-16 text-gray-100 mx-auto mb-3"/>
+                        <p className="text-sm text-gray-400 font-medium">Không tìm thấy món ăn "<span className="font-black text-gray-800">{searchQuery}</span>"</p>
                     </div>
                   )}
                 </div>
@@ -243,14 +235,14 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
             </div>
           </div>
 
-          <div className="hidden md:flex items-center space-x-2">
-            <Link to="/user/orders" className="p-2 rounded-full text-gray-500 hover:text-orange-500 hover:bg-orange-50 focus:outline-none focus:bg-orange-100 transition" aria-label="Đơn hàng">
+          <div className="hidden md:flex items-center space-x-3">
+            <Link to="/user/orders" className="p-2.5 rounded-full text-gray-400 hover:text-orange-500 hover:bg-orange-50 transition-all" aria-label="Đơn hàng">
               <DocumentTextIcon className="h-6 w-6" />
             </Link>
-             <button onClick={onCartClick} className="relative p-2 rounded-full text-gray-500 hover:text-orange-500 hover:bg-orange-50 focus:outline-none focus:bg-orange-100 transition" aria-label="Giỏ hàng">
+             <button onClick={onCartClick} className="relative p-2.5 rounded-full text-gray-400 hover:text-orange-500 hover:bg-orange-50 transition-all" aria-label="Giỏ hàng">
               <ShoppingCartIcon className="h-6 w-6" />
               {cartItemCount > 0 && (
-                <span className="absolute top-0 right-0 block h-5 w-5 rounded-full bg-orange-500 text-white text-xs flex items-center justify-center ring-2 ring-white">
+                <span className="absolute top-1 right-1 block h-5 w-5 rounded-full bg-orange-500 text-white text-[10px] font-black flex items-center justify-center ring-2 ring-white">
                   {cartItemCount}
                 </span>
               )}
@@ -258,10 +250,10 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
             <div className="relative">
                 <button
                     onClick={() => setIsNotificationOpen(prev => !prev)}
-                    className="p-2 rounded-full text-gray-500 hover:text-orange-500 hover:bg-orange-50 focus:outline-none focus:bg-orange-100 transition"
+                    className="p-2.5 rounded-full text-gray-400 hover:text-orange-500 hover:bg-orange-50 transition-all"
                 >
                     <BellIcon className="h-6 w-6" />
-                    {mockUserNotifications.some(n => !n.isRead) && <span className="absolute top-1.5 right-1.5 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white"></span>}
+                    {mockUserNotifications.some(n => !n.isRead) && <span className="absolute top-2 right-2 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white"></span>}
                 </button>
                  <NotificationDropdown isOpen={isNotificationOpen} onClose={() => setIsNotificationOpen(false)} notifications={mockUserNotifications} />
             </div>
@@ -269,16 +261,19 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
             <div className="ml-3 relative" ref={userMenuRef}>
               <button 
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                className="bg-gray-100 rounded-full flex items-center justify-center h-10 w-10 text-sm focus:outline-none ring-2 ring-offset-2 hover:ring-orange-500 transition"
+                className="bg-gray-100 rounded-2xl flex items-center justify-center h-11 w-11 text-sm focus:outline-none ring-2 ring-transparent hover:ring-orange-200 transition-all"
               >
                 <UserIcon className="h-6 w-6 text-gray-500" />
               </button>
               {isUserMenuOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 ring-1 ring-black ring-opacity-5 z-30">
-                  <Link to="/user/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Hồ sơ của tôi</Link>
-                  <Link to="/user/support" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Hỗ trợ</Link>
-                  <hr className="my-1"/>
-                  <button onClick={handleLogout} className="w-full text-left flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                <div className="absolute right-0 mt-3 w-56 bg-white rounded-2xl shadow-2xl py-2 ring-1 ring-black/5 z-30 border border-gray-50 overflow-hidden">
+                  <div className="px-4 py-3 border-b border-gray-50 mb-1">
+                    <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Tài khoản</p>
+                  </div>
+                  <Link to="/user/profile" className="block px-4 py-2.5 text-sm text-gray-700 font-semibold hover:bg-orange-50 hover:text-orange-600 transition-colors">Hồ sơ của tôi</Link>
+                  <Link to="/user/support" className="block px-4 py-2.5 text-sm text-gray-700 font-semibold hover:bg-orange-50 hover:text-orange-600 transition-colors">Trung tâm hỗ trợ</Link>
+                  <hr className="my-1 border-gray-50"/>
+                  <button onClick={handleLogout} className="w-full text-left flex items-center px-4 py-2.5 text-sm text-rose-600 font-bold hover:bg-rose-50 transition-colors">
                     <LogoutIcon className="h-4 w-4 mr-2" /> Đăng xuất
                   </button>
                 </div>
@@ -287,8 +282,8 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
           </div>
           
           <div className="md:hidden flex items-center">
-             <button className="p-2 rounded-full text-gray-500 hover:text-orange-500 hover:bg-orange-50 focus:outline-none focus:bg-orange-100 transition">
-              <MenuIcon className="h-6 w-6" />
+             <button className="p-2 rounded-xl text-gray-500 hover:text-orange-500 hover:bg-orange-50 transition-all">
+              <MenuIcon className="h-7 w-7" />
             </button>
           </div>
         </div>
