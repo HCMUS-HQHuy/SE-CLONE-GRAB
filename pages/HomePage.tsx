@@ -159,17 +159,6 @@ const FoodCard: React.FC<{ item: FoodItem }> = ({ item }) => (
     <div className="p-4 flex flex-col flex-grow">
       <div className="flex-grow">
         <h3 className="text-md font-bold text-gray-800 mb-1 line-clamp-1">{item.name}</h3>
-        {item.restaurant ? (
-            <Link 
-              to={`/user/restaurant/${item.restaurant.id}`} 
-              onClick={(e) => e.stopPropagation()}
-              className="text-gray-500 text-xs mb-2 font-semibold hover:text-orange-600 transition-colors block"
-            >
-                {item.restaurant.name}
-            </Link>
-        ) : (
-            <span className="text-gray-400 text-xs mb-2 block italic">Nhà hàng #{item.restaurantId}</span>
-        )}
         <p className="text-gray-600 text-xs mt-1 line-clamp-2">{item.description}</p>
       </div>
       <div className="mt-auto pt-3 flex justify-between items-end">

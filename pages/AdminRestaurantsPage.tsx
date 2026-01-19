@@ -19,7 +19,7 @@ const AdminRestaurantsPage: React.FC = () => {
     const [selectedRestaurant, setSelectedRestaurant] = useState<RestaurantListItem | null>(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     
-    const [confirmation, setConfirmation] = useState<{ 
+    const [confirmation, setConfirmation] = useState<{
         isOpen: boolean; 
         title: string; 
         message: string; 

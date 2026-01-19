@@ -1,7 +1,8 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { XIcon, UploadIcon, ImageIcon } from './Icons';
 import { FoodItem } from '../pages/HomePage';
+
+const BASE_IMG_URL = 'http://localhost:8004/';
 
 type AddMenuItemModalProps = {
   isOpen: boolean;
@@ -63,7 +64,7 @@ const AddMenuItemModal: React.FC<AddMenuItemModalProps> = ({ isOpen, onClose, on
         
         setCategory(itemToEdit.category || categories[0] || 'Đại hạ giá');
         setIsBestseller(itemToEdit.bestseller);
-        setImagePreview(itemToEdit.image || null);
+        setImagePreview(BASE_IMG_URL + itemToEdit.image || null);
         setImageFile(null);
         setStock(''); 
       } else {

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { XIcon, UploadIcon } from './Icons';
 import { Restaurant } from '../pages/HomePage';
 
+
 type EditRestaurantProfileModalProps = {
   isOpen: boolean;
   onClose: () => void;
