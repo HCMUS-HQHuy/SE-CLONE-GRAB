@@ -118,8 +118,8 @@ const PromotionsPage: React.FC = () => {
     }
 
     return (
-        <div className="max-w-7xl mx-auto p-6 lg:p-10 space-y-10 bg-gray-50/30">
-            <div className="flex justify-between items-end">
+        <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+            <div className="flex justify-between items-center mb-8">
                 <div>
                     <h1 className="text-3xl font-semibold text-gray-800 tracking-tight">Chiến dịch Ưu đãi</h1>
                     <p className="text-gray-400 text-sm mt-1 font-medium">Tạo và quản lý các mã giảm giá cho khách hàng của bạn.</p>
