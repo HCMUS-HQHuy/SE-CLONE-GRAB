@@ -57,11 +57,6 @@ const AdminShippersPage: React.FC = () => {
         setIsLoading(true);
         try {
             await apiService.adminUpdateUserStatus(parseInt(driverId, 10), status);
-            
-            if (status === 'active') {
-                await shipperApiService.verifyDriver(driverId);
-            }
-
             fetchShippers();
             setConfirmation(null);
             setIsDetailModalOpen(false);
