@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { UserIcon, SearchIcon, HeartIcon, ShoppingCartIcon, BellIcon, DocumentTextIcon, MenuIcon, LocationMarkerIcon, PackageIcon, CheckCircleIcon, ImageIcon, LogoutIcon } from './Icons';
+import { UserIcon, SearchIcon, ShoppingCartIcon, BellIcon, DocumentTextIcon, MenuIcon, LocationMarkerIcon, PackageIcon, CheckCircleIcon, ImageIcon, LogoutIcon } from './Icons';
 import { useCart } from '../contexts/CartContext';
 import NotificationDropdown from './NotificationDropdown';
 import type { Notification } from './NotificationDropdown';
@@ -246,9 +246,6 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
           <div className="hidden md:flex items-center space-x-2">
             <Link to="/user/orders" className="p-2 rounded-full text-gray-500 hover:text-orange-500 hover:bg-orange-50 focus:outline-none focus:bg-orange-100 transition" aria-label="Đơn hàng">
               <DocumentTextIcon className="h-6 w-6" />
-            </Link>
-            <Link to="/user/favorites" className="p-2 rounded-full text-gray-500 hover:text-orange-500 hover:bg-orange-50 focus:outline-none focus:bg-orange-100 transition" aria-label="Yêu thích">
-              <HeartIcon className="h-6 w-6" />
             </Link>
              <button onClick={onCartClick} className="relative p-2 rounded-full text-gray-500 hover:text-orange-500 hover:bg-orange-50 focus:outline-none focus:bg-orange-100 transition" aria-label="Giỏ hàng">
               <ShoppingCartIcon className="h-6 w-6" />
