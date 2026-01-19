@@ -28,7 +28,10 @@ const getStatusColor = (status: string) => {
         case 'PREPARING': return 'bg-orange-100 text-orange-700 border-orange-200';
         case 'SHIPPING': return 'bg-indigo-100 text-indigo-700 border-indigo-200';
         case 'DELIVERED': return 'bg-green-100 text-green-700 border-green-200';
-        case 'CANCELLED': return 'bg-red-100 text-red-700 border-red-200';
+        case 'CANCELLED': 
+        case 'REJECTED':
+        case 'RESTAURANT_REJECTED':
+        case 'DRIVER_REJECTED': return 'bg-red-100 text-red-700 border-red-200';
         default: return 'bg-gray-100 text-gray-700 border-gray-200';
     }
 };
@@ -109,7 +112,6 @@ const UserOrdersHistoryPage: React.FC = () => {
                         const subtotal = parseFloat(order.subtotal || '0');
                         const deliveryFee = parseFloat(order.delivery_fee || '0');
                         const discountVal = parseFloat(order.discount || '0');
-                        // Tổng thanh toán = Tạm tính + Phí ship - Giảm giá
                         const calculatedTotal = Math.max(0, subtotal + deliveryFee - discountVal);
 
                         return (
@@ -140,7 +142,7 @@ const UserOrdersHistoryPage: React.FC = () => {
                                         <div className="text-right">
                                             <p className="text-lg font-black text-gray-900">{formatCurrency(calculatedTotal)}</p>
                                             <span className={`inline-block px-2.5 py-0.5 mt-1 rounded-full text-[10px] font-black uppercase border ${getStatusColor(order.status)}`}>
-                                                {order.status}
+                                                {order.status === 'driver_rejected' ? 'TÀI XẾ TỪ CHỐI' : order.status}
                                             </span>
                                         </div>
                                         <ChevronRightIcon className="h-5 w-5 text-gray-300 group-hover:text-orange-500 transition-colors hidden sm:block" />
