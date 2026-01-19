@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { XIcon, ClockIcon, HomeIcon, UserIcon } from './Icons';
+import { XIcon, ClockIcon, HomeIcon, UserIcon, PhoneIcon, CheckBadgeIcon } from './Icons';
 import { Order, getStatusStyles, formatCurrency, formatDateTime } from '../pages/RestaurantOrdersPage';
 
 type OrderDetailModalProps = {
@@ -13,100 +14,112 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ isOpen, onClose, or
 
   return (
     <div 
-      className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4"
+      className="fixed inset-0 bg-black/40 z-50 flex justify-center items-center p-4 backdrop-blur-sm"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
-      aria-labelledby="order-detail-title"
     >
       <div 
-        className="relative bg-white p-6 rounded-lg shadow-xl w-full max-w-lg max-h-[95vh] overflow-y-auto"
+        className="relative bg-white rounded-[2.5rem] shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col overflow-hidden border border-gray-100"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex justify-between items-start border-b pb-4 mb-6">
+        {/* Header */}
+        <div className="p-8 border-b border-gray-50 flex justify-between items-center bg-gray-50/30">
             <div>
-                <h2 id="order-detail-title" className="text-xl font-bold text-orange-600">
-                    Chi tiết đơn hàng {order.id}
+                <h2 className="text-xl font-semibold text-gray-800 tracking-tight">
+                    Đơn hàng <span className="text-orange-500">#{order.id.substring(0, 8).toUpperCase()}</span>
                 </h2>
-                <div className="text-xs text-gray-500 mt-2 flex items-center">
-                    <ClockIcon className="h-4 w-4 mr-1.5" />
+                <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1.5 flex items-center">
+                    <ClockIcon className="h-3.5 w-3.5 mr-1.5 text-blue-400" />
                     <span>Đặt lúc: {formatDateTime(order.createdAt)}</span>
                 </div>
             </div>
             <button 
               onClick={onClose} 
-              className="text-gray-400 hover:text-gray-600 transition-colors duration-300"
-              aria-label="Close"
+              className="p-2 hover:bg-white rounded-full transition-colors text-gray-400 border border-transparent hover:border-gray-100"
             >
               <XIcon className="h-6 w-6" />
             </button>
         </div>
         
-        <div className="space-y-6">
+        {/* Content */}
+        <div className="p-10 overflow-y-auto flex-grow space-y-10 bg-white">
+            {/* Status Section */}
+            <div className="flex items-center justify-between p-5 bg-gray-50/50 rounded-2xl border border-gray-100">
+                <span className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Trạng thái hiện tại</span>
+                <span className={`text-[10px] font-bold px-3 py-1 rounded-full border uppercase tracking-tight ${getStatusStyles(order.status)}`}>
+                    {order.status}
+                </span>
+            </div>
+
             {/* Customer Info */}
             <div>
-                <h3 className="font-semibold text-gray-800 mb-3">Thông tin khách hàng</h3>
-                <div className="text-sm space-y-2 text-gray-600">
+                <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-4 ml-1">Thông tin nhận hàng</h3>
+                <div className="space-y-4">
                     <div className="flex items-center">
-                        <UserIcon className="h-4 w-4 mr-3 text-gray-400"/>
-                        <span>{order.customerName}</span>
+                        <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center mr-4 text-orange-500 border border-orange-100">
+                            <UserIcon className="h-5 w-5"/>
+                        </div>
+                        <div>
+                            <p className="text-sm font-semibold text-gray-800">{order.customerName}</p>
+                            <p className="text-[11px] text-gray-400 font-medium">Khách hàng</p>
+                        </div>
                     </div>
                     <div className="flex items-start">
-                        <HomeIcon className="h-4 w-4 mr-3 mt-0.5 text-gray-400"/>
-                        <span>{order.address}</span>
+                        <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center mr-4 text-blue-500 border border-blue-100 flex-shrink-0">
+                            <HomeIcon className="h-5 w-5"/>
+                        </div>
+                        <div className="pt-0.5">
+                            <p className="text-sm font-semibold text-gray-800 leading-snug">{order.address}</p>
+                            <p className="text-[11px] text-gray-400 font-medium mt-0.5 uppercase tracking-wide">Địa chỉ giao hàng</p>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {/* Order Items */}
+            {/* Items List */}
             <div>
-                <h3 className="font-semibold text-gray-800 mb-3">Danh sách món ăn</h3>
-                <div className="border rounded-md">
-                    <ul className="divide-y">
+                <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-4 ml-1">Chi tiết thực đơn</h3>
+                <div className="bg-gray-50/30 rounded-[2rem] border border-gray-50 overflow-hidden">
+                    <ul className="divide-y divide-gray-50">
                         {order.items.map((item, index) => (
-                            <li key={index} className="flex justify-between items-center p-3 text-sm">
+                            <li key={index} className="flex justify-between items-center p-5 text-sm group hover:bg-white transition-colors">
                                 <div className="flex items-center">
-                                    <span className="font-bold text-orange-500 mr-3">{item.quantity}x</span>
-                                    <span className="text-gray-800">{item.name}</span>
+                                    <span className="h-7 w-7 rounded-lg bg-orange-50 text-orange-600 font-bold flex items-center justify-center mr-4 text-[10px] border border-orange-100">
+                                        {item.quantity}x
+                                    </span>
+                                    <span className="text-gray-700 font-medium">{item.name}</span>
                                 </div>
-                                <span className="text-gray-600">{formatCurrency(item.price * item.quantity)}</span>
+                                <span className="font-semibold text-gray-900">{formatCurrency(item.price * item.quantity)}</span>
                             </li>
                         ))}
                     </ul>
                 </div>
             </div>
             
-            {/* Payment Summary */}
-            <div>
-                 <h3 className="font-semibold text-gray-800 mb-3">Tổng thanh toán</h3>
-                 <div className="bg-gray-50 p-4 rounded-lg space-y-2 text-sm">
-                    <div className="flex justify-between">
-                        <span className="text-gray-600">Tổng tiền món</span>
-                        <span className="font-medium text-gray-800">{formatCurrency(order.total)}</span>
+            {/* Summary */}
+            <div className="pt-6 border-t border-dashed border-gray-200">
+                 <div className="space-y-3">
+                    <div className="flex justify-between text-xs font-semibold text-gray-400 uppercase tracking-wider px-1">
+                        <span>Giá trị món ăn</span>
+                        <span className="text-gray-700">{formatCurrency(order.total)}</span>
                     </div>
-                     <div className="flex justify-between text-base font-bold border-t pt-2 mt-2">
-                      <span className="text-gray-900">Thanh toán</span>
-                      <span className="text-orange-600">{formatCurrency(order.total)}</span>
+                     <div className="flex justify-between text-2xl font-semibold text-gray-800 tracking-tighter pt-2 px-1">
+                      <span className="text-lg font-medium text-gray-500 uppercase tracking-widest mt-1">Tổng cộng</span>
+                      <span className="text-orange-500">{formatCurrency(order.total)}</span>
                     </div>
                 </div>
             </div>
-
-             {/* Status */}
-            <div>
-                <h3 className="font-semibold text-gray-800 mb-2">Trạng thái</h3>
-                <span className={`text-sm font-bold px-3 py-1.5 rounded-full ${getStatusStyles(order.status)}`}>
-                    {order.status}
-                </span>
-            </div>
         </div>
 
-        <div className="mt-8 pt-5 border-t flex justify-end">
+        {/* Footer */}
+        <div className="p-8 border-t border-gray-50 bg-gray-50/30 flex justify-end">
             <button 
                 type="button" 
                 onClick={onClose}
-                className="bg-orange-500 py-2 px-6 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+                className="px-10 py-3.5 bg-gray-900 text-white font-semibold text-xs rounded-full hover:bg-black transition-all shadow-xl shadow-gray-200 active:scale-95 uppercase tracking-widest"
             >
-                Đóng
+                Quay lại
             </button>
         </div>
       </div>
